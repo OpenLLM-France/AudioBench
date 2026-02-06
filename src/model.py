@@ -84,6 +84,18 @@ class Model(object):
         elif self.model_name == 'seallms_audio_7b':
             from model_src.seallms_audio_7b import seallms_audio_7b_model_loader
             seallms_audio_7b_model_loader(self)
+        
+        elif self.model_name == 'luciole_audio':
+            from model_src.luciole_audio import luciole_audio_model_loader
+            luciole_audio_model_loader(self)
+        
+        elif self.model_name == 'canary_qwen':
+            from model_src.canary_qwen import canary_qwen_model_loader
+            canary_qwen_model_loader(self)
+
+        elif self.model_name == 'audio_flamingo':
+            from model_src.audio_flamingo import audio_flamingo_model_loader
+            audio_flamingo_model_loader(self)
 
         else:
             raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
@@ -147,6 +159,18 @@ class Model(object):
             elif self.model_name == 'seallms_audio_7b':
                 from model_src.seallms_audio_7b import seallms_audio_7b_model_generation
                 return seallms_audio_7b_model_generation(self, input)
+            
+            elif self.model_name == 'luciole_audio':
+                from model_src.luciole_audio import luciole_audio_model_generation
+                return luciole_audio_model_generation(self, input)
+            
+            elif self.model_name == 'canary_qwen':
+                from model_src.canary_qwen import canary_qwen_model_generation
+                return canary_qwen_model_generation(self, input)
+            
+            elif self.model_name == 'audio_flamingo':
+                from model_src.audio_flamingo import audio_flamingo_model_generation
+                return audio_flamingo_model_generation(self, input)
 
             else:
                 raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
