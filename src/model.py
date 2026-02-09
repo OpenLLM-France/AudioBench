@@ -97,6 +97,13 @@ class Model(object):
             from model_src.audio_flamingo import audio_flamingo_model_loader
             audio_flamingo_model_loader(self)
 
+        elif self.model_name.startswith('qwen2_omni'):
+            from model_src.qwen_omni import qwen2_omni_model_loader
+            if self.model_name == 'qwen2_omni-7B':
+                qwen2_omni_model_loader(self, model_name="Qwen/Qwen2.5-Omni-7B")
+            else:
+                qwen2_omni_model_loader(self)
+
         else:
             raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
 
@@ -171,6 +178,10 @@ class Model(object):
             elif self.model_name == 'audio_flamingo':
                 from model_src.audio_flamingo import audio_flamingo_model_generation
                 return audio_flamingo_model_generation(self, input)
+            
+            elif self.model_name.startswith('qwen2_omni'):
+                from model_src.qwen_omni import qwen2_omni_model_generation
+                return qwen2_omni_model_generation(self, input)
 
             else:
                 raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
