@@ -103,6 +103,10 @@ class Model(object):
                 qwen2_omni_model_loader(self, model_name="Qwen/Qwen2.5-Omni-7B")
             else:
                 qwen2_omni_model_loader(self)
+        
+        elif self.model_name.startswith('voxtral'):
+                from model_src.mistralai_voxtral import voxtral_model_loader
+                return voxtral_model_loader(self)
 
         else:
             raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
@@ -182,6 +186,10 @@ class Model(object):
             elif self.model_name.startswith('qwen2_omni'):
                 from model_src.qwen_omni import qwen2_omni_model_generation
                 return qwen2_omni_model_generation(self, input)
+            
+            elif self.model_name.startswith('voxtral'):
+                from model_src.mistralai_voxtral import voxtral_model_generation
+                return voxtral_model_generation(self, input)
 
             else:
                 raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
