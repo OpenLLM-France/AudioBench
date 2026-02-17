@@ -17,8 +17,8 @@ import logging
 
 from jiwer import compute_measures, wer
 
-from dataset_src.text_normalizer.preprocess_text import preprocess_text_asr
 from dataset_src.prompts.prompts import asr_instructions
+from dataset_src.eval_methods.metrics import compute_wer, get_predictions_and_references_lists
 
 
 class librispeech_test_other_dataset(object):
@@ -66,41 +66,10 @@ class librispeech_test_other_dataset(object):
         return data_with_model_predictions
 
 
-    def compute_score(self, data_with_model_predictions, metrics=None):
-
-        if metrics != 'wer':
-            raise ValueError(f"Unsupported metric: {metrics}. Supported metrics: 'wer' for ASR")
+    def compute_score(self, data_with_model_predictions, metrics=None):        
+        if metrics is not None and metrics != 'wer':
+            raise ValueError('Only WER is supported for this dataset.')
         
-        predictions=[]
-        references=[]
-        for item in data_with_model_predictions:
-            model_prediction = preprocess_text_asr(item["model_prediction"])
-            answer           = preprocess_text_asr(item["reference"])
-
-            if len(model_prediction) == 0: model_prediction = "empty"
-            if len(answer) == 0: answer = "empty"
-
-            predictions.append(model_prediction)
-            references.append(answer)
-
-        sample_wer = []
-        incorrect  = 0
-        total      = 0
-        for prediction, reference in zip(predictions, references):
-            measures   = compute_measures(reference, prediction)
-            incorrect += measures["substitutions"] + measures["deletions"] + measures["insertions"]
-            total     += measures["substitutions"] + measures["deletions"] + measures["hits"]
-
-            wer_score = wer(reference, prediction)
-
-            sample_wer_score = {
-                "reference" : reference,
-                "prediction": prediction,
-                "wer"       : wer_score,
-            }
-
-            sample_wer.append(sample_wer_score)
-
-        total_wer = incorrect / total
-
-        return {"wer": total_wer, "sample_wer": sample_wer}
+        references, predictions = get_predictions_and_references_lists(data_with_model_predictions)
+        
+        return compute_wer(references, predictions)
