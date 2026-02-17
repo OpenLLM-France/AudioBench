@@ -13,9 +13,6 @@ import tempfile
 import soundfile as sf
 import nemo.collections.speechlm2 as slm
 
-# Install fairseq 'pip install --editable ./'
-
-
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -26,7 +23,7 @@ logging.basicConfig(
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
-model_path = "/home/abert/speechlm_benchmark/models/SPEECHLM2_MODELS/Canary-Qwen3.3.7B-v2"
+model_path = f"{os.getenv('MODELS')}/Canary-Qwen3-1.7B-v2"
 
 def luciole_audio_model_loader(self):
     self.model = slm.models.SALM.from_pretrained(model_path).eval()
@@ -37,7 +34,6 @@ def luciole_audio_model_generation(self, input):
     sampling_rate  = input["audio"]["sampling_rate"]
     audio_duration = len(audio_array) / sampling_rate
     prompt = input["instruction"]
-    print(prompt)
     
     os.makedirs('tmp', exist_ok=True)
 

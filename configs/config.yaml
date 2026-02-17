@@ -1,0 +1,11 @@
+global:
+  batch_size: 1
+  overwrite: true
+  number_of_samples: 5
+  datasets:
+    - name: librispeech_test_clean
+      metrics: wer
+
+models:
+  - name: luciole_audio
+  - name: canary_qwen
