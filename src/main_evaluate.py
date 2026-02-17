@@ -39,14 +39,15 @@ def do_model_prediction(input_data, model, batch_size):
                 
     return model_predictions
 
-def run_evaluation(        
+def run_evaluation(
         dataset_name      : str  = None,
         model_name        : str  = None,
         batch_size        : int  = 1,     # it is now a dummy parameter
         overwrite         : bool = False,
         metrics           : str  = None,
         number_of_samples : int  = -1,
-        log_folder: str = "log_for_all_models"
+        log_folder: str = "log_for_all_models",
+        backend: str = "transformers"
     ):
     
     dataset = Dataset(dataset_name, number_of_samples)
@@ -77,7 +78,7 @@ def run_evaluation(
         logger.info(f'Overwrite is enabled or the results are not found. Try to infer with the model: {model_name}.')
     
         # Load model
-        model = Model(model_name)
+        model = Model(model_name, backend=backend)
 
         # Specific current dataset name for evaluation
         model.dataset_name = dataset.dataset_name
@@ -117,7 +118,8 @@ def main(
         overwrite         : bool = False,
         metrics           : str  = None,
         number_of_samples : int  = -1,
-        log_folder: str = "log_for_all_models"
+        log_folder: str = "log_for_all_models",
+        backend: str = "transformers"
     ):
 
     logger.info("= = "*20)
@@ -127,9 +129,10 @@ def main(
     logger.info("Overwrite: {}".format(overwrite))
     logger.info("Metrics: {}".format(metrics))
     logger.info("Number of samples: {}".format(number_of_samples))
+    logger.info("Backend: {}".format(backend))
     logger.info("= = "*20)
-    
-    run_evaluation(dataset_name, model_name, batch_size, overwrite, metrics, number_of_samples, log_folder)
+
+    run_evaluation(dataset_name, model_name, batch_size, overwrite, metrics, number_of_samples, log_folder, backend)
     
 
 

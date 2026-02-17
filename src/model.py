@@ -14,22 +14,35 @@ logging.basicConfig(
 )
 
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
+VLLM_SUPPORTED_MODELS = {
+    "Qwen2-Audio-7B-Instruct",
+    "qwen2_omni",
+    "qwen2_omni-7B",
+    "phi_4_multimodal_instruct",
+    "whisper_large_v3",
+    "whisper_large_v2",
+}
+
 class Model(object):
 
-    def __init__(self, model_name_or_path):
+    def __init__(self, model_name_or_path, backend="transformers"):
 
         self.dataset_name = None
         self.model_name   = model_name_or_path
+        self.backend      = backend
         self.device       = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.load_model()
-        logger.info("Loaded model: {}".format(self.model_name))
+        logger.info("Loaded model: {} (backend: {})".format(self.model_name, self.backend))
         logger.info("= = "*20)
 
 
     def load_model(self):
 
-        if self.model_name == "cascade_whisper_large_v3_llama_3_8b_instruct": 
+        if self.backend == "vllm":
+            return self._load_model_vllm()
+
+        if self.model_name == "cascade_whisper_large_v3_llama_3_8b_instruct":
             from model_src.whisper_large_v3_with_llama_3_8b_instruct import whisper_large_v3_with_llama_3_8b_instruct_model_loader
             whisper_large_v3_with_llama_3_8b_instruct_model_loader(self)
 
@@ -112,7 +125,67 @@ class Model(object):
             raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
 
 
+    def _load_model_vllm(self):
+        if self.model_name == "Qwen2-Audio-7B-Instruct":
+            from model_src.vllm_backend import qwen2_audio_7b_instruct_vllm_loader
+            qwen2_audio_7b_instruct_vllm_loader(self)
+
+        elif self.model_name.startswith('qwen2_omni'):
+            from model_src.vllm_backend import qwen2_omni_vllm_loader
+            if self.model_name == 'qwen2_omni-7B':
+                qwen2_omni_vllm_loader(self, model_name="Qwen/Qwen2.5-Omni-7B")
+            else:
+                qwen2_omni_vllm_loader(self)
+
+        elif self.model_name == 'phi_4_multimodal_instruct':
+            from model_src.vllm_backend import phi_4_multimodal_instruct_vllm_loader
+            phi_4_multimodal_instruct_vllm_loader(self)
+
+        elif self.model_name == 'whisper_large_v3':
+            from model_src.vllm_backend import whisper_large_v3_vllm_loader
+            whisper_large_v3_vllm_loader(self)
+
+        elif self.model_name == 'whisper_large_v2':
+            from model_src.vllm_backend import whisper_large_v2_vllm_loader
+            whisper_large_v2_vllm_loader(self)
+
+        else:
+            raise NotImplementedError(
+                "VLLM backend not supported for model '{}'. "
+                "Supported models: {}".format(self.model_name, ', '.join(sorted(VLLM_SUPPORTED_MODELS)))
+            )
+
+    def _generate_vllm(self, input):
+        if self.model_name == "Qwen2-Audio-7B-Instruct":
+            from model_src.vllm_backend import qwen2_audio_7b_instruct_vllm_generation
+            return qwen2_audio_7b_instruct_vllm_generation(self, input)
+
+        elif self.model_name.startswith('qwen2_omni'):
+            from model_src.vllm_backend import qwen2_omni_vllm_generation
+            return qwen2_omni_vllm_generation(self, input)
+
+        elif self.model_name == 'phi_4_multimodal_instruct':
+            from model_src.vllm_backend import phi_4_multimodal_instruct_vllm_generation
+            return phi_4_multimodal_instruct_vllm_generation(self, input)
+
+        elif self.model_name == 'whisper_large_v3':
+            from model_src.vllm_backend import whisper_large_v3_vllm_generation
+            return whisper_large_v3_vllm_generation(self, input)
+
+        elif self.model_name == 'whisper_large_v2':
+            from model_src.vllm_backend import whisper_large_v2_vllm_generation
+            return whisper_large_v2_vllm_generation(self, input)
+
+        else:
+            raise NotImplementedError(
+                "VLLM backend not supported for model '{}'. "
+                "Supported models: {}".format(self.model_name, ', '.join(sorted(VLLM_SUPPORTED_MODELS)))
+            )
+
     def generate(self, input):
+
+        if self.backend == "vllm":
+            return self._generate_vllm(input)
 
         with torch.no_grad():
             if self.model_name == "cascade_whisper_large_v3_llama_3_8b_instruct": 
