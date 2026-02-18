@@ -1,7 +1,6 @@
-import random
-import logging
-
+from dataset_src.base_dataset import BaseDatasetProcessor
 from dataset_src.math_utils import utils
+
 
 def get_seperation_trigger(dataset: str):
     triggers = ['The answer is:', 'The answer is', 'the answer is']
@@ -10,44 +9,20 @@ def get_seperation_trigger(dataset: str):
     return triggers
 
 
-class spokenmqa_dataset_arithmatic(object):
+class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
+    task_type = "MathQA"
+    reference_key = "answer"
 
-    def __init__(self, raw_data, number_of_samples):
-
-        if number_of_samples != -1:
-            raw_data = raw_data.shuffle(seed=42)
-            raw_data = raw_data.select(range(number_of_samples))
-        
-        self.raw_data = raw_data
-        # self.prompt   = math_instructions
-        logging.info('Number of samples: {}'.format(len(self.raw_data)))
-
-
-    def prepare_model_input(self):
-
-        input_data = []
-        for sample in self.raw_data:
-            audio       = sample['context']
-            audio_gt    = sample['context_transcript']
-            reference   = sample['answer']['text']
-            instruction = sample['instruction']['text']
-            input_data.append({
-                                "audio"    : audio,
-                                "audio_gt" : audio_gt,
-                                "instruction": instruction,
-                                "answer"   : reference,
-                                "task_type": "MathQA"
-                                })
-
-        logging.info('\n=  =  =  Dataset Sample  =  =  =')
-        logging.info(random.sample(input_data, 1)[0])
-        logging.info('=  =  =  =  =  =  =  =  =  =  =  =\n')
-
-        return input_data
-
+    def _process_sample(self, sample):
+        return {
+            "audio": sample['context'],
+            "audio_gt": sample['context_transcript'],
+            "instruction": sample['instruction']['text'],
+            "answer": sample['answer']['text'],
+            "task_type": self.task_type,
+        }
 
     def format_model_predictions(self, input_data, model_predictions, llm_text_inputs=None):
-
         data_with_model_predictions = []
         for idx, sample in enumerate(input_data):
             new_sample = sample.copy()
@@ -59,24 +34,23 @@ class spokenmqa_dataset_arithmatic(object):
         return data_with_model_predictions
 
     def compute_score(self, data_with_model_predictions, metrics=None):
-
         if metrics != 'acc':
             raise ValueError(f"Unsupported metric: {metrics}. Supported metrics: 'acc' for MathQA")
-        
-        predictions=[]
-        references=[]
+
+        predictions = []
+        references = []
         for item in data_with_model_predictions:
-            # prediction
             if item["model_prediction"] == None:
                 item["model_prediction"] = "empty"
             else:
                 model_prediction = utils.answer_clean('gsm8k', get_seperation_trigger('gsm8k'), item["model_prediction"])
 
-            # answer
             answer = item["answer"]
 
-            if not model_prediction: model_prediction = "empty"
-            if not answer: answer = "empty"
+            if not model_prediction:
+                model_prediction = "empty"
+            if not answer:
+                answer = "empty"
 
             predictions.append(model_prediction)
             references.append(answer)
@@ -86,61 +60,31 @@ class spokenmqa_dataset_arithmatic(object):
         for prediction, reference in zip(predictions, references):
             if isinstance(reference, str):
                 reference = [reference]
-            if len(prediction) > 100: prediction=prediction[:100]
+            if len(prediction) > 100:
+                prediction = prediction[:100]
             if utils.compare_answer_with_groundtruth(prediction, *reference):
                 correct += 1
             else:
                 wrong += 1
-
-            sample_details = {
-                "reference" : reference,
-                "prediction": prediction,
-            }
-
-            details.append(sample_details)
+            details.append({"reference": reference, "prediction": prediction})
 
         return {"acc": correct / (correct + wrong), "details": details}
-    
 
 
-class spokenmqa_dataset_reasoning(object):
+class spokenmqa_dataset_reasoning(BaseDatasetProcessor):
+    task_type = "MathQA"
+    reference_key = "answer"
 
-    def __init__(self, raw_data, number_of_samples):
-
-        if number_of_samples != -1:
-            raw_data = raw_data.shuffle(seed=42)
-            raw_data = raw_data.select(range(number_of_samples))
-        
-        self.raw_data = raw_data
-        # self.prompt   = math_instructions
-        logging.info('Number of samples: {}'.format(len(self.raw_data)))
-
-
-    def prepare_model_input(self):
-
-        input_data = []
-        for sample in self.raw_data:
-            audio       = sample['context']
-            audio_gt    = sample['context_transcript']
-            reference   = sample['answer']['text']
-            instruction = sample['instruction']['text']
-            input_data.append({
-                                "audio"    : audio,
-                                "audio_gt" : audio_gt,
-                                "instruction": instruction,
-                                "answer"   : reference,
-                                "task_type": "MathQA"
-                                })
-
-        logging.info('\n=  =  =  Dataset Sample  =  =  =')
-        logging.info(random.sample(input_data, 1)[0])
-        logging.info('=  =  =  =  =  =  =  =  =  =  =  =\n')
-
-        return input_data
-
+    def _process_sample(self, sample):
+        return {
+            "audio": sample['context'],
+            "audio_gt": sample['context_transcript'],
+            "instruction": sample['instruction']['text'],
+            "answer": sample['answer']['text'],
+            "task_type": self.task_type,
+        }
 
     def format_model_predictions(self, input_data, model_predictions, llm_text_inputs=None):
-
         data_with_model_predictions = []
         for idx, sample in enumerate(input_data):
             new_sample = sample.copy()
@@ -152,20 +96,17 @@ class spokenmqa_dataset_reasoning(object):
         return data_with_model_predictions
 
     def compute_score(self, data_with_model_predictions, metrics=None):
-
         if metrics != 'acc':
             raise ValueError(f"Unsupported metric: {metrics}. Supported metrics: 'acc' for MathQA")
-        
-        predictions=[]
-        references=[]
+
+        predictions = []
+        references = []
         for item in data_with_model_predictions:
-            # prediction
             if item["model_prediction"] == None:
                 item["model_prediction"] = "empty"
             else:
                 model_prediction = utils.answer_clean('gsm8k', get_seperation_trigger('gsm8k'), item["model_prediction"])
 
-            # answer
             answer = []
             for ans in item["answer"]:
                 if "####" in ans:
@@ -173,8 +114,10 @@ class spokenmqa_dataset_reasoning(object):
                 ans = utils.delete_extra_zero(ans)
                 answer.append(ans)
 
-            if not model_prediction: model_prediction = "empty"
-            if len(answer) == 0: answer = "empty"
+            if not model_prediction:
+                model_prediction = "empty"
+            if len(answer) == 0:
+                answer = "empty"
 
             predictions.append(model_prediction)
             references.append(answer)
@@ -184,17 +127,12 @@ class spokenmqa_dataset_reasoning(object):
         for prediction, reference in zip(predictions, references):
             if isinstance(reference, str):
                 reference = [reference]
-            if len(prediction) > 100: prediction=prediction[:100]
+            if len(prediction) > 100:
+                prediction = prediction[:100]
             if utils.compare_answer_with_groundtruth(prediction, *reference):
                 correct += 1
             else:
                 wrong += 1
-
-            sample_details = {
-                "reference" : reference,
-                "prediction": prediction,
-            }
-
-            details.append(sample_details)
+            details.append({"reference": reference, "prediction": prediction})
 
         return {"acc": correct / (correct + wrong), "details": details}
