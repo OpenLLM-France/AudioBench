@@ -123,6 +123,66 @@ def qwen2_audio_7b_instruct_vllm_generation(self, input):
     return output
 
 
+def _qwen2_audio_build_messages(audio_array, sampling_rate, instruction):
+    return [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": [
+            _input_audio_part(audio_array, sampling_rate),
+            {"type": "text", "text": instruction},
+        ]},
+    ]
+
+
+def qwen2_audio_7b_instruct_vllm_batch_generation(self, inputs):
+    """Process a list of inputs in a single batched chat() call."""
+    results = [None] * len(inputs)
+    all_messages = []
+    # meta: ('normal', result_idx, apply_asr) | ('chunk', result_idx)
+    meta = []
+    chunk_buffers = {}  # result_idx -> ordered list of chunk texts
+
+    for i, inp in enumerate(inputs):
+        audio_array = inp["audio"]["array"]
+        sampling_rate = inp["audio"]["sampling_rate"]
+        audio_duration = len(audio_array) / sampling_rate
+        instruction = inp["instruction"]
+
+        if audio_duration > 30 and inp['task_type'] == 'ASR':
+            chunk_buffers[i] = []
+            for j in range(0, len(audio_array), 30 * sampling_rate):
+                chunk = audio_array[j:j + 30 * sampling_rate]
+                all_messages.append(_qwen2_audio_build_messages(chunk, sampling_rate, instruction))
+                meta.append(('chunk', i))
+
+        elif audio_duration > 30:
+            audio_array = audio_array[:30 * sampling_rate]
+            all_messages.append(_qwen2_audio_build_messages(audio_array, sampling_rate, instruction))
+            meta.append(('normal', i, inp['task_type'] == 'ASR'))
+
+        else:
+            if audio_duration < 1:
+                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+            all_messages.append(_qwen2_audio_build_messages(audio_array, sampling_rate, instruction))
+            meta.append(('normal', i, inp['task_type'] == 'ASR'))
+
+    outputs = self.llm.chat(all_messages, sampling_params=self.sampling_params)
+
+    for output, m in zip(outputs, meta):
+        text = output.outputs[0].text
+        if m[0] == 'chunk':
+            chunk_buffers[m[1]].append(_post_process_qwen2_asr(text))
+        else:
+            _, result_idx, apply_asr = m
+            if apply_asr:
+                text = _post_process_qwen2_asr(text)
+            results[result_idx] = text
+
+    for result_idx, chunks in chunk_buffers.items():
+        results[result_idx] = ' '.join(chunks)
+
+    return results
+
+
 # =====================================================================
 #  Qwen2.5-Omni (3B / 7B)
 # =====================================================================
@@ -147,17 +207,8 @@ def _post_process_qwen2_omni_asr(model_output):
     return model_output
 
 
-def qwen2_omni_vllm_generation(self, input):
-    audio_array = input["audio"]["array"]
-    sampling_rate = input["audio"]["sampling_rate"]
-    audio_duration = len(audio_array) / sampling_rate
-    instruction = input["instruction"]
-
-    if audio_duration < 1:
-        logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-        audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
-
-    messages = [
+def _qwen2_omni_build_messages(audio_array, sampling_rate, instruction):
+    return [
         {
             "role": "system",
             "content": (
@@ -170,13 +221,53 @@ def qwen2_omni_vllm_generation(self, input):
             _input_audio_part(audio_array, sampling_rate),
         ]},
     ]
-    outputs = self.llm.chat(messages, sampling_params=self.sampling_params)
+
+
+def qwen2_omni_vllm_generation(self, input):
+    audio_array = input["audio"]["array"]
+    sampling_rate = input["audio"]["sampling_rate"]
+    audio_duration = len(audio_array) / sampling_rate
+    instruction = input["instruction"]
+
+    if audio_duration < 1:
+        logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
+        audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+
+    outputs = self.llm.chat(
+        _qwen2_omni_build_messages(audio_array, sampling_rate, instruction),
+        sampling_params=self.sampling_params,
+    )
     text = outputs[0].outputs[0].text
 
     if input['task_type'] == 'ASR':
         text = _post_process_qwen2_omni_asr(text)
 
     return text
+
+
+def qwen2_omni_vllm_batch_generation(self, inputs):
+    """Process a list of inputs in a single batched chat() call."""
+    all_messages = []
+    for inp in inputs:
+        audio_array = inp["audio"]["array"]
+        sampling_rate = inp["audio"]["sampling_rate"]
+        audio_duration = len(audio_array) / sampling_rate
+
+        if audio_duration < 1:
+            audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+
+        all_messages.append(_qwen2_omni_build_messages(audio_array, sampling_rate, inp["instruction"]))
+
+    outputs = self.llm.chat(all_messages, sampling_params=self.sampling_params)
+
+    results = []
+    for output, inp in zip(outputs, inputs):
+        text = output.outputs[0].text
+        if inp['task_type'] == 'ASR':
+            text = _post_process_qwen2_omni_asr(text)
+        results.append(text)
+
+    return results
 
 
 # =====================================================================
@@ -203,20 +294,26 @@ def phi_4_multimodal_instruct_vllm_loader(self):
     self.sampling_params = SamplingParams(temperature=0, max_tokens=1000)
 
 
-def _phi4_vllm_infer_single(self, audio_array, sampling_rate, instruction):
-    # Phi-4 expects 16kHz audio
+def _phi4_resample(audio_array, sampling_rate):
     if sampling_rate != 16000:
         audio_array = librosa.resample(audio_array, orig_sr=sampling_rate, target_sr=16000)
         sampling_rate = 16000
+    return audio_array, sampling_rate
 
-    messages = [
+
+def _phi4_build_messages(audio_array, sampling_rate, instruction):
+    return [
         {"role": "user", "content": [
             _input_audio_part(audio_array, sampling_rate),
             {"type": "text", "text": instruction},
         ]},
     ]
+
+
+def _phi4_vllm_infer_single(self, audio_array, sampling_rate, instruction):
+    audio_array, sampling_rate = _phi4_resample(audio_array, sampling_rate)
     outputs = self.llm.chat(
-        messages,
+        _phi4_build_messages(audio_array, sampling_rate, instruction),
         sampling_params=self.sampling_params,
         lora_request=self.lora_request,
     )
@@ -254,6 +351,60 @@ def phi_4_multimodal_instruct_vllm_generation(self, input):
     return output
 
 
+def phi_4_multimodal_instruct_vllm_batch_generation(self, inputs):
+    """Process a list of inputs in a single batched chat() call."""
+    results = [None] * len(inputs)
+    all_messages = []
+    # meta: ('normal', result_idx) | ('chunk', result_idx)
+    meta = []
+    chunk_buffers = {}  # result_idx -> ordered list of chunk texts
+
+    for i, inp in enumerate(inputs):
+        audio_array = inp["audio"]["array"]
+        sampling_rate = inp["audio"]["sampling_rate"]
+        audio_duration = len(audio_array) / sampling_rate
+        instruction = inp["instruction"]
+
+        if audio_duration > 40 and inp['task_type'] == 'ASR':
+            chunk_buffers[i] = []
+            for j in range(0, len(audio_array), 40 * sampling_rate):
+                chunk = audio_array[j:j + 40 * sampling_rate]
+                chunk, sr = _phi4_resample(chunk, sampling_rate)
+                all_messages.append(_phi4_build_messages(chunk, sr, instruction))
+                meta.append(('chunk', i))
+
+        elif audio_duration > 40:
+            audio_array = audio_array[:40 * sampling_rate]
+            audio_array, sampling_rate = _phi4_resample(audio_array, sampling_rate)
+            all_messages.append(_phi4_build_messages(audio_array, sampling_rate, instruction))
+            meta.append(('normal', i))
+
+        else:
+            if audio_duration < 1:
+                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+            audio_array, sampling_rate = _phi4_resample(audio_array, sampling_rate)
+            all_messages.append(_phi4_build_messages(audio_array, sampling_rate, instruction))
+            meta.append(('normal', i))
+
+    outputs = self.llm.chat(
+        all_messages,
+        sampling_params=self.sampling_params,
+        lora_request=self.lora_request,
+    )
+
+    for output, m in zip(outputs, meta):
+        text = output.outputs[0].text
+        if m[0] == 'chunk':
+            chunk_buffers[m[1]].append(text)
+        else:
+            results[m[1]] = text
+
+    for result_idx, chunks in chunk_buffers.items():
+        results[result_idx] = ' '.join(chunks)
+
+    return results
+
+
 # =====================================================================
 #  Whisper Large v3
 #  Uses generate() — Whisper is an encoder-decoder model with no chat template.
@@ -269,26 +420,44 @@ def whisper_large_v3_vllm_loader(self):
     self.sampling_params = SamplingParams(temperature=0, max_tokens=448)
 
 
+def _whisper_task_prompt(task_type):
+    if task_type == 'ASR':
+        return "<|startoftranscript|>"
+    elif task_type == 'ASR-ZH':
+        return "<|startoftranscript|><|zh|><|transcribe|>"
+    elif task_type in ["ST-ID-EN", "ST-TA-EN", "ST-ZH-EN"]:
+        return "<|startoftranscript|><|en|><|translate|>"
+    else:
+        raise NotImplementedError(f"Whisper does not support other task: {task_type}.")
+
+
 def whisper_large_v3_vllm_generation(self, sample):
     from vllm import TextPrompt
 
     audio_array = sample["audio"]["array"]
     sampling_rate = sample["audio"]["sampling_rate"]
-
-    if sample['task_type'] == 'ASR':
-        prompt = "<|startoftranscript|>"
-    elif sample['task_type'] == 'ASR-ZH':
-        prompt = "<|startoftranscript|><|zh|><|transcribe|>"
-    elif sample['task_type'] in ["ST-ID-EN", "ST-TA-EN", "ST-ZH-EN"]:
-        prompt = "<|startoftranscript|><|en|><|translate|>"
-    else:
-        raise NotImplementedError(f"Whisper does not support other task: {sample['task_type']}.")
+    prompt = _whisper_task_prompt(sample['task_type'])
 
     outputs = self.llm.generate(
         TextPrompt(prompt=prompt, multi_modal_data={"audio": [(audio_array, sampling_rate)]}),
         sampling_params=self.sampling_params,
     )
     return outputs[0].outputs[0].text.strip()
+
+
+def whisper_large_v3_vllm_batch_generation(self, samples):
+    """Process a list of samples in a single batched generate() call."""
+    from vllm import TextPrompt
+
+    all_prompts = [
+        TextPrompt(
+            prompt=_whisper_task_prompt(s['task_type']),
+            multi_modal_data={"audio": [(s["audio"]["array"], s["audio"]["sampling_rate"])]},
+        )
+        for s in samples
+    ]
+    outputs = self.llm.generate(all_prompts, sampling_params=self.sampling_params)
+    return [o.outputs[0].text.strip() for o in outputs]
 
 
 # =====================================================================
@@ -311,18 +480,25 @@ def whisper_large_v2_vllm_generation(self, sample):
 
     audio_array = sample["audio"]["array"]
     sampling_rate = sample["audio"]["sampling_rate"]
-
-    if sample['task_type'] == 'ASR':
-        prompt = "<|startoftranscript|>"
-    elif sample['task_type'] == 'ASR-ZH':
-        prompt = "<|startoftranscript|><|zh|><|transcribe|>"
-    elif sample['task_type'] in ["ST-ID-EN", "ST-TA-EN", "ST-ZH-EN"]:
-        prompt = "<|startoftranscript|><|en|><|translate|>"
-    else:
-        raise NotImplementedError(f"Whisper does not support other task: {sample['task_type']}.")
+    prompt = _whisper_task_prompt(sample['task_type'])
 
     outputs = self.llm.generate(
         TextPrompt(prompt=prompt, multi_modal_data={"audio": [(audio_array, sampling_rate)]}),
         sampling_params=self.sampling_params,
     )
     return outputs[0].outputs[0].text.strip()
+
+
+def whisper_large_v2_vllm_batch_generation(self, samples):
+    """Process a list of samples in a single batched generate() call."""
+    from vllm import TextPrompt
+
+    all_prompts = [
+        TextPrompt(
+            prompt=_whisper_task_prompt(s['task_type']),
+            multi_modal_data={"audio": [(s["audio"]["array"], s["audio"]["sampling_rate"])]},
+        )
+        for s in samples
+    ]
+    outputs = self.llm.generate(all_prompts, sampling_params=self.sampling_params)
+    return [o.outputs[0].text.strip() for o in outputs]

@@ -156,23 +156,40 @@ class Model(object):
             )
 
     def _generate_vllm(self, input):
+        is_batch = isinstance(input, list)
+
         if self.model_name == "Qwen2-Audio-7B-Instruct":
+            if is_batch:
+                from model_src.vllm_backend import qwen2_audio_7b_instruct_vllm_batch_generation
+                return qwen2_audio_7b_instruct_vllm_batch_generation(self, input)
             from model_src.vllm_backend import qwen2_audio_7b_instruct_vllm_generation
             return qwen2_audio_7b_instruct_vllm_generation(self, input)
 
         elif self.model_name.startswith('qwen2_omni'):
+            if is_batch:
+                from model_src.vllm_backend import qwen2_omni_vllm_batch_generation
+                return qwen2_omni_vllm_batch_generation(self, input)
             from model_src.vllm_backend import qwen2_omni_vllm_generation
             return qwen2_omni_vllm_generation(self, input)
 
         elif self.model_name == 'phi_4_multimodal_instruct':
+            if is_batch:
+                from model_src.vllm_backend import phi_4_multimodal_instruct_vllm_batch_generation
+                return phi_4_multimodal_instruct_vllm_batch_generation(self, input)
             from model_src.vllm_backend import phi_4_multimodal_instruct_vllm_generation
             return phi_4_multimodal_instruct_vllm_generation(self, input)
 
         elif self.model_name == 'whisper_large_v3':
+            if is_batch:
+                from model_src.vllm_backend import whisper_large_v3_vllm_batch_generation
+                return whisper_large_v3_vllm_batch_generation(self, input)
             from model_src.vllm_backend import whisper_large_v3_vllm_generation
             return whisper_large_v3_vllm_generation(self, input)
 
         elif self.model_name == 'whisper_large_v2':
+            if is_batch:
+                from model_src.vllm_backend import whisper_large_v2_vllm_batch_generation
+                return whisper_large_v2_vllm_batch_generation(self, input)
             from model_src.vllm_backend import whisper_large_v2_vllm_generation
             return whisper_large_v2_vllm_generation(self, input)
 
