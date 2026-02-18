@@ -35,15 +35,30 @@ class BaseDatasetProcessor:
     audio_path = None
     instruction_path = None
     reference_path = None
+    metrics = None
 
-    def __init__(self, raw_data, number_of_samples):
-        if number_of_samples != -1:
-            raw_data = raw_data.shuffle(seed=42)
-            raw_data = raw_data.select(range(number_of_samples))
-        self.raw_data = raw_data
+    def __init__(self, data_loader, number_of_samples):
+        self._data_loader = data_loader
+        self._number_of_samples = number_of_samples
+        self.raw_data = None
         if self.instructions is not None:
             self.prompt = self.instructions
+
+    def load(self):
+        """Actually load the raw data. Call before prepare_model_input()."""
+        raw_data = self._data_loader()
+        logging.info("Loaded {} samples".format(len(raw_data)))
+
+        if self._number_of_samples != -1:
+            if self._number_of_samples > len(raw_data):
+                self._number_of_samples = len(raw_data)
+                logging.info("Requested samples exceed available. Using {}".format(self._number_of_samples))
+            raw_data = raw_data.shuffle(seed=42)
+            raw_data = raw_data.select(range(self._number_of_samples))
+
+        self.raw_data = raw_data
         logging.info('Number of samples: {}'.format(len(self.raw_data)))
+        return self
 
     @staticmethod
     def _resolve_path(sample, path):
@@ -117,20 +132,8 @@ class BaseDatasetProcessor:
         return compute_wer(references, predictions)
 
     def _compute_bleu(self, data_with_model_predictions):
-        from dataset_src.eval_methods.metrics import compute_bleu
-
-        predictions = []
-        references = []
-        for item in data_with_model_predictions:
-            model_prediction = item["model_prediction"]
-            answer = item[self.reference_key]
-            if len(model_prediction) == 0:
-                model_prediction = "empty"
-            if len(answer) == 0:
-                answer = "empty"
-            predictions.append(model_prediction)
-            references.append(answer)
-
+        from dataset_src.eval_methods.metrics import compute_bleu, get_predictions_and_references_lists
+        references, predictions = get_predictions_and_references_lists(data_with_model_predictions)
         return compute_bleu(references, predictions)
 
     def _compute_judge(self, data_with_model_predictions, metrics):

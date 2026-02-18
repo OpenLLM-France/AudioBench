@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 import torch
 
-from dataset import Dataset
+from dataset import load_dataset_processor
 from model import Model
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  = 
@@ -22,7 +22,7 @@ logging.basicConfig(
 
 def do_model_prediction(input_data, model, batch_size):
 
-    # if batch_size not in [1, -1]:
+    # if batch_size > 1 :
     #     raise NotImplementedError("Batch size {} not implemented yet".format(batch_size))
     
     if batch_size > 1:
@@ -50,13 +50,16 @@ def run_evaluation(
         backend: str = "transformers"
     ):
     
-    dataset = Dataset(dataset_name, number_of_samples)
+    processor = load_dataset_processor(dataset_name, number_of_samples)
 
     if metrics is None:
-        metrics = dataset.dataset_processor.metrics
-        logger.info(f"Metrics is not specified. Use the default metrics of the dataset: {metrics}")
+        if processor.metrics is not None:
+            metrics = processor.metrics
+            logger.info(f"Metrics is not specified. Use the default metrics of the dataset: {metrics}")
+        else:
+            raise NotImplementedError(f"The dataset {dataset_name} does not have a default metrics.")
 
-    # If the final score log exists, skip the evaluation
+    # If the final score log exists, skip the evaluation (no data loading needed)
     if not overwrite and os.path.exists(f'{log_folder}/{model_name}/{dataset_name}_{metrics}_score.json'):
         logger.info("Evaluation has been done before. Skip the evaluation.")
         with open(f'{log_folder}/{model_name}/{dataset_name}_{metrics}_score.json', 'r') as f:
@@ -76,16 +79,20 @@ def run_evaluation(
 
     if overwrite or not os.path.exists(f'{log_folder}/{model_name}/{dataset_name}.json'):
         logger.info(f'Overwrite is enabled or the results are not found. Try to infer with the model: {model_name}.')
-    
+
+        # Load dataset (deferred until now to skip download when not needed)
+        processor.load()
+        input_data = processor.prepare_model_input()
+
         # Load model
         model = Model(model_name, backend=backend)
 
         # Specific current dataset name for evaluation
-        model.dataset_name = dataset.dataset_name
+        model.dataset_name = dataset_name
 
         # Infer with model
-        model_predictions = do_model_prediction(dataset.input_data, model, batch_size=batch_size)
-        data_with_model_predictions = dataset.dataset_processor.format_model_predictions(dataset.input_data, model_predictions)
+        model_predictions = do_model_prediction(input_data, model, batch_size=batch_size)
+        data_with_model_predictions = processor.format_model_predictions(input_data, model_predictions)
 
         # Save the result with predictions
         os.makedirs(f'{log_folder}/{model_name}', exist_ok=True)
@@ -94,7 +101,7 @@ def run_evaluation(
 
     data_with_model_predictions = json.load(open(f'{log_folder}/{model_name}/{dataset_name}.json'))
 
-    results = dataset.dataset_processor.compute_score(data_with_model_predictions, metrics=metrics)
+    results = processor.compute_score(data_with_model_predictions, metrics=metrics)
 
     # Take only the first 100 samples for record.
     if 'details' in results:

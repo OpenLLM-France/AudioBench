@@ -4,3 +4,4 @@ from dataset_src.prompts.prompts import asr_instructions
 class librispeech_test_clean_dataset(BaseDatasetProcessor):
     instructions = asr_instructions
     task_type = "ASR"
+    metrics = "wer"

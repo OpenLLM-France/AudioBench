@@ -6,11 +6,6 @@ class audiollm_instruction_following_dataset(BaseDatasetProcessor):
     question_key = "text"
     reference_key = "answer"
 
-    def __init__(self, raw_data, number_of_samples):
-        if isinstance(raw_data, dict):
-            raw_data = raw_data["train"]
-        super().__init__(raw_data, number_of_samples)
-
     def _process_sample(self, sample):
         return {
             "audio": sample['context'],
