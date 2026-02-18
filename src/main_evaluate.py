@@ -22,10 +22,10 @@ logging.basicConfig(
 
 def do_model_prediction(input_data, model, batch_size):
 
-    if batch_size not in [1, -1]:
-        raise NotImplementedError("Batch size {} not implemented yet".format(batch_size))
+    # if batch_size not in [1, -1]:
+    #     raise NotImplementedError("Batch size {} not implemented yet".format(batch_size))
     
-    if batch_size == -1:
+    if batch_size > 1:
         model_predictions = model.generate(input_data)
     
     else:
