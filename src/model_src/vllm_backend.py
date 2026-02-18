@@ -1,3 +1,5 @@
+import base64
+import io
 import os
 import re
 import sys
@@ -7,7 +9,6 @@ import logging
 import numpy as np
 import librosa
 import soundfile as sf
-import tempfile
 
 from vllm import LLM, SamplingParams
 
@@ -19,6 +20,24 @@ logging.basicConfig(
     level=logging.INFO,
 )
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
+
+
+def _audio_to_base64_wav(audio_array, sampling_rate):
+    """Convert a numpy audio array to a base64-encoded WAV string."""
+    buf = io.BytesIO()
+    sf.write(buf, audio_array, sampling_rate, format="WAV")
+    return base64.b64encode(buf.getvalue()).decode("utf-8")
+
+
+def _input_audio_part(audio_array, sampling_rate):
+    """Build an OpenAI-style 'input_audio' content part from a numpy array."""
+    return {
+        "type": "input_audio",
+        "input_audio": {
+            "data": _audio_to_base64_wav(audio_array, sampling_rate),
+            "format": "wav",
+        },
+    }
 
 
 # =====================================================================
@@ -53,18 +72,14 @@ def _post_process_qwen2_asr(model_output):
 
 
 def _qwen2_audio_vllm_infer_single(self, audio_array, sampling_rate, instruction):
-    from vllm import TextPrompt
-
-    prompt = (
-        "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n"
-        "<|im_start|>user\n<|audio_bos|><|AUDIO|><|audio_eos|>\n"
-        f"{instruction}<|im_end|>\n"
-        "<|im_start|>assistant\n"
-    )
-    outputs = self.llm.generate(
-        TextPrompt(prompt=prompt, multi_modal_data={"audio": [(audio_array, sampling_rate)]}),
-        sampling_params=self.sampling_params,
-    )
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": [
+            _input_audio_part(audio_array, sampling_rate),
+            {"type": "text", "text": instruction},
+        ]},
+    ]
+    outputs = self.llm.chat(messages, sampling_params=self.sampling_params)
     return outputs[0].outputs[0].text
 
 
@@ -123,10 +138,6 @@ def qwen2_omni_vllm_loader(self, model_name="Qwen/Qwen2.5-Omni-3B"):
 
 
 def _post_process_qwen2_omni_asr(model_output):
-    match = re.search(r"\nassistant\n(.*)", model_output, re.DOTALL)
-    if match:
-        model_output = match.group(1)
-
     match = re.search(r"\\boxed\{\"?(.*?)\"?\}", model_output, re.DOTALL)
     if match:
         model_output = match.group(1)
@@ -146,21 +157,20 @@ def qwen2_omni_vllm_generation(self, input):
         logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
         audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
 
-    from vllm import TextPrompt
-
-    prompt = (
-        "<|im_start|>system\nYou are Qwen, a virtual human developed by the Qwen Team, "
-        "Alibaba Group, capable of perceiving auditory and visual inputs, as well as "
-        "generating text and speech.<|im_end|>\n"
-        "<|im_start|>user\n"
-        f"{instruction}\nPut the result in the following format: \\boxed{{.}}\n"
-        "<|audio_bos|><|AUDIO|><|audio_eos|><|im_end|>\n"
-        "<|im_start|>assistant\n"
-    )
-    outputs = self.llm.generate(
-        TextPrompt(prompt=prompt, multi_modal_data={"audio": [(audio_array, sampling_rate)]}),
-        sampling_params=self.sampling_params,
-    )
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are Qwen, a virtual human developed by the Qwen Team, Alibaba Group, "
+                "capable of perceiving auditory and visual inputs, as well as generating text and speech."
+            ),
+        },
+        {"role": "user", "content": [
+            {"type": "text", "text": instruction + "\nPut the result in the following format: \\boxed{.}"},
+            _input_audio_part(audio_array, sampling_rate),
+        ]},
+    ]
+    outputs = self.llm.chat(messages, sampling_params=self.sampling_params)
     text = outputs[0].outputs[0].text
 
     if input['task_type'] == 'ASR':
@@ -194,20 +204,19 @@ def phi_4_multimodal_instruct_vllm_loader(self):
 
 
 def _phi4_vllm_infer_single(self, audio_array, sampling_rate, instruction):
-    from vllm import TextPrompt
-
-    prompt = f"<|user|><|audio_1|>{instruction}<|end|><|assistant|>"
-
     # Phi-4 expects 16kHz audio
     if sampling_rate != 16000:
         audio_array = librosa.resample(audio_array, orig_sr=sampling_rate, target_sr=16000)
         sampling_rate = 16000
 
-    outputs = self.llm.generate(
-        TextPrompt(
-            prompt=prompt,
-            multi_modal_data={"audio": [(audio_array, sampling_rate)]},
-        ),
+    messages = [
+        {"role": "user", "content": [
+            _input_audio_part(audio_array, sampling_rate),
+            {"type": "text", "text": instruction},
+        ]},
+    ]
+    outputs = self.llm.chat(
+        messages,
         sampling_params=self.sampling_params,
         lora_request=self.lora_request,
     )
@@ -247,6 +256,7 @@ def phi_4_multimodal_instruct_vllm_generation(self, input):
 
 # =====================================================================
 #  Whisper Large v3
+#  Uses generate() — Whisper is an encoder-decoder model with no chat template.
 # =====================================================================
 
 def whisper_large_v3_vllm_loader(self):
@@ -260,12 +270,11 @@ def whisper_large_v3_vllm_loader(self):
 
 
 def whisper_large_v3_vllm_generation(self, sample):
+    from vllm import TextPrompt
+
     audio_array = sample["audio"]["array"]
     sampling_rate = sample["audio"]["sampling_rate"]
 
-    from vllm import TextPrompt
-
-    # Language/task tokens for Whisper
     if sample['task_type'] == 'ASR':
         prompt = "<|startoftranscript|>"
     elif sample['task_type'] == 'ASR-ZH':
@@ -284,6 +293,7 @@ def whisper_large_v3_vllm_generation(self, sample):
 
 # =====================================================================
 #  Whisper Large v2
+#  Uses generate() — Whisper is an encoder-decoder model with no chat template.
 # =====================================================================
 
 def whisper_large_v2_vllm_loader(self):
@@ -297,10 +307,10 @@ def whisper_large_v2_vllm_loader(self):
 
 
 def whisper_large_v2_vllm_generation(self, sample):
+    from vllm import TextPrompt
+
     audio_array = sample["audio"]["array"]
     sampling_rate = sample["audio"]["sampling_rate"]
-
-    from vllm import TextPrompt
 
     if sample['task_type'] == 'ASR':
         prompt = "<|startoftranscript|>"
