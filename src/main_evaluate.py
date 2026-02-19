@@ -6,7 +6,7 @@ import logging
 from tqdm import tqdm
 
 from src.dataset_factory import load_dataset_processor
-from model import load_model
+from model_factory import load_model
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  = 
 logger = logging.getLogger(__name__)

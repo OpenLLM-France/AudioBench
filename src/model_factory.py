@@ -25,23 +25,23 @@ def load_model(model_name, backend="transformers"):
         from model_src.whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct import WhisperLargeV2Gemma29BCptSeaLionV3Instruct
         model = WhisperLargeV2Gemma29BCptSeaLionV3Instruct()
 
-    elif model_name == "Qwen2-Audio-7B-Instruct":
+    elif model_name == "qwen2-audio-7b-instruct":
         from model_src.qwen2_audio_7b_instruct import Qwen2Audio7BInstruct
         model = Qwen2Audio7BInstruct()
 
-    elif model_name == "SALMONN_7B":
+    elif model_name == "salmonn_7b":
         from model_src.salmonn_7b import Salmonn7B
         model = Salmonn7B()
 
-    elif model_name == 'WavLLM_fairseq':
+    elif model_name == 'wavllm_fairseq':
         from model_src.wavllm_fairseq import WavLLMFairseq
         model = WavLLMFairseq()
 
-    elif model_name == 'Qwen-Audio-Chat':
+    elif model_name == 'qwen-audio-chat':
         from model_src.qwen_audio_chat import QwenAudioChat
         model = QwenAudioChat()
 
-    elif model_name == 'MERaLiON-AudioLLM-Whisper-SEA-LION':
+    elif model_name == 'meralion-audiollm-whisper-sea-lion':
         from model_src.meralion_audiollm_whisper_sea_lion import MeralionAudioLLMWhisperSeaLion
         model = MeralionAudioLLMWhisperSeaLion()
 
