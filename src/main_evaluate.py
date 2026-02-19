@@ -1,31 +1,31 @@
 
-import os
 import fire
 import json
 import logging
+from pathlib import Path
 from tqdm import tqdm
 
 from src.dataset_factory import load_dataset_processor
 from model_factory import load_model
 
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  = 
+# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     format  = "%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     datefmt = "%m/%d/%Y %H:%M:%S",
     level   = logging.INFO,
 )
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  = 
+# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
 def do_model_prediction(input_data, model, batch_size):
 
-    # if batch_size > 1 :
-    #     raise NotImplementedError("Batch size {} not implemented yet".format(batch_size))
-    
+    if batch_size > 1 and not model.supports_vllm:
+        raise NotImplementedError(f"Batch size {batch_size} not implemented yet for {model} (vllm support: {model.supports_vllm})")
+
     if batch_size > 1:
         model_predictions = model.generate(input_data)
-    
+
     else:
         model_predictions = []
         for inputs in tqdm(input_data, leave=False):
@@ -34,7 +34,7 @@ def do_model_prediction(input_data, model, batch_size):
                 model_predictions.extend(outputs)
             else:
                 model_predictions.append(outputs)
-                
+
     return model_predictions
 
 def run_evaluation(
@@ -45,9 +45,10 @@ def run_evaluation(
         metrics           : str  = None,
         number_of_samples : int  = -1,
         log_folder: str = "log_for_all_models",
-        backend: str = "transformers"
+        backend: str = "transformers",
+        model = None
     ):
-    
+
     processor = load_dataset_processor(dataset_name, number_of_samples)
 
     if metrics is None:
@@ -57,11 +58,14 @@ def run_evaluation(
         else:
             raise NotImplementedError(f"The dataset {dataset_name} does not have a default metrics.")
 
+    model_dir = Path(log_folder) / model_name
+    score_path = model_dir / f"{dataset_name}_{metrics}_score.json"
+    prediction_path = model_dir / f"{dataset_name}.json"
+
     # If the final score log exists, skip the evaluation (no data loading needed)
-    if not overwrite and os.path.exists(f'{log_folder}/{model_name}/{dataset_name}_{metrics}_score.json'):
+    if not overwrite and score_path.exists():
         logger.info("Evaluation has been done before. Skip the evaluation.")
-        with open(f'{log_folder}/{model_name}/{dataset_name}_{metrics}_score.json', 'r') as f:
-            results = json.load(f)
+        results = json.loads(score_path.read_text())
         logger.info('=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =')
         logger.info(f'Dataset name: {dataset_name.upper()}')
         logger.info(f'Model name: {model_name.upper()}')
@@ -69,13 +73,13 @@ def run_evaluation(
         logger.info('=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =')
 
         logger.info("\n\n\n\n\n")
-        return
+        return model
 
     if model_name == 'WavLLM_fairseq':
         batch_size = -1
         logger.info("Batch size is set to -1 for WavLLM_fairseq model.")
 
-    if overwrite or not os.path.exists(f'{log_folder}/{model_name}/{dataset_name}.json'):
+    if overwrite or not prediction_path.exists():
         logger.info(f'Overwrite is enabled or the results are not found. Try to infer with the model: {model_name}.')
 
         # Load dataset (deferred until now to skip download when not needed)
@@ -83,7 +87,8 @@ def run_evaluation(
         input_data = processor.prepare_model_input()
 
         # Load model
-        model = load_model(model_name, backend=backend)
+        if model is None:
+            model = load_model(model_name, backend=backend)
 
         # Specific current dataset name for evaluation
         model.dataset_name = dataset_name
@@ -93,11 +98,11 @@ def run_evaluation(
         data_with_model_predictions = processor.format_model_predictions(input_data, model_predictions)
 
         # Save the result with predictions
-        os.makedirs(f'{log_folder}/{model_name}', exist_ok=True)
-        with open(f'{log_folder}/{model_name}/{dataset_name}.json', 'w') as f:
+        model_dir.mkdir(parents=True, exist_ok=True)
+        with open(prediction_path, 'w') as f:
             json.dump(data_with_model_predictions, f, indent=4, ensure_ascii=False)
 
-    data_with_model_predictions = json.load(open(f'{log_folder}/{model_name}/{dataset_name}.json'))
+    data_with_model_predictions = json.loads(prediction_path.read_text())
 
     results = processor.compute_score(data_with_model_predictions, metrics=metrics)
 
@@ -113,8 +118,10 @@ def run_evaluation(
     logger.info('=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =')
 
     # Save the scores
-    with open(f'{log_folder}/{model_name}/{dataset_name}_{metrics}_score.json', 'w') as f:
-        json.dump(results, f, indent=4, ensure_ascii=False)   
+    with open(score_path, 'w') as f:
+        json.dump(results, f, indent=4, ensure_ascii=False)
+
+    return model
 
 def main(
         dataset_name      : str  = None,
@@ -138,7 +145,7 @@ def main(
     logger.info("= = "*20)
 
     run_evaluation(dataset_name, model_name, batch_size, overwrite, metrics, number_of_samples, log_folder, backend)
-    
+
 
 
 if __name__ == "__main__":

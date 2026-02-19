@@ -1,5 +1,5 @@
-import os
 import logging
+from pathlib import Path
 
 import librosa
 from transformers import AutoModelForCausalLM, AutoProcessor, GenerationConfig
@@ -79,7 +79,7 @@ class Phi4MultimodalInstruct(BaseModel):
         from vllm.lora.request import LoRARequest
 
         model_path = snapshot_download("microsoft/Phi-4-multimodal-instruct")
-        speech_lora_path = os.path.join(model_path, "speech-lora")
+        speech_lora_path = str(Path(model_path) / "speech-lora")
 
         self.llm = LLM(
             model=model_path,

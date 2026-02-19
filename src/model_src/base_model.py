@@ -1,5 +1,5 @@
-import os
 import tempfile
+from pathlib import Path
 
 import numpy as np
 import soundfile as sf
@@ -35,10 +35,7 @@ class BaseModel:
     def _cleanup_temp_files(self):
         """Remove all temp files created during the last generate() call."""
         for path in self._temp_files:
-            try:
-                os.remove(path)
-            except OSError:
-                pass
+            Path(path).unlink(missing_ok=True)
         self._temp_files.clear()
 
     # --- Audio preprocessing ---
