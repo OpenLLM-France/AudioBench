@@ -1,36 +1,12 @@
-import os
 import re
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
-import numpy as np
-import torch
-
-from tqdm import tqdm
-
-import soundfile as sf
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.generation import GenerationConfig
 
-import tempfile
-
 from model_src.base_model import BaseModel
 
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-MODEL_PATH = "Qwen/Qwen-Audio-Chat"
 
 
 def _post_process_qwen_asr(model_output):
@@ -58,79 +34,39 @@ def _post_process_qwen_asr(model_output):
 
 class QwenAudioChat(BaseModel):
 
+    def __init__(self):
+        super().__init__(model_path="Qwen/Qwen-Audio-Chat")
+
     def load(self):
-        self.tokenizer               = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
-        self.model                   = AutoModelForCausalLM.from_pretrained(MODEL_PATH, device_map="cuda", trust_remote_code=True).eval()
-        self.model.generation_config = GenerationConfig.from_pretrained(MODEL_PATH, trust_remote_code=True)
-        logger.info("Model loaded: {}".format(MODEL_PATH))
+        self.tokenizer               = AutoTokenizer.from_pretrained(self.model_path, trust_remote_code=True)
+        self.model                   = AutoModelForCausalLM.from_pretrained(self.model_path, device_map="cuda", trust_remote_code=True).eval()
+        self.model.generation_config = GenerationConfig.from_pretrained(self.model_path, trust_remote_code=True)
+        logger.info(f"Model loaded: {self.model_path}")
+
+    def _infer_single(self, audio_array, sampling_rate, instruction, is_asr):
+        """Run inference on a single audio segment."""
+        audio_path = self._write_temp_audio(audio_array, sampling_rate)
+
+        query = self.tokenizer.from_list_format([
+            {'audio': audio_path},
+            {'text': instruction},
+        ])
+        response, history = self.model.chat(self.tokenizer, query=query, history=None)
+
+        if is_asr:
+            response = _post_process_qwen_asr(response)
+
+        return response
 
     def _generate(self, input):
 
-        audio_array    = input["audio"]["array"]
-        sampling_rate  = input["audio"]["sampling_rate"]
-        audio_duration = len(audio_array) / sampling_rate
+        audio_array   = input["audio"]["array"]
+        sampling_rate = input["audio"]["sampling_rate"]
+        instruction   = input["instruction"]
+        is_asr        = input['task_type'] == 'ASR'
 
-        os.makedirs('tmp', exist_ok=True)
+        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
 
-        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-        if audio_duration > 30 and input['task_type'] == 'ASR':
-            logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
-            audio_chunks = []
-            for i in range(0, len(audio_array), 30 * sampling_rate):
-                audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
-
-            model_predictions = []
-            for chunk in tqdm(audio_chunks):
-                audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-                sf.write(audio_path.name, chunk, sampling_rate)
-
-                query = self.tokenizer.from_list_format([
-                    {'audio': audio_path.name}, # Either a local path or an url
-                    {'text': input["instruction"]},
-                ])
-                response, history = self.model.chat(self.tokenizer, query=query, history=None)
-
-                # Reprocess the results to get the output
-                if input['task_type'] == 'ASR': response = _post_process_qwen_asr(response)
-
-                model_predictions.append(response)
-
-            output = ' '.join(model_predictions)
-
-
-        elif audio_duration > 30:
-            logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
-            audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-            sf.write(audio_path.name, audio_array[:30 * sampling_rate], sampling_rate)
-
-            query = self.tokenizer.from_list_format([
-                {'audio': audio_path.name}, # Either a local path or an url
-                {'text': input["instruction"]},
-            ])
-            response, history = self.model.chat(self.tokenizer, query=query, history=None)
-
-            # Reprocess the results to get the output
-            if input['task_type'] == 'ASR': response = _post_process_qwen_asr(response)
-
-            output = response
-
-        else:
-            if audio_duration < 1:
-                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
-
-            audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-            sf.write(audio_path.name, audio_array, sampling_rate)
-
-            query = self.tokenizer.from_list_format([
-                {'audio': audio_path.name}, # Either a local path or an url
-                {'text': input["instruction"]},
-            ])
-            response, history = self.model.chat(self.tokenizer, query=query, history=None)
-
-            # Reprocess the results to get the output
-            if input['task_type'] == 'ASR': response = _post_process_qwen_asr(response)
-
-            output = response
-
-        return output
+        if mode == 'chunked':
+            return ' '.join(self._infer_single(seg, sampling_rate, instruction, is_asr) for seg in segments)
+        return self._infer_single(segments[0], sampling_rate, instruction, is_asr)

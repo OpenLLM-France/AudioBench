@@ -1,46 +1,18 @@
-import os
-import re
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
-import numpy as np
+
 import torch
-
-from tqdm import tqdm
-
-import soundfile as sf
-
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers.generation import GenerationConfig
-
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
-
-
-import tempfile
 
 from model_src.base_model import BaseModel
 
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-REPO_ID = "MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION"
 
 
 def _do_sample_inference(self, audio_array, instruction):
 
-    prompt = "Given the following audio context: <SpeechHere>\n\nText instruction: {instruction}"
+    prompt = f"Given the following audio context: <SpeechHere>\n\nText instruction: {instruction}"
     conversation = [
-            {"role": "user", "content": prompt.format(instruction=instruction)}
+            {"role": "user", "content": prompt}
         ]
 
     chat_prompt = self.processor.tokenizer.apply_chat_template(
@@ -66,13 +38,16 @@ def _do_sample_inference(self, audio_array, instruction):
 
 class MeralionAudioLLMWhisperSeaLion(BaseModel):
 
+    def __init__(self):
+        super().__init__(model_path="MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION")
+
     def load(self):
         self.processor = AutoProcessor.from_pretrained(
-        REPO_ID,
+        self.model_path,
         trust_remote_code=True,
         )
         self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
-            REPO_ID,
+            self.model_path,
             use_safetensors=True,
             trust_remote_code=True,
             attn_implementation="flash_attention_2",
@@ -80,37 +55,16 @@ class MeralionAudioLLMWhisperSeaLion(BaseModel):
         )
         self.model.to("cuda")
 
-        logger.info("Model loaded: {}".format(REPO_ID))
+        logger.info(f"Model loaded: {self.model_path}")
 
     def _generate(self, input):
 
-        audio_array    = input["audio"]["array"]
-        sampling_rate  = input["audio"]["sampling_rate"]
-        instruction    = input["instruction"]
-        audio_duration = len(audio_array) / sampling_rate
+        audio_array   = input["audio"]["array"]
+        sampling_rate = input["audio"]["sampling_rate"]
+        instruction   = input["instruction"]
 
-        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-        if audio_duration > 30 and input['task_type'] == 'ASR':
-            logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
-            audio_chunks = []
-            for i in range(0, len(audio_array), 30 * sampling_rate):
-                audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
+        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
 
-            model_predictions = [_do_sample_inference(self, chunk_array, instruction) for chunk_array in tqdm(audio_chunks)]
-            output = ' '.join(model_predictions)
-
-
-        elif audio_duration > 30:
-            logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
-
-            audio_array = audio_array[:30 * sampling_rate]
-            output = _do_sample_inference(self, audio_array, instruction)
-
-        else:
-            if audio_duration < 1:
-                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
-
-            output = _do_sample_inference(self, audio_array, instruction)
-
-        return output
+        if mode == 'chunked':
+            return ' '.join(_do_sample_inference(self, seg, instruction) for seg in segments)
+        return _do_sample_inference(self, segments[0], instruction)

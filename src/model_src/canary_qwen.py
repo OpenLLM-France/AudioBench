@@ -1,58 +1,30 @@
-import os
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
 
-import time
-
-import subprocess
-import tempfile
-import soundfile as sf
 import nemo.collections.speechlm2 as slm
 
 from model_src.base_model import BaseModel
 
-
-# Install fairseq 'pip install --editable ./'
-
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-
-MODEL_PATH = "nvidia/canary-qwen-2.5b"
 
 
 class CanaryQwen(BaseModel):
 
+    def __init__(self):
+        super().__init__(model_path="nvidia/canary-qwen-2.5b")
+
     def load(self):
-        self.model = slm.models.SALM.from_pretrained(MODEL_PATH).eval()
+        self.model = slm.models.SALM.from_pretrained(self.model_path).eval()
 
     def _generate(self, input):
         audio_array    = input["audio"]["array"]
         sampling_rate  = input["audio"]["sampling_rate"]
-        audio_duration = len(audio_array) / sampling_rate
         prompt = input["instruction"]
 
-        os.makedirs('tmp', exist_ok=True)
-
-        audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-        sf.write(audio_path.name, audio_array, sampling_rate)
-
+        audio_path = self._write_temp_audio(audio_array, sampling_rate)
 
         prompt_content = (
             f"{prompt}:\n"
             f"{self.model.audio_locator_tag}\n"
-
         )
 
         prompts = [
@@ -60,7 +32,7 @@ class CanaryQwen(BaseModel):
                 {
                     "role": "user",
                     "content": prompt_content,
-                    "audio": [audio_path.name],
+                    "audio": [audio_path],
                 }
             ]
         ]

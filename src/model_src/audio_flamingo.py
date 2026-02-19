@@ -1,60 +1,34 @@
-import os
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
 
-import time
-
-import subprocess
-import tempfile
-import soundfile as sf
 from transformers import AudioFlamingo3ForConditionalGeneration, AutoProcessor
 
 from model_src.base_model import BaseModel
 
-
-# Install fairseq 'pip install --editable ./'
-
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-
-MODEL_PATH = "nvidia/audio-flamingo-3-hf"
 
 
 class AudioFlamingo(BaseModel):
 
+    def __init__(self):
+        super().__init__(model_path="nvidia/audio-flamingo-3-hf")
+
     def load(self):
-        self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(MODEL_PATH, device_map="auto").eval()
-        self.processor = AutoProcessor.from_pretrained(MODEL_PATH)
+        self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(self.model_path, device_map="auto").eval()
+        self.processor = AutoProcessor.from_pretrained(self.model_path)
 
     def _generate(self, input):
         audio_array    = input["audio"]["array"]
         sampling_rate  = input["audio"]["sampling_rate"]
-        audio_duration = len(audio_array) / sampling_rate
         prompt = input["instruction"]
 
-        os.makedirs('tmp', exist_ok=True)
-
-        audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-        sf.write(audio_path.name, audio_array, sampling_rate)
+        audio_path = self._write_temp_audio(audio_array, sampling_rate)
 
         conversation = [
             {
                 "role": "user",
                 "content": [
                     {"type": "text", "text": prompt},
-                    {"type": "audio", "path": audio_path.name},
+                    {"type": "audio", "path": audio_path},
                 ],
             }
         ]

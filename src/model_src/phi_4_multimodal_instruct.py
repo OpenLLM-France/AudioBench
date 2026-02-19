@@ -1,38 +1,12 @@
 import os
-import re
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
-import numpy as np
-import torch
 
-from tqdm import tqdm
-
-import soundfile as sf
-
-from io import BytesIO
-from urllib.request import urlopen
 import librosa
 from transformers import AutoModelForCausalLM, AutoProcessor, GenerationConfig
 
-import tempfile
-
 from model_src.base_model import BaseModel
 
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-MODEL_PATH = "microsoft/Phi-4-multimodal-instruct"
 
 
 def _phi4_resample(audio_array, sampling_rate):
@@ -63,57 +37,39 @@ def _do_sample_inference(self, audio_array, prompt):
 class Phi4MultimodalInstruct(BaseModel):
 
     supports_vllm = True
+    max_audio_duration = 40
+
+    def __init__(self):
+        super().__init__(model_path="microsoft/Phi-4-multimodal-instruct")
 
     def load(self):
-        self.processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
+        self.processor = AutoProcessor.from_pretrained(self.model_path, trust_remote_code=True)
         self.model = AutoModelForCausalLM.from_pretrained(
-                MODEL_PATH,
+                self.model_path,
                 trust_remote_code=True,
                 torch_dtype='auto',
                 _attn_implementation='flash_attention_2',
             ).cuda()
         print("model.config._attn_implementation:", self.model.config._attn_implementation)
-        self.generation_config = GenerationConfig.from_pretrained(MODEL_PATH, 'generation_config.json')
-        logger.info("Model loaded: {}".format(MODEL_PATH))
+        self.generation_config = GenerationConfig.from_pretrained(self.model_path, 'generation_config.json')
+        logger.info(f"Model loaded: {self.model_path}")
 
     def _generate(self, input):
 
-        audio_array    = input["audio"]["array"]
-        sampling_rate  = input["audio"]["sampling_rate"]
-        instruction    = input['instruction']
-        audio_duration = len(audio_array) / sampling_rate
+        audio_array   = input["audio"]["array"]
+        sampling_rate = input["audio"]["sampling_rate"]
+        instruction   = input['instruction']
 
         user_prompt      = '<|user|>'
         assistant_prompt = '<|assistant|>'
         prompt_suffix    = '<|end|>'
         prompt = f'{user_prompt}<|audio_1|>{instruction}{prompt_suffix}{assistant_prompt}'
 
+        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
 
-        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-        if audio_duration > 40 and input['task_type'] == 'ASR':
-            logger.info('Audio duration is more than 40 seconds. Chunking and inferring separately.')
-            audio_chunks = []
-            for i in range(0, len(audio_array), 40 * sampling_rate):
-                audio_chunks.append(audio_array[i:i + 40 * sampling_rate])
-
-            model_predictions = [_do_sample_inference(self, chunk_array, prompt) for chunk_array in tqdm(audio_chunks)]
-            output = ' '.join(model_predictions)
-
-
-        elif audio_duration > 40:
-            logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
-
-            audio_array = audio_array[:40 * sampling_rate]
-            output = _do_sample_inference(self, audio_array, prompt)
-
-        else:
-            if audio_duration < 1:
-                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
-
-            output = _do_sample_inference(self, audio_array, prompt)
-
-        return output
+        if mode == 'chunked':
+            return ' '.join(_do_sample_inference(self, seg, prompt) for seg in segments)
+        return _do_sample_inference(self, segments[0], prompt)
 
     # --- VLLM support ---
 
@@ -137,65 +93,19 @@ class Phi4MultimodalInstruct(BaseModel):
         self.lora_request = LoRARequest("speech", 1, speech_lora_path)
         self.sampling_params = SamplingParams(temperature=0, max_tokens=1000)
 
-    def generate_vllm(self, inputs):
+    # --- VLLM hooks ---
+
+    def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
         from model_src.vllm_backend import _input_audio_part
+        return [
+            {"role": "user", "content": [
+                _input_audio_part(audio_array, sampling_rate),
+                {"type": "text", "text": instruction},
+            ]},
+        ]
 
-        results = [None] * len(inputs)
-        all_messages = []
-        meta = []
-        chunk_buffers = {}
+    def _preprocess_audio_for_vllm(self, audio_array, sampling_rate):
+        return _phi4_resample(audio_array, sampling_rate)
 
-        for i, inp in enumerate(inputs):
-            audio_array = inp["audio"]["array"]
-            sampling_rate = inp["audio"]["sampling_rate"]
-            audio_duration = len(audio_array) / sampling_rate
-            instruction = inp["instruction"]
-
-            if audio_duration > 40 and inp['task_type'] == 'ASR':
-                chunk_buffers[i] = []
-                for j in range(0, len(audio_array), 40 * sampling_rate):
-                    chunk = audio_array[j:j + 40 * sampling_rate]
-                    chunk, sr = _phi4_resample(chunk, sampling_rate)
-                    all_messages.append(_build_vllm_messages(chunk, sr, instruction))
-                    meta.append(('chunk', i))
-
-            elif audio_duration > 40:
-                audio_array = audio_array[:40 * sampling_rate]
-                audio_array, sampling_rate = _phi4_resample(audio_array, sampling_rate)
-                all_messages.append(_build_vllm_messages(audio_array, sampling_rate, instruction))
-                meta.append(('normal', i))
-
-            else:
-                if audio_duration < 1:
-                    audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
-                audio_array, sampling_rate = _phi4_resample(audio_array, sampling_rate)
-                all_messages.append(_build_vllm_messages(audio_array, sampling_rate, instruction))
-                meta.append(('normal', i))
-
-        outputs = self.llm.chat(
-            all_messages,
-            sampling_params=self.sampling_params,
-            lora_request=self.lora_request,
-        )
-
-        for output, m in zip(outputs, meta):
-            text = output.outputs[0].text
-            if m[0] == 'chunk':
-                chunk_buffers[m[1]].append(text)
-            else:
-                results[m[1]] = text
-
-        for result_idx, chunks in chunk_buffers.items():
-            results[result_idx] = ' '.join(chunks)
-
-        return results
-
-
-def _build_vllm_messages(audio_array, sampling_rate, instruction):
-    from model_src.vllm_backend import _input_audio_part
-    return [
-        {"role": "user", "content": [
-            _input_audio_part(audio_array, sampling_rate),
-            {"type": "text", "text": instruction},
-        ]},
-    ]
+    def _vllm_chat_kwargs(self):
+        return {"lora_request": self.lora_request}

@@ -128,13 +128,13 @@ def main(
     ):
 
     logger.info("= = "*20)
-    logger.info("Dataset name: {}".format(dataset_name))
-    logger.info("Model name: {}".format(model_name))
-    logger.info("Batch size: {}".format(batch_size))
-    logger.info("Overwrite: {}".format(overwrite))
-    logger.info("Metrics: {}".format(metrics))
-    logger.info("Number of samples: {}".format(number_of_samples))
-    logger.info("Backend: {}".format(backend))
+    logger.info(f"Dataset name: {dataset_name}")
+    logger.info(f"Model name: {model_name}")
+    logger.info(f"Batch size: {batch_size}")
+    logger.info(f"Overwrite: {overwrite}")
+    logger.info(f"Metrics: {metrics}")
+    logger.info(f"Number of samples: {number_of_samples}")
+    logger.info(f"Backend: {backend}")
     logger.info("= = "*20)
 
     run_evaluation(dataset_name, model_name, batch_size, overwrite, metrics, number_of_samples, log_folder, backend)

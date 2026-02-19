@@ -1,36 +1,13 @@
-import os
 import re
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
+
 import numpy as np
 import torch
-
-from tqdm import tqdm
-
-import soundfile as sf
-
-from io import BytesIO
-from urllib.request import urlopen
-import librosa
-from transformers import VoxtralForConditionalGeneration, AutoProcessor, GenerationConfig
-
-import tempfile
+from transformers import VoxtralForConditionalGeneration, AutoProcessor
 
 from model_src.base_model import BaseModel
 
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
 def _post_process_voxtral_asr(model_output):
@@ -53,13 +30,12 @@ def _post_process_voxtral_asr(model_output):
 class Voxtral(BaseModel):
 
     def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507"):
-        super().__init__()
-        self._model_path = model_path
+        super().__init__(model_path=model_path)
 
     def load(self):
-        self.processor = AutoProcessor.from_pretrained(self._model_path)
-        self.model = VoxtralForConditionalGeneration.from_pretrained(self._model_path, torch_dtype=torch.bfloat16, device_map="cuda")
-        logger.info("Model loaded: {}".format(self._model_path))
+        self.processor = AutoProcessor.from_pretrained(self.model_path)
+        self.model = VoxtralForConditionalGeneration.from_pretrained(self.model_path, torch_dtype=torch.bfloat16, device_map="cuda")
+        logger.info(f"Model loaded: {self.model_path}")
 
     def _generate(self, input):
 
@@ -67,19 +43,16 @@ class Voxtral(BaseModel):
         sampling_rate  = input["audio"]["sampling_rate"]
         audio_duration = len(audio_array) / sampling_rate
 
-        os.makedirs('tmp', exist_ok=True)
-
         if audio_duration < 1:
             logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
             audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
 
-        audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-        sf.write(audio_path.name, audio_array, sampling_rate)
+        audio_path = self._write_temp_audio(audio_array, sampling_rate)
 
         conversation = [
             {"role": "user", "content": [
                 {"type": "text", "text": input["instruction"]+"\nPut the result in the following format: \\boxed\{.\}"},
-                {"type": "audio", "path": audio_path.name},
+                {"type": "audio", "path": audio_path},
             ]},
         ]
 

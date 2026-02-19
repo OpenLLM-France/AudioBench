@@ -1,34 +1,23 @@
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
-import numpy as np
-import torch
 
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, AutoTokenizer, AutoModelForCausalLM
+import torch
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
 from model_src.base_model import BaseModel
 
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-WHISPER_MODEL_PATH = "openai/whisper-large-v2"
 
 
 class WhisperLargeV2(BaseModel):
 
     supports_vllm = True
 
+    def __init__(self):
+        super().__init__(model_path="openai/whisper-large-v2")
+
     def load(self):
-        self.whisper_model     = AutoModelForSpeechSeq2Seq.from_pretrained(WHISPER_MODEL_PATH, torch_dtype=torch.float16, low_cpu_mem_usage=True, use_safetensors=True, device_map="auto")
-        self.whisper_processor = AutoProcessor.from_pretrained(WHISPER_MODEL_PATH)
+        self.whisper_model     = AutoModelForSpeechSeq2Seq.from_pretrained(self.model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, use_safetensors=True, device_map="auto")
+        self.whisper_processor = AutoProcessor.from_pretrained(self.model_path)
         self.whisper_pipe      = pipeline(
                         "automatic-speech-recognition",
                         model              = self.whisper_model,
@@ -43,7 +32,7 @@ class WhisperLargeV2(BaseModel):
                     )
         self.whisper_model.eval()
 
-        logging.info(f"Model loaded from {WHISPER_MODEL_PATH}.")
+        logger.info(f"Model loaded from {self.model_path}.")
 
     def _generate(self, sample):
 
@@ -70,7 +59,7 @@ class WhisperLargeV2(BaseModel):
     def load_vllm(self):
         from vllm import LLM, SamplingParams
         self.llm = LLM(
-            model="openai/whisper-large-v2",
+            model=self.model_path,
             max_model_len=448,
             max_num_seqs=5,
             limit_mm_per_prompt={"audio": 1},

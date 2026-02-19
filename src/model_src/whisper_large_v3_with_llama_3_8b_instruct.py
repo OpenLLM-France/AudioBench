@@ -1,47 +1,21 @@
-#!/usr/bin/env python
-# -*- coding:utf-8 -*-
-###
-# Created Date: Friday, April 19th 2024, 11:17:41 am
-# Author: Bin Wang
-# -----
-# Copyright (c) Bin Wang @ bwang28c@gmail.com
-#
-# -----
-# HISTORY:
-# Date&Time 			By	Comments
-# ----------			---	----------------------------------------------------------
-###
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
-import numpy as np
-import torch
 
+import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, AutoTokenizer, AutoModelForCausalLM
 
 from model_src.base_model import BaseModel
 
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-WHISPER_MODEL_PATH = "openai/whisper-large-v3"
-LLAMA_MODEL_PATH = "meta-llama/Meta-Llama-3-8B-Instruct"
-
 
 class WhisperLargeV3WithLlama38BInstruct(BaseModel):
 
+    def __init__(self):
+        super().__init__(model_path="openai/whisper-large-v3")
+        self.llm_model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
+
     def load(self):
-        self.whisper_model     = AutoModelForSpeechSeq2Seq.from_pretrained(WHISPER_MODEL_PATH, torch_dtype=torch.float16, low_cpu_mem_usage=True, use_safetensors=True, device_map="auto")
-        self.whisper_processor = AutoProcessor.from_pretrained(WHISPER_MODEL_PATH)
+        self.whisper_model     = AutoModelForSpeechSeq2Seq.from_pretrained(self.model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, use_safetensors=True, device_map="auto")
+        self.whisper_processor = AutoProcessor.from_pretrained(self.model_path)
         self.whisper_pipe      = pipeline(
                         "automatic-speech-recognition",
                         model=self.whisper_model,
@@ -56,12 +30,12 @@ class WhisperLargeV3WithLlama38BInstruct(BaseModel):
                     )
         self.whisper_model.eval()
 
-        self.llm_tokenizer           = AutoTokenizer.from_pretrained(LLAMA_MODEL_PATH, padding_side='left')
+        self.llm_tokenizer           = AutoTokenizer.from_pretrained(self.llm_model_path, padding_side='left')
         self.llm_tokenizer.pad_token = self.llm_tokenizer.eos_token
-        self.llm_model               = AutoModelForCausalLM.from_pretrained(LLAMA_MODEL_PATH, device_map="auto", torch_dtype=torch.float16)
+        self.llm_model               = AutoModelForCausalLM.from_pretrained(self.llm_model_path, device_map="auto", torch_dtype=torch.float16)
         self.llm_model.eval()
 
-        logging.info(f"Model loaded from {WHISPER_MODEL_PATH} and {LLAMA_MODEL_PATH}.")
+        logger.info(f"Model loaded from {self.model_path} and {self.llm_model_path}.")
 
     def _generate(self, sample):
 
@@ -85,7 +59,7 @@ class WhisperLargeV3WithLlama38BInstruct(BaseModel):
 
             instruction = sample['instruction']
 
-            PROMPT_TEMPLATE = """\
+            prompt = f"""\
             [Audio Transcriptions]
             {whisper_output}
 
@@ -98,7 +72,7 @@ class WhisperLargeV3WithLlama38BInstruct(BaseModel):
 
             Answer: (Provide a precise and concise answer here.)
             """
-            batch_input = [PROMPT_TEMPLATE.format(whisper_output=whisper_output, instruction=instruction)]
+            batch_input = [prompt]
 
             # If speech instruction task, then only use whisper_output
             if sample['task_type'] == "SI":

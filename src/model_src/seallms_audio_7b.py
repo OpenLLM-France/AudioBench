@@ -1,38 +1,11 @@
-import os
-import re
-
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
-sys.path.append('../')
 import logging
-import numpy as np
-import torch
 
-from tqdm import tqdm
-
-import soundfile as sf
-
-from io import BytesIO
-from urllib.request import urlopen
 import librosa
 from transformers import Qwen2AudioForConditionalGeneration, AutoProcessor
 
-import tempfile
-
 from model_src.base_model import BaseModel
 
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-
-MODEL_PATH = "SeaLLMs/SeaLLMs-Audio-7B"
 
 
 def _response_to_audio(conversation, model=None, processor=None):
@@ -61,13 +34,12 @@ def _response_to_audio(conversation, model=None, processor=None):
 
 def _do_sample_inference(self, audio_array, prompt):
 
-    audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-    sf.write(audio_path.name, audio_array, 16000)
+    audio_path = self._write_temp_audio(audio_array, 16000)
 
     # Audio Analysis
     conversation = [
         {"role": "user", "content": [
-            {"type": "audio", "audio_url": audio_path.name},
+            {"type": "audio", "audio_url": audio_path},
             {"type": "text", "text": prompt},
         ]},
     ]
@@ -79,41 +51,24 @@ def _do_sample_inference(self, audio_array, prompt):
 
 class SeallmsAudio7B(BaseModel):
 
+    max_audio_duration = 40
+
+    def __init__(self):
+        super().__init__(model_path="SeaLLMs/SeaLLMs-Audio-7B")
+
     def load(self):
-        self.processor = AutoProcessor.from_pretrained(MODEL_PATH)
-        self.model = Qwen2AudioForConditionalGeneration.from_pretrained("SeaLLMs/SeaLLMs-Audio-7B", device_map="auto")
-        logger.info("Model loaded: {}".format(MODEL_PATH))
+        self.processor = AutoProcessor.from_pretrained(self.model_path)
+        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto")
+        logger.info(f"Model loaded: {self.model_path}")
 
     def _generate(self, input):
 
-        audio_array    = input["audio"]["array"]
-        sampling_rate  = input["audio"]["sampling_rate"]
-        instruction    = input['instruction']
-        audio_duration = len(audio_array) / sampling_rate
-        prompt         = instruction
+        audio_array   = input["audio"]["array"]
+        sampling_rate = input["audio"]["sampling_rate"]
+        instruction   = input['instruction']
 
-        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-        if audio_duration > 40 and input['task_type'] == 'ASR':
-            logger.info('Audio duration is more than 40 seconds. Chunking and inferring separately.')
-            audio_chunks = []
-            for i in range(0, len(audio_array), 40 * sampling_rate):
-                audio_chunks.append(audio_array[i:i + 40 * sampling_rate])
+        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
 
-            model_predictions = [_do_sample_inference(self, chunk_array, prompt) for chunk_array in tqdm(audio_chunks)]
-            output = ' '.join(model_predictions)
-
-
-        elif audio_duration > 40:
-            logger.info('Audio duration is more than 40 seconds. Taking first 40 seconds.')
-
-            audio_array = audio_array[:40 * sampling_rate]
-            output = _do_sample_inference(self, audio_array, prompt)
-
-        else:
-            if audio_duration < 1:
-                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
-
-            output = _do_sample_inference(self, audio_array, prompt)
-
-        return output
+        if mode == 'chunked':
+            return ' '.join(_do_sample_inference(self, seg, instruction) for seg in segments)
+        return _do_sample_inference(self, segments[0], instruction)

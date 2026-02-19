@@ -1,17 +1,6 @@
-# add parent directory to sys.path
-import sys
-sys.path.append('.')
 import logging
 
-
-# =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    datefmt="%m/%d/%Y %H:%M:%S",
-    level=logging.INFO,
-)
-# =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
 def load_model(model_name, backend="transformers"):
@@ -87,7 +76,7 @@ def load_model(model_name, backend="transformers"):
 
     elif model_name.startswith('qwen2_omni'):
         from model_src.qwen_omni import Qwen2Omni
-        if model_name == 'qwen2_omni-7B':
+        if model_name == 'qwen2_omni-7b':
             model = Qwen2Omni(model_path="Qwen/Qwen2.5-Omni-7B")
         else:
             model = Qwen2Omni()
@@ -97,7 +86,7 @@ def load_model(model_name, backend="transformers"):
         model = Voxtral()
 
     else:
-        raise NotImplementedError("Model {} not implemented yet".format(model_name))
+        raise NotImplementedError(f"Model {model_name} not implemented yet")
 
     model.model_name = model_name
     model.backend = backend
@@ -105,12 +94,12 @@ def load_model(model_name, backend="transformers"):
     if backend == "vllm":
         if not model.supports_vllm:
             raise NotImplementedError(
-                "VLLM backend not supported for model '{}'.".format(model_name)
+                f"VLLM backend not supported for model '{model_name}'."
             )
         model.load_vllm()
     else:
         model.load()
 
-    logger.info("Loaded model: {} (backend: {})".format(model_name, backend))
+    logger.info(f"Loaded model: {model_name} (backend: {backend})")
     logger.info("= = "*20)
     return model
