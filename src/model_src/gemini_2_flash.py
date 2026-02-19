@@ -5,7 +5,7 @@
 # Author: Bin Wang
 # -----
 # Copyright (c) Bin Wang @ bwang28c@gmail.com
-# 
+#
 # -----
 # HISTORY:
 # Date&Time 			By	Comments
@@ -38,6 +38,8 @@ import google.generativeai as genai
 
 import tempfile
 
+from model_src.base_model import BaseModel
+
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
@@ -49,14 +51,7 @@ logging.basicConfig(
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
-def gemini_2_flash_model_loader(self):
-
-    # Initialize a Gemini model appropriate for your use case.
-    self.model = genai.GenerativeModel('models/gemini-2.0-flash-exp')
-    logger.info("Model loaded")
-
-
-def do_sample_inference(self, audio_array, instruction, sampling_rate=16000):
+def _do_sample_inference(self, audio_array, instruction, sampling_rate=16000):
 
     audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
     sf.write(audio_path.name, audio_array, sampling_rate)
@@ -73,39 +68,44 @@ def do_sample_inference(self, audio_array, instruction, sampling_rate=16000):
     return response
 
 
+class Gemini2Flash(BaseModel):
 
-def gemini_2_flash_model_generation(self, input):
+    def load(self):
+        # Initialize a Gemini model appropriate for your use case.
+        self.model = genai.GenerativeModel('models/gemini-2.0-flash-exp')
+        logger.info("Model loaded")
 
-    audio_array    = input["audio"]["array"]
-    sampling_rate  = input["audio"]["sampling_rate"]
-    audio_duration = len(audio_array) / sampling_rate
-    instruction    = input["instruction"]
+    def _generate(self, input):
 
-    os.makedirs('tmp', exist_ok=True)
+        audio_array    = input["audio"]["array"]
+        sampling_rate  = input["audio"]["sampling_rate"]
+        audio_duration = len(audio_array) / sampling_rate
+        instruction    = input["instruction"]
 
-    # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-    if audio_duration > 30 and input['task_type'] == 'ASR':
-        logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
-        audio_chunks = []
-        for i in range(0, len(audio_array), 30 * sampling_rate):
-            audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
-        
-        model_predictions = [do_sample_inference(self, chunk_array, instruction) for chunk_array in tqdm(audio_chunks)]
-        output = ' '.join(model_predictions)
+        os.makedirs('tmp', exist_ok=True)
+
+        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
+        if audio_duration > 30 and input['task_type'] == 'ASR':
+            logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
+            audio_chunks = []
+            for i in range(0, len(audio_array), 30 * sampling_rate):
+                audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
+
+            model_predictions = [_do_sample_inference(self, chunk_array, instruction) for chunk_array in tqdm(audio_chunks)]
+            output = ' '.join(model_predictions)
 
 
-    elif audio_duration > 30:
-        logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
+        elif audio_duration > 30:
+            logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
 
-        audio_array = audio_array[:30 * sampling_rate]
-        output = do_sample_inference(self, audio_array, instruction)
-    
-    else: 
-        if audio_duration < 1:
-            logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-            audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+            audio_array = audio_array[:30 * sampling_rate]
+            output = _do_sample_inference(self, audio_array, instruction)
 
-        output = do_sample_inference(self, audio_array, instruction)
+        else:
+            if audio_duration < 1:
+                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
+                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
 
-    return output
+            output = _do_sample_inference(self, audio_array, instruction)
 
+        return output

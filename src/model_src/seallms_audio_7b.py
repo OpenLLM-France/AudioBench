@@ -20,6 +20,8 @@ from transformers import Qwen2AudioForConditionalGeneration, AutoProcessor
 
 import tempfile
 
+from model_src.base_model import BaseModel
+
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
@@ -30,16 +32,10 @@ logging.basicConfig(
 )
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
-model_path = "SeaLLMs/SeaLLMs-Audio-7B"
-
-def seallms_audio_7b_model_loader(self):
-
-    self.processor = AutoProcessor.from_pretrained(model_path)
-    self.model = Qwen2AudioForConditionalGeneration.from_pretrained("SeaLLMs/SeaLLMs-Audio-7B", device_map="auto")
-    logger.info("Model loaded: {}".format(model_path))
+MODEL_PATH = "SeaLLMs/SeaLLMs-Audio-7B"
 
 
-def response_to_audio(conversation, model=None, processor=None):
+def _response_to_audio(conversation, model=None, processor=None):
     text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
     audios = []
     for message in conversation:
@@ -48,12 +44,12 @@ def response_to_audio(conversation, model=None, processor=None):
                 if ele["type"] == "audio":
                     if ele['audio_url'] != None:
                         audios.append(librosa.load(
-                            ele['audio_url'], 
+                            ele['audio_url'],
                             sr=processor.feature_extractor.sampling_rate)[0]
                         )
     if audios != []:
         inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True,sampling_rate=16000)
-    else: 
+    else:
         inputs = processor(text=text, return_tensors="pt", padding=True)
     inputs.input_ids = inputs.input_ids.to("cuda")
     inputs = {k: v.to("cuda") for k, v in inputs.items() if v is not None}
@@ -62,7 +58,8 @@ def response_to_audio(conversation, model=None, processor=None):
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     return response
 
-def do_sample_inference(self, audio_array, prompt):
+
+def _do_sample_inference(self, audio_array, prompt):
 
     audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
     sf.write(audio_path.name, audio_array, 16000)
@@ -75,42 +72,48 @@ def do_sample_inference(self, audio_array, prompt):
         ]},
     ]
 
-    response = response_to_audio(conversation, model=self.model, processor=self.processor)
+    response = _response_to_audio(conversation, model=self.model, processor=self.processor)
 
     return response
 
 
-def seallms_audio_7b_model_generation(self, input):
+class SeallmsAudio7B(BaseModel):
 
-    audio_array    = input["audio"]["array"]
-    sampling_rate  = input["audio"]["sampling_rate"]
-    instruction    = input['instruction']
-    audio_duration = len(audio_array) / sampling_rate
-    prompt         = instruction
+    def load(self):
+        self.processor = AutoProcessor.from_pretrained(MODEL_PATH)
+        self.model = Qwen2AudioForConditionalGeneration.from_pretrained("SeaLLMs/SeaLLMs-Audio-7B", device_map="auto")
+        logger.info("Model loaded: {}".format(MODEL_PATH))
 
-    # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-    if audio_duration > 40 and input['task_type'] == 'ASR':
-        logger.info('Audio duration is more than 40 seconds. Chunking and inferring separately.')
-        audio_chunks = []
-        for i in range(0, len(audio_array), 40 * sampling_rate):
-            audio_chunks.append(audio_array[i:i + 40 * sampling_rate])
-        
-        model_predictions = [do_sample_inference(self, chunk_array, prompt) for chunk_array in tqdm(audio_chunks)]
-        output = ' '.join(model_predictions)
+    def _generate(self, input):
+
+        audio_array    = input["audio"]["array"]
+        sampling_rate  = input["audio"]["sampling_rate"]
+        instruction    = input['instruction']
+        audio_duration = len(audio_array) / sampling_rate
+        prompt         = instruction
+
+        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
+        if audio_duration > 40 and input['task_type'] == 'ASR':
+            logger.info('Audio duration is more than 40 seconds. Chunking and inferring separately.')
+            audio_chunks = []
+            for i in range(0, len(audio_array), 40 * sampling_rate):
+                audio_chunks.append(audio_array[i:i + 40 * sampling_rate])
+
+            model_predictions = [_do_sample_inference(self, chunk_array, prompt) for chunk_array in tqdm(audio_chunks)]
+            output = ' '.join(model_predictions)
 
 
-    elif audio_duration > 40:
-        logger.info('Audio duration is more than 40 seconds. Taking first 40 seconds.')
+        elif audio_duration > 40:
+            logger.info('Audio duration is more than 40 seconds. Taking first 40 seconds.')
 
-        audio_array = audio_array[:40 * sampling_rate]
-        output = do_sample_inference(self, audio_array, prompt)
-    
-    else: 
-        if audio_duration < 1:
-            logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-            audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+            audio_array = audio_array[:40 * sampling_rate]
+            output = _do_sample_inference(self, audio_array, prompt)
 
-        output = do_sample_inference(self, audio_array, prompt)
+        else:
+            if audio_duration < 1:
+                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
+                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
 
-    return output
+            output = _do_sample_inference(self, audio_array, prompt)
 
+        return output

@@ -6,7 +6,7 @@ import logging
 from tqdm import tqdm
 
 from src.dataset_factory import load_dataset_processor
-from model import Model
+from model import load_model
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  = 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ def run_evaluation(
         input_data = processor.prepare_model_input()
 
         # Load model
-        model = Model(model_name, backend=backend)
+        model = load_model(model_name, backend=backend)
 
         # Specific current dataset name for evaluation
         model.dataset_name = dataset_name

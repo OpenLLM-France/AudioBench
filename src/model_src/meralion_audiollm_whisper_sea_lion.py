@@ -21,6 +21,8 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
 
 import tempfile
 
+from model_src.base_model import BaseModel
+
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
@@ -31,28 +33,10 @@ logging.basicConfig(
 )
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
-repo_id = "MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION"
-
-def meralion_audiollm_whisper_sea_lion_model_loader(self):
-
-    self.processor = AutoProcessor.from_pretrained(
-    repo_id, 
-    trust_remote_code=True,
-    )
-    self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        repo_id,
-        use_safetensors=True,
-        trust_remote_code=True,
-        attn_implementation="flash_attention_2",
-        torch_dtype=torch.bfloat16
-    )
-    self.model.to("cuda")
-
-    logger.info("Model loaded: {}".format(repo_id))
+REPO_ID = "MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION"
 
 
-
-def do_sample_inference(self, audio_array, instruction):
+def _do_sample_inference(self, audio_array, instruction):
 
     prompt = "Given the following audio context: <SpeechHere>\n\nText instruction: {instruction}"
     conversation = [
@@ -80,36 +64,53 @@ def do_sample_inference(self, audio_array, instruction):
     return response
 
 
-def meralion_audiollm_whisper_sea_lion_model_generation(self, input):
+class MeralionAudioLLMWhisperSeaLion(BaseModel):
 
-    audio_array    = input["audio"]["array"]
-    sampling_rate  = input["audio"]["sampling_rate"]
-    instruction    = input["instruction"]
-    audio_duration = len(audio_array) / sampling_rate
+    def load(self):
+        self.processor = AutoProcessor.from_pretrained(
+        REPO_ID,
+        trust_remote_code=True,
+        )
+        self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
+            REPO_ID,
+            use_safetensors=True,
+            trust_remote_code=True,
+            attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16
+        )
+        self.model.to("cuda")
 
-    # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-    if audio_duration > 30 and input['task_type'] == 'ASR':
-        logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
-        audio_chunks = []
-        for i in range(0, len(audio_array), 30 * sampling_rate):
-            audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
-        
-        model_predictions = [do_sample_inference(self, chunk_array, instruction) for chunk_array in tqdm(audio_chunks)]
-        output = ' '.join(model_predictions)
+        logger.info("Model loaded: {}".format(REPO_ID))
+
+    def _generate(self, input):
+
+        audio_array    = input["audio"]["array"]
+        sampling_rate  = input["audio"]["sampling_rate"]
+        instruction    = input["instruction"]
+        audio_duration = len(audio_array) / sampling_rate
+
+        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
+        if audio_duration > 30 and input['task_type'] == 'ASR':
+            logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
+            audio_chunks = []
+            for i in range(0, len(audio_array), 30 * sampling_rate):
+                audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
+
+            model_predictions = [_do_sample_inference(self, chunk_array, instruction) for chunk_array in tqdm(audio_chunks)]
+            output = ' '.join(model_predictions)
 
 
-    elif audio_duration > 30:
-        logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
+        elif audio_duration > 30:
+            logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
 
-        audio_array = audio_array[:30 * sampling_rate]
-        output = do_sample_inference(self, audio_array, instruction)
-    
-    else: 
-        if audio_duration < 1:
-            logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-            audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+            audio_array = audio_array[:30 * sampling_rate]
+            output = _do_sample_inference(self, audio_array, instruction)
 
-        output = do_sample_inference(self, audio_array, instruction)
+        else:
+            if audio_duration < 1:
+                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
+                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
 
-    return output
+            output = _do_sample_inference(self, audio_array, instruction)
 
+        return output

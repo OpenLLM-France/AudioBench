@@ -13,6 +13,9 @@ import tempfile
 import soundfile as sf
 from transformers import AudioFlamingo3ForConditionalGeneration, AutoProcessor
 
+from model_src.base_model import BaseModel
+
+
 # Install fairseq 'pip install --editable ./'
 
 
@@ -26,42 +29,44 @@ logging.basicConfig(
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
-model_path = "nvidia/audio-flamingo-3-hf"
-
-def audio_flamingo_model_loader(self):
-    self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(model_path, device_map="auto").eval()
-    self.processor = AutoProcessor.from_pretrained(model_path)
+MODEL_PATH = "nvidia/audio-flamingo-3-hf"
 
 
-def audio_flamingo_model_generation(self, input):
-    audio_array    = input["audio"]["array"]
-    sampling_rate  = input["audio"]["sampling_rate"]
-    audio_duration = len(audio_array) / sampling_rate
-    prompt = input["instruction"]
-    
-    os.makedirs('tmp', exist_ok=True)
+class AudioFlamingo(BaseModel):
 
-    audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-    sf.write(audio_path.name, audio_array, sampling_rate)
+    def load(self):
+        self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(MODEL_PATH, device_map="auto").eval()
+        self.processor = AutoProcessor.from_pretrained(MODEL_PATH)
 
-    conversation = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": prompt},
-                {"type": "audio", "path": audio_path.name},
-            ],
-        }
-    ]
+    def _generate(self, input):
+        audio_array    = input["audio"]["array"]
+        sampling_rate  = input["audio"]["sampling_rate"]
+        audio_duration = len(audio_array) / sampling_rate
+        prompt = input["instruction"]
 
-    inputs = self.processor.apply_chat_template(
-        conversation,
-        tokenize=True,
-        add_generation_prompt=True,
-        return_dict=True,
-    ).to(self.model.device)
+        os.makedirs('tmp', exist_ok=True)
 
-    outputs = self.model.generate(**inputs, max_new_tokens=500)
+        audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
+        sf.write(audio_path.name, audio_array, sampling_rate)
 
-    decoded_outputs = self.processor.batch_decode(outputs[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)
-    return decoded_outputs
+        conversation = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "audio", "path": audio_path.name},
+                ],
+            }
+        ]
+
+        inputs = self.processor.apply_chat_template(
+            conversation,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_dict=True,
+        ).to(self.model.device)
+
+        outputs = self.model.generate(**inputs, max_new_tokens=500)
+
+        decoded_outputs = self.processor.batch_decode(outputs[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)
+        return decoded_outputs

@@ -1,6 +1,7 @@
 import fire
 import yaml
 import logging
+import torch
 from main_evaluate import run_evaluation
 from tqdm import tqdm
 
@@ -63,6 +64,7 @@ def evaluate_models_from_config(config_path="configs/config.yaml"):
                 log_folder=global_params.get("output_folder", "results"),
                 backend=model_backend
             )
+            torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     fire.Fire(evaluate_models_from_config)

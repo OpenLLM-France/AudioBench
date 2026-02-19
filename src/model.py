@@ -2,7 +2,6 @@
 import sys
 sys.path.append('.')
 import logging
-import torch
 
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
@@ -12,275 +11,106 @@ logging.basicConfig(
     datefmt="%m/%d/%Y %H:%M:%S",
     level=logging.INFO,
 )
-
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
-VLLM_SUPPORTED_MODELS = {
-    "Qwen2-Audio-7B-Instruct",
-    "qwen2_omni",
-    "qwen2_omni-7B",
-    "phi_4_multimodal_instruct",
-    "whisper_large_v3",
-    "whisper_large_v2",
-}
-
-class Model(object):
-
-    def __init__(self, model_name_or_path, backend="transformers"):
-
-        self.dataset_name = None
-        self.model_name   = model_name_or_path
-        self.backend      = backend
-        self.device       = "cuda" if torch.cuda.is_available() else "cpu"
-
-        self.load_model()
-        logger.info("Loaded model: {} (backend: {})".format(self.model_name, self.backend))
-        logger.info("= = "*20)
 
 
-    def load_model(self):
+def load_model(model_name, backend="transformers"):
+    """Factory: return a BaseModel subclass, loaded and ready to generate."""
 
-        if self.backend == "vllm":
-            return self._load_model_vllm()
+    if model_name == "cascade_whisper_large_v3_llama_3_8b_instruct":
+        from model_src.whisper_large_v3_with_llama_3_8b_instruct import WhisperLargeV3WithLlama38BInstruct
+        model = WhisperLargeV3WithLlama38BInstruct()
 
-        if self.model_name == "cascade_whisper_large_v3_llama_3_8b_instruct":
-            from model_src.whisper_large_v3_with_llama_3_8b_instruct import whisper_large_v3_with_llama_3_8b_instruct_model_loader
-            whisper_large_v3_with_llama_3_8b_instruct_model_loader(self)
+    elif model_name == "cascade_whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct":
+        from model_src.whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct import WhisperLargeV2Gemma29BCptSeaLionV3Instruct
+        model = WhisperLargeV2Gemma29BCptSeaLionV3Instruct()
 
-        elif self.model_name == "cascade_whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct":
-            from model_src.whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct import whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct_model_loader
-            whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct_model_loader(self)
-        
-        elif self.model_name == "Qwen2-Audio-7B-Instruct":
-            from model_src.qwen2_audio_7b_instruct import qwen2_audio_7b_instruct_model_loader
-            qwen2_audio_7b_instruct_model_loader(self)
+    elif model_name == "Qwen2-Audio-7B-Instruct":
+        from model_src.qwen2_audio_7b_instruct import Qwen2Audio7BInstruct
+        model = Qwen2Audio7BInstruct()
 
-        elif self.model_name == "SALMONN_7B":
-            from model_src.salmonn_7b import salmonn_7b_model_loader
-            salmonn_7b_model_loader(self)
+    elif model_name == "SALMONN_7B":
+        from model_src.salmonn_7b import Salmonn7B
+        model = Salmonn7B()
 
-        elif self.model_name == 'WavLLM_fairseq': 
-            from model_src.wavllm_fairseq import wavllm_fairseq_model_loader
-            wavllm_fairseq_model_loader(self)
+    elif model_name == 'WavLLM_fairseq':
+        from model_src.wavllm_fairseq import WavLLMFairseq
+        model = WavLLMFairseq()
 
-        elif self.model_name == 'Qwen-Audio-Chat':
-            from model_src.qwen_audio_chat import qwen_audio_chat_model_loader
-            qwen_audio_chat_model_loader(self)
+    elif model_name == 'Qwen-Audio-Chat':
+        from model_src.qwen_audio_chat import QwenAudioChat
+        model = QwenAudioChat()
 
-        elif self.model_name == 'MERaLiON-AudioLLM-Whisper-SEA-LION':
-            from model_src.meralion_audiollm_whisper_sea_lion import meralion_audiollm_whisper_sea_lion_model_loader
-            meralion_audiollm_whisper_sea_lion_model_loader(self)
+    elif model_name == 'MERaLiON-AudioLLM-Whisper-SEA-LION':
+        from model_src.meralion_audiollm_whisper_sea_lion import MeralionAudioLLMWhisperSeaLion
+        model = MeralionAudioLLMWhisperSeaLion()
 
-        elif self.model_name == 'gemini-1.5-flash':
-            from model_src.gemini_1_5_flash import gemini_1_5_flash_model_loader
-            gemini_1_5_flash_model_loader(self)
+    elif model_name == 'gemini-1.5-flash':
+        from model_src.gemini_1_5_flash import Gemini15Flash
+        model = Gemini15Flash()
 
-        elif self.model_name == 'gemini-2-flash':
-            from model_src.gemini_2_flash import gemini_2_flash_model_loader
-            gemini_2_flash_model_loader(self)
+    elif model_name == 'gemini-2-flash':
+        from model_src.gemini_2_flash import Gemini2Flash
+        model = Gemini2Flash()
 
-        elif self.model_name == 'whisper_large_v3':
-            from model_src.whisper_large_v3 import whisper_large_v3_model_loader
-            whisper_large_v3_model_loader(self)
+    elif model_name == 'whisper_large_v3':
+        from model_src.whisper_large_v3 import WhisperLargeV3
+        model = WhisperLargeV3()
 
-        elif self.model_name == 'whisper_large_v2':
-            from model_src.whisper_large_v2 import whisper_large_v2_model_loader
-            whisper_large_v2_model_loader(self)
+    elif model_name == 'whisper_large_v2':
+        from model_src.whisper_large_v2 import WhisperLargeV2
+        model = WhisperLargeV2()
 
-        elif self.model_name == 'gpt-4o-audio':
-            from model_src.gpt_4o_audio import gpt_4o_audio_model_loader
-            gpt_4o_audio_model_loader(self)
+    elif model_name == 'gpt-4o-audio':
+        from model_src.gpt_4o_audio import GPT4oAudio
+        model = GPT4oAudio()
 
-        elif self.model_name == 'phi_4_multimodal_instruct':
-            from model_src.phi_4_multimodal_instruct import phi_4_multimodal_instruct_model_loader
-            phi_4_multimodal_instruct_model_loader(self)
+    elif model_name == 'phi_4_multimodal_instruct':
+        from model_src.phi_4_multimodal_instruct import Phi4MultimodalInstruct
+        model = Phi4MultimodalInstruct()
 
-        elif self.model_name == 'seallms_audio_7b':
-            from model_src.seallms_audio_7b import seallms_audio_7b_model_loader
-            seallms_audio_7b_model_loader(self)
-        
-        elif self.model_name == 'luciole_audio':
-            from model_src.luciole_audio import luciole_audio_model_loader
-            luciole_audio_model_loader(self)
-        
-        elif self.model_name == 'canary_qwen':
-            from model_src.canary_qwen import canary_qwen_model_loader
-            canary_qwen_model_loader(self)
+    elif model_name == 'seallms_audio_7b':
+        from model_src.seallms_audio_7b import SeallmsAudio7B
+        model = SeallmsAudio7B()
 
-        elif self.model_name == 'audio_flamingo':
-            from model_src.audio_flamingo import audio_flamingo_model_loader
-            audio_flamingo_model_loader(self)
+    elif model_name == 'luciole_audio':
+        from model_src.luciole_audio import LucioleAudio
+        model = LucioleAudio()
 
-        elif self.model_name.startswith('qwen2_omni'):
-            from model_src.qwen_omni import qwen2_omni_model_loader
-            if self.model_name == 'qwen2_omni-7B':
-                qwen2_omni_model_loader(self, model_name="Qwen/Qwen2.5-Omni-7B")
-            else:
-                qwen2_omni_model_loader(self)
-        
-        elif self.model_name.startswith('voxtral'):
-                from model_src.mistralai_voxtral import voxtral_model_loader
-                return voxtral_model_loader(self)
+    elif model_name == 'canary_qwen':
+        from model_src.canary_qwen import CanaryQwen
+        model = CanaryQwen()
 
+    elif model_name == 'audio_flamingo':
+        from model_src.audio_flamingo import AudioFlamingo
+        model = AudioFlamingo()
+
+    elif model_name.startswith('qwen2_omni'):
+        from model_src.qwen_omni import Qwen2Omni
+        if model_name == 'qwen2_omni-7B':
+            model = Qwen2Omni(model_path="Qwen/Qwen2.5-Omni-7B")
         else:
-            raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
+            model = Qwen2Omni()
 
+    elif model_name.startswith('voxtral'):
+        from model_src.mistralai_voxtral import Voxtral
+        model = Voxtral()
 
-    def _load_model_vllm(self):
-        if self.model_name == "Qwen2-Audio-7B-Instruct":
-            from model_src.vllm_backend import qwen2_audio_7b_instruct_vllm_loader
-            qwen2_audio_7b_instruct_vllm_loader(self)
+    else:
+        raise NotImplementedError("Model {} not implemented yet".format(model_name))
 
-        elif self.model_name.startswith('qwen2_omni'):
-            from model_src.vllm_backend import qwen2_omni_vllm_loader
-            if self.model_name == 'qwen2_omni-7B':
-                qwen2_omni_vllm_loader(self, model_name="Qwen/Qwen2.5-Omni-7B")
-            else:
-                qwen2_omni_vllm_loader(self)
+    model.model_name = model_name
+    model.backend = backend
 
-        elif self.model_name == 'phi_4_multimodal_instruct':
-            from model_src.vllm_backend import phi_4_multimodal_instruct_vllm_loader
-            phi_4_multimodal_instruct_vllm_loader(self)
-
-        elif self.model_name == 'whisper_large_v3':
-            from model_src.vllm_backend import whisper_large_v3_vllm_loader
-            whisper_large_v3_vllm_loader(self)
-
-        elif self.model_name == 'whisper_large_v2':
-            from model_src.vllm_backend import whisper_large_v2_vllm_loader
-            whisper_large_v2_vllm_loader(self)
-
-        else:
+    if backend == "vllm":
+        if not model.supports_vllm:
             raise NotImplementedError(
-                "VLLM backend not supported for model '{}'. "
-                "Supported models: {}".format(self.model_name, ', '.join(sorted(VLLM_SUPPORTED_MODELS)))
+                "VLLM backend not supported for model '{}'.".format(model_name)
             )
+        model.load_vllm()
+    else:
+        model.load()
 
-    def _generate_vllm(self, input):
-        is_batch = isinstance(input, list)
-
-        if self.model_name == "Qwen2-Audio-7B-Instruct":
-            if is_batch:
-                from model_src.vllm_backend import qwen2_audio_7b_instruct_vllm_batch_generation
-                return qwen2_audio_7b_instruct_vllm_batch_generation(self, input)
-            from model_src.vllm_backend import qwen2_audio_7b_instruct_vllm_generation
-            return qwen2_audio_7b_instruct_vllm_generation(self, input)
-
-        elif self.model_name.startswith('qwen2_omni'):
-            if is_batch:
-                from model_src.vllm_backend import qwen2_omni_vllm_batch_generation
-                return qwen2_omni_vllm_batch_generation(self, input)
-            from model_src.vllm_backend import qwen2_omni_vllm_generation
-            return qwen2_omni_vllm_generation(self, input)
-
-        elif self.model_name == 'phi_4_multimodal_instruct':
-            if is_batch:
-                from model_src.vllm_backend import phi_4_multimodal_instruct_vllm_batch_generation
-                return phi_4_multimodal_instruct_vllm_batch_generation(self, input)
-            from model_src.vllm_backend import phi_4_multimodal_instruct_vllm_generation
-            return phi_4_multimodal_instruct_vllm_generation(self, input)
-
-        elif self.model_name == 'whisper_large_v3':
-            if is_batch:
-                from model_src.vllm_backend import whisper_large_v3_vllm_batch_generation
-                return whisper_large_v3_vllm_batch_generation(self, input)
-            from model_src.vllm_backend import whisper_large_v3_vllm_generation
-            return whisper_large_v3_vllm_generation(self, input)
-
-        elif self.model_name == 'whisper_large_v2':
-            if is_batch:
-                from model_src.vllm_backend import whisper_large_v2_vllm_batch_generation
-                return whisper_large_v2_vllm_batch_generation(self, input)
-            from model_src.vllm_backend import whisper_large_v2_vllm_generation
-            return whisper_large_v2_vllm_generation(self, input)
-
-        else:
-            raise NotImplementedError(
-                "VLLM backend not supported for model '{}'. "
-                "Supported models: {}".format(self.model_name, ', '.join(sorted(VLLM_SUPPORTED_MODELS)))
-            )
-
-    def generate(self, input):
-
-        if self.backend == "vllm":
-            return self._generate_vllm(input)
-
-        with torch.no_grad():
-            if self.model_name == "cascade_whisper_large_v3_llama_3_8b_instruct": 
-                from model_src.whisper_large_v3_with_llama_3_8b_instruct import whisper_large_v3_with_llama_3_8b_instruct_model_generation
-                return whisper_large_v3_with_llama_3_8b_instruct_model_generation(self, input)
-            
-            elif self.model_name == "cascade_whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct":
-                from model_src.whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct import whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct_model_generation
-                return whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct_model_generation(self, input)
-            
-            elif self.model_name == "Qwen2-Audio-7B-Instruct":
-                from model_src.qwen2_audio_7b_instruct import qwen2_audio_7b_instruct_model_generation
-                return qwen2_audio_7b_instruct_model_generation(self, input)
-
-            elif self.model_name == "SALMONN_7B":
-                from model_src.salmonn_7b import salmonn_7b_model_generation
-                return salmonn_7b_model_generation(self, input)
-            
-            elif self.model_name == "WavLLM_fairseq":
-                from model_src.wavllm_fairseq import wavllm_fairseq_model_generation
-                return wavllm_fairseq_model_generation(self, input)
-            
-            elif self.model_name == "Qwen-Audio-Chat":
-                from model_src.qwen_audio_chat import qwen_audio_chat_model_generation
-                return qwen_audio_chat_model_generation(self, input)
-            
-            elif self.model_name == "MERaLiON-AudioLLM-Whisper-SEA-LION":
-                from model_src.meralion_audiollm_whisper_sea_lion import meralion_audiollm_whisper_sea_lion_model_generation
-                return meralion_audiollm_whisper_sea_lion_model_generation(self, input)
-            
-            elif self.model_name == "gemini-1.5-flash":
-                from model_src.gemini_1_5_flash import gemini_1_5_flash_model_generation
-                return gemini_1_5_flash_model_generation(self, input)
-
-            elif self.model_name == "gemini-2-flash":
-                from model_src.gemini_2_flash import gemini_2_flash_model_generation
-                return gemini_2_flash_model_generation(self, input)
-
-            elif self.model_name == "whisper_large_v3":
-                from model_src.whisper_large_v3 import whisper_large_v3_model_generation
-                return whisper_large_v3_model_generation(self, input)
-
-            elif self.model_name == "whisper_large_v2":
-                from model_src.whisper_large_v2 import whisper_large_v2_model_generation
-                return whisper_large_v2_model_generation(self, input)
-
-            elif self.model_name == "gpt-4o-audio":
-                from model_src.gpt_4o_audio import gpt_4o_audio_model_generation
-                return gpt_4o_audio_model_generation(self, input)
-
-            elif self.model_name == 'phi_4_multimodal_instruct':
-                from model_src.phi_4_multimodal_instruct import phi_4_multimodal_instruct_model_generation
-                return phi_4_multimodal_instruct_model_generation(self, input)
-
-            elif self.model_name == 'seallms_audio_7b':
-                from model_src.seallms_audio_7b import seallms_audio_7b_model_generation
-                return seallms_audio_7b_model_generation(self, input)
-            
-            elif self.model_name == 'luciole_audio':
-                from model_src.luciole_audio import luciole_audio_model_generation
-                return luciole_audio_model_generation(self, input)
-            
-            elif self.model_name == 'canary_qwen':
-                from model_src.canary_qwen import canary_qwen_model_generation
-                return canary_qwen_model_generation(self, input)
-            
-            elif self.model_name == 'audio_flamingo':
-                from model_src.audio_flamingo import audio_flamingo_model_generation
-                return audio_flamingo_model_generation(self, input)
-            
-            elif self.model_name.startswith('qwen2_omni'):
-                from model_src.qwen_omni import qwen2_omni_model_generation
-                return qwen2_omni_model_generation(self, input)
-            
-            elif self.model_name.startswith('voxtral'):
-                from model_src.mistralai_voxtral import voxtral_model_generation
-                return voxtral_model_generation(self, input)
-
-            else:
-                raise NotImplementedError("Model {} not implemented yet".format(self.model_name))
-
+    logger.info("Loaded model: {} (backend: {})".format(model_name, backend))
+    logger.info("= = "*20)
+    return model

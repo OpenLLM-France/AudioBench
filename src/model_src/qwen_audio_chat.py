@@ -18,6 +18,8 @@ from transformers.generation import GenerationConfig
 
 import tempfile
 
+from model_src.base_model import BaseModel
+
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
@@ -28,20 +30,11 @@ logging.basicConfig(
 )
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
-model_path = "Qwen/Qwen-Audio-Chat"
-
-def qwen_audio_chat_model_loader(self):
-
-    self.tokenizer               = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-    self.model                   = AutoModelForCausalLM.from_pretrained(model_path, device_map="cuda", trust_remote_code=True).eval()
-    self.model.generation_config = GenerationConfig.from_pretrained(model_path, trust_remote_code=True)
-    logger.info("Model loaded: {}".format(model_path))
+MODEL_PATH = "Qwen/Qwen-Audio-Chat"
 
 
+def _post_process_qwen_asr(model_output):
 
-
-def post_process_qwen_asr(model_output):
-    
     match = re.search(r'"((?:\\.|[^"\\])*)"', model_output)
     if match:
         model_output = match.group(1)
@@ -63,29 +56,52 @@ def post_process_qwen_asr(model_output):
     return model_output
 
 
-def qwen_audio_chat_model_generation(self, input):
+class QwenAudioChat(BaseModel):
 
-    audio_array    = input["audio"]["array"]
-    sampling_rate  = input["audio"]["sampling_rate"]
-    audio_duration = len(audio_array) / sampling_rate
+    def load(self):
+        self.tokenizer               = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
+        self.model                   = AutoModelForCausalLM.from_pretrained(MODEL_PATH, device_map="cuda", trust_remote_code=True).eval()
+        self.model.generation_config = GenerationConfig.from_pretrained(MODEL_PATH, trust_remote_code=True)
+        logger.info("Model loaded: {}".format(MODEL_PATH))
 
-    os.makedirs('tmp', exist_ok=True)
+    def _generate(self, input):
 
-    # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
-    if audio_duration > 30 and input['task_type'] == 'ASR':
-        logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
-        audio_chunks = []
-        for i in range(0, len(audio_array), 30 * sampling_rate):
-            audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
+        audio_array    = input["audio"]["array"]
+        sampling_rate  = input["audio"]["sampling_rate"]
+        audio_duration = len(audio_array) / sampling_rate
 
-            # if len(audio_chunks) > 10:
-            #     logger.info('More than 10 chunks. Taking first 10 chunks.')
-            #     break
-        
-        model_predictions = []
-        for chunk in tqdm(audio_chunks):
+        os.makedirs('tmp', exist_ok=True)
+
+        # For ASR task, if audio duration is more than 30 seconds, we will chunk and infer separately
+        if audio_duration > 30 and input['task_type'] == 'ASR':
+            logger.info('Audio duration is more than 30 seconds. Chunking and inferring separately.')
+            audio_chunks = []
+            for i in range(0, len(audio_array), 30 * sampling_rate):
+                audio_chunks.append(audio_array[i:i + 30 * sampling_rate])
+
+            model_predictions = []
+            for chunk in tqdm(audio_chunks):
+                audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
+                sf.write(audio_path.name, chunk, sampling_rate)
+
+                query = self.tokenizer.from_list_format([
+                    {'audio': audio_path.name}, # Either a local path or an url
+                    {'text': input["instruction"]},
+                ])
+                response, history = self.model.chat(self.tokenizer, query=query, history=None)
+
+                # Reprocess the results to get the output
+                if input['task_type'] == 'ASR': response = _post_process_qwen_asr(response)
+
+                model_predictions.append(response)
+
+            output = ' '.join(model_predictions)
+
+
+        elif audio_duration > 30:
+            logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
             audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-            sf.write(audio_path.name, chunk, sampling_rate)
+            sf.write(audio_path.name, audio_array[:30 * sampling_rate], sampling_rate)
 
             query = self.tokenizer.from_list_format([
                 {'audio': audio_path.name}, # Either a local path or an url
@@ -94,49 +110,27 @@ def qwen_audio_chat_model_generation(self, input):
             response, history = self.model.chat(self.tokenizer, query=query, history=None)
 
             # Reprocess the results to get the output
-            if input['task_type'] == 'ASR': response = post_process_qwen_asr(response)
+            if input['task_type'] == 'ASR': response = _post_process_qwen_asr(response)
 
-            model_predictions.append(response)
-        
-        output = ' '.join(model_predictions)
+            output = response
 
+        else:
+            if audio_duration < 1:
+                logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
+                audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
 
-    elif audio_duration > 30:
-        logger.info('Audio duration is more than 30 seconds. Taking first 30 seconds.')
-        audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-        sf.write(audio_path.name, audio_array[:30 * sampling_rate], sampling_rate)
+            audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
+            sf.write(audio_path.name, audio_array, sampling_rate)
 
-        query = self.tokenizer.from_list_format([
-            {'audio': audio_path.name}, # Either a local path or an url
-            {'text': input["instruction"]},
-        ])
-        response, history = self.model.chat(self.tokenizer, query=query, history=None)
+            query = self.tokenizer.from_list_format([
+                {'audio': audio_path.name}, # Either a local path or an url
+                {'text': input["instruction"]},
+            ])
+            response, history = self.model.chat(self.tokenizer, query=query, history=None)
 
-        # Reprocess the results to get the output
-        if input['task_type'] == 'ASR': response = post_process_qwen_asr(response)
+            # Reprocess the results to get the output
+            if input['task_type'] == 'ASR': response = _post_process_qwen_asr(response)
 
-        output = response
-    
-    else: 
-        if audio_duration < 1:
-            logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-            audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+            output = response
 
-        audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-        sf.write(audio_path.name, audio_array, sampling_rate)
-
-        query = self.tokenizer.from_list_format([
-            {'audio': audio_path.name}, # Either a local path or an url
-            {'text': input["instruction"]},
-        ])
-        response, history = self.model.chat(self.tokenizer, query=query, history=None)
-        
-        # Reprocess the results to get the output
-        if input['task_type'] == 'ASR': response = post_process_qwen_asr(response)
-
-        output = response
-
-
-
-    return output
-
+        return output

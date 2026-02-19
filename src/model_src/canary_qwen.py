@@ -13,6 +13,9 @@ import tempfile
 import soundfile as sf
 import nemo.collections.speechlm2 as slm
 
+from model_src.base_model import BaseModel
+
+
 # Install fairseq 'pip install --editable ./'
 
 
@@ -26,39 +29,41 @@ logging.basicConfig(
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
-model_path = "nvidia/canary-qwen-2.5b"
-
-def canary_qwen_model_loader(self):
-    self.model = slm.models.SALM.from_pretrained(model_path).eval()
+MODEL_PATH = "nvidia/canary-qwen-2.5b"
 
 
-def canary_qwen_model_generation(self, input):
-    audio_array    = input["audio"]["array"]
-    sampling_rate  = input["audio"]["sampling_rate"]
-    audio_duration = len(audio_array) / sampling_rate
-    prompt = input["instruction"]
-    
-    os.makedirs('tmp', exist_ok=True)
+class CanaryQwen(BaseModel):
 
-    audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
-    sf.write(audio_path.name, audio_array, sampling_rate)
+    def load(self):
+        self.model = slm.models.SALM.from_pretrained(MODEL_PATH).eval()
+
+    def _generate(self, input):
+        audio_array    = input["audio"]["array"]
+        sampling_rate  = input["audio"]["sampling_rate"]
+        audio_duration = len(audio_array) / sampling_rate
+        prompt = input["instruction"]
+
+        os.makedirs('tmp', exist_ok=True)
+
+        audio_path = tempfile.NamedTemporaryFile(suffix=".wav", prefix="audio_", delete=False)
+        sf.write(audio_path.name, audio_array, sampling_rate)
 
 
-    prompt_content = (
-        f"{prompt}:\n"
-        f"{self.model.audio_locator_tag}\n"
-    
-    )
+        prompt_content = (
+            f"{prompt}:\n"
+            f"{self.model.audio_locator_tag}\n"
 
-    prompts = [
-        [
-            {
-                "role": "user",
-                "content": prompt_content,
-                "audio": [audio_path.name],
-            }
+        )
+
+        prompts = [
+            [
+                {
+                    "role": "user",
+                    "content": prompt_content,
+                    "audio": [audio_path.name],
+                }
+            ]
         ]
-    ]
 
-    answer_ids = self.model.generate(prompts=prompts, max_new_tokens=512)
-    return self.model.tokenizer.ids_to_text(answer_ids[0].cpu())
+        answer_ids = self.model.generate(prompts=prompts, max_new_tokens=512)
+        return self.model.tokenizer.ids_to_text(answer_ids[0].cpu())

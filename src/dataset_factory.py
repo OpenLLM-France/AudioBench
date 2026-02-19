@@ -1,5 +1,4 @@
 import functools
-import importlib
 import logging
 
 # add parent directory to sys.path
@@ -20,7 +19,7 @@ logging.basicConfig(
 
 
 # ---------------------------------------------------------------------------
-# Dict 1: DATASET_SOURCES
+# Dict: DATASET_SOURCES
 #   HuggingFace datasets : (hf_path, split)  or  (hf_path, split, data_dir)
 #   Disk datasets        : (disk_path,)          — tuple of length 1
 #   split=None           : returns the full DatasetDict (no split selection)
@@ -118,91 +117,6 @@ DATASET_SOURCES = {
 
 
 # ---------------------------------------------------------------------------
-# Dict 2: DATASET_PROCESSORS — (module_path, class_name)
-# ---------------------------------------------------------------------------
-DATASET_PROCESSORS = {
-    'cn_college_listen_mcq_test':       None,
-    'slue_p2_sqa5_test':                None,
-    'public_sg_speech_qa_test':         None,
-    'dream_tts_mcq_test':               None,
-    'librispeech_test_clean':           None,
-    'librispeech_test_other':           None,
-    'common_voice_15_en_test':          None,
-    'peoples_speech_test':              None,
-    'gigaspeech_test':                  None,
-    'earnings21_test':                  None,
-    'earnings22_test':                  None,
-    'tedlium3_test':                    None,
-    'tedlium3_long_form_test':          None,
-    'openhermes_audio_test':            None,
-    'alpaca_audio_test':                None,
-    'audiocaps_test':                   None,
-    'wavcaps_test':                     None,
-    'clotho_aqa_test':                  None,
-    'audiocaps_qa_test':                None,
-    'wavcaps_qa_test':                  None,
-    'voxceleb_accent_test':             None,
-    'voxceleb_gender_test':             None,
-    'iemocap_gender_test':              None,
-    'iemocap_emotion_test':             None,
-    'meld_sentiment_test':              None,
-    'meld_emotion_test':                None,
-    'covost2_en_id_test':               None,
-    'covost2_en_zh_test':               None,
-    'covost2_en_ta_test':               None,
-    'covost2_id_en_test':               None,
-    'covost2_zh_en_test':               None,
-    'covost2_ta_en_test':               None,
-    'aishell_asr_zh_test':              None,
-    'spoken_squad_test':                None,
-    'muchomusic_test':                  ('dataset_src.mu_chomusic_test', 'mu_chomusic_test_dataset'),
-    'imda_part1_asr_test':              None,
-    'imda_part2_asr_test':              None,
-    'imda_part3_30s_asr_test':          None,
-    'imda_part4_30s_asr_test':          None,
-    'imda_part5_30s_asr_test':          None,
-    'imda_part6_30s_asr_test':          None,
-    'imda_part3_30s_sqa_human_test':    None,
-    'imda_part4_30s_sqa_human_test':    None,
-    'imda_part5_30s_sqa_human_test':    None,
-    'imda_part6_30s_sqa_human_test':    None,
-    'imda_part3_30s_ds_human_test':     None,
-    'imda_part4_30s_ds_human_test':     None,
-    'imda_part5_30s_ds_human_test':     None,
-    'imda_part6_30s_ds_human_test':     None,
-    'imda_ar_sentence':                 None,
-    'imda_ar_dialogue':                 None,
-    'imda_gr_sentence':                 None,
-    'imda_gr_dialogue':                 None,
-    'mmau_mini':                        None,
-    'gigaspeech2_thai':                 None,
-    'gigaspeech2_indo':                 None,
-    'gigaspeech2_viet':                 None,
-    'spoken-mqa_short_digit':           ('dataset_src.spoken_mqa', 'spokenmqa_dataset_arithmatic'),
-    'spoken-mqa_long_digit':            ('dataset_src.spoken_mqa', 'spokenmqa_dataset_arithmatic'),
-    'spoken-mqa_single_step_reasoning': ('dataset_src.spoken_mqa', 'spokenmqa_dataset_reasoning'),
-    'spoken-mqa_multi_step_reasoning':  ('dataset_src.spoken_mqa', 'spokenmqa_dataset_reasoning'),
-    'ytb_asr_batch1':                   None,
-    'ytb_asr_batch2':                   None,
-    'ytb_sqa_batch1':                   None,
-    'ytb_sds_batch1':                   None,
-    'ytb_pqa_batch1':                   None,
-    'seame_dev_man':                    None,
-    'seame_dev_sge':                    None,
-    'cna_test':                         None,
-    'idpc_test':                        None,
-    'parliament_test':                  None,
-    'ukusnews_test':                    None,
-    'mediacorp_test':                   None,
-    'idpc_short_test':                  None,
-    'parliament_short_test':            None,
-    'ukusnews_short_test':              None,
-    'mediacorp_short_test':             None,
-    'audiollm_instructionfollowing':    ('dataset_src.audiollm_instruction_following_dataset', 'audiollm_instruction_following_dataset'),
-}
-
-
-# ---------------------------------------------------------------------------
 # Internal loader
 # ---------------------------------------------------------------------------
 def _load_raw_data(dataset_name):
@@ -218,22 +132,333 @@ def _load_raw_data(dataset_name):
 
 
 # ---------------------------------------------------------------------------
+# Processor factory (if/elif with explicit imports)
+# ---------------------------------------------------------------------------
+def _create_processor(dataset_name, data_loader, number_of_samples):
+
+    if dataset_name == 'cn_college_listen_mcq_test':
+        from dataset_src.cn_college_listen_mcq_test import cn_college_listen_mcq_test_dataset
+        return cn_college_listen_mcq_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'slue_p2_sqa5_test':
+        from dataset_src.slue_p2_sqa5_test import slue_p2_sqa5_test_dataset
+        return slue_p2_sqa5_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'public_sg_speech_qa_test':
+        from dataset_src.public_sg_speech_qa_test import public_sg_speech_qa_test_dataset
+        return public_sg_speech_qa_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'dream_tts_mcq_test':
+        from dataset_src.dream_tts_mcq_test import dream_tts_mcq_test_dataset
+        return dream_tts_mcq_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'librispeech_test_clean':
+        from dataset_src.librispeech_test_clean import librispeech_test_clean_dataset
+        return librispeech_test_clean_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'librispeech_test_other':
+        from dataset_src.librispeech_test_other import librispeech_test_other_dataset
+        return librispeech_test_other_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'common_voice_15_en_test':
+        from dataset_src.common_voice_15_en_test import common_voice_15_en_test_dataset
+        return common_voice_15_en_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'peoples_speech_test':
+        from dataset_src.peoples_speech_test import peoples_speech_test_dataset
+        return peoples_speech_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'gigaspeech_test':
+        from dataset_src.gigaspeech_test import gigaspeech_test_dataset
+        return gigaspeech_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'earnings21_test':
+        from dataset_src.earnings21_test import earnings21_test_dataset
+        return earnings21_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'earnings22_test':
+        from dataset_src.earnings22_test import earnings22_test_dataset
+        return earnings22_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'tedlium3_test':
+        from dataset_src.tedlium3_test import tedlium3_test_dataset
+        return tedlium3_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'tedlium3_long_form_test':
+        from dataset_src.tedlium3_long_form_test import tedlium3_long_form_test_dataset
+        return tedlium3_long_form_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'openhermes_audio_test':
+        from dataset_src.openhermes_audio_test import openhermes_audio_test_dataset
+        return openhermes_audio_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'alpaca_audio_test':
+        from dataset_src.alpaca_audio_test import alpaca_audio_test_dataset
+        return alpaca_audio_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'audiocaps_test':
+        from dataset_src.audiocaps_test import audiocaps_test_dataset
+        return audiocaps_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'wavcaps_test':
+        from dataset_src.wavcaps_test import wavcaps_test_dataset
+        return wavcaps_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'clotho_aqa_test':
+        from dataset_src.clotho_aqa_test import clotho_aqa_test_dataset
+        return clotho_aqa_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'audiocaps_qa_test':
+        from dataset_src.audiocaps_qa_test import audiocaps_qa_test_dataset
+        return audiocaps_qa_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'wavcaps_qa_test':
+        from dataset_src.wavcaps_qa_test import wavcaps_qa_test_dataset
+        return wavcaps_qa_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'voxceleb_accent_test':
+        from dataset_src.voxceleb_accent_test import voxceleb_accent_test_dataset
+        return voxceleb_accent_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'voxceleb_gender_test':
+        from dataset_src.voxceleb_gender_test import voxceleb_gender_test_dataset
+        return voxceleb_gender_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'iemocap_gender_test':
+        from dataset_src.iemocap_gender_test import iemocap_gender_test_dataset
+        return iemocap_gender_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'iemocap_emotion_test':
+        from dataset_src.iemocap_emotion_test import iemocap_emotion_test_dataset
+        return iemocap_emotion_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'meld_sentiment_test':
+        from dataset_src.meld_sentiment_test import meld_sentiment_test_dataset
+        return meld_sentiment_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'meld_emotion_test':
+        from dataset_src.meld_emotion_test import meld_emotion_test_dataset
+        return meld_emotion_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'covost2_en_id_test':
+        from dataset_src.covost2_en_id_test import covost2_en_id_test_dataset
+        return covost2_en_id_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'covost2_en_zh_test':
+        from dataset_src.covost2_en_zh_test import covost2_en_zh_test_dataset
+        return covost2_en_zh_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'covost2_en_ta_test':
+        from dataset_src.covost2_en_ta_test import covost2_en_ta_test_dataset
+        return covost2_en_ta_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'covost2_id_en_test':
+        from dataset_src.covost2_id_en_test import covost2_id_en_test_dataset
+        return covost2_id_en_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'covost2_zh_en_test':
+        from dataset_src.covost2_zh_en_test import covost2_zh_en_test_dataset
+        return covost2_zh_en_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'covost2_ta_en_test':
+        from dataset_src.covost2_ta_en_test import covost2_ta_en_test_dataset
+        return covost2_ta_en_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'aishell_asr_zh_test':
+        from dataset_src.aishell_asr_zh_test import aishell_asr_zh_test_dataset
+        return aishell_asr_zh_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'spoken_squad_test':
+        from dataset_src.spoken_squad_test import spoken_squad_test_dataset
+        return spoken_squad_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'muchomusic_test':
+        from dataset_src.mu_chomusic_test import mu_chomusic_test_dataset
+        return mu_chomusic_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part1_asr_test':
+        from dataset_src.imda_part1_asr_test import imda_part1_asr_test_dataset
+        return imda_part1_asr_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part2_asr_test':
+        from dataset_src.imda_part2_asr_test import imda_part2_asr_test_dataset
+        return imda_part2_asr_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part3_30s_asr_test':
+        from dataset_src.imda_part3_30s_asr_test import imda_part3_30s_asr_test_dataset
+        return imda_part3_30s_asr_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part4_30s_asr_test':
+        from dataset_src.imda_part4_30s_asr_test import imda_part4_30s_asr_test_dataset
+        return imda_part4_30s_asr_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part5_30s_asr_test':
+        from dataset_src.imda_part5_30s_asr_test import imda_part5_30s_asr_test_dataset
+        return imda_part5_30s_asr_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part6_30s_asr_test':
+        from dataset_src.imda_part6_30s_asr_test import imda_part6_30s_asr_test_dataset
+        return imda_part6_30s_asr_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part3_30s_sqa_human_test':
+        from dataset_src.imda_part3_30s_sqa_human_test import imda_part3_30s_sqa_human_test_dataset
+        return imda_part3_30s_sqa_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part4_30s_sqa_human_test':
+        from dataset_src.imda_part4_30s_sqa_human_test import imda_part4_30s_sqa_human_test_dataset
+        return imda_part4_30s_sqa_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part5_30s_sqa_human_test':
+        from dataset_src.imda_part5_30s_sqa_human_test import imda_part5_30s_sqa_human_test_dataset
+        return imda_part5_30s_sqa_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part6_30s_sqa_human_test':
+        from dataset_src.imda_part6_30s_sqa_human_test import imda_part6_30s_sqa_human_test_dataset
+        return imda_part6_30s_sqa_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part3_30s_ds_human_test':
+        from dataset_src.imda_part3_30s_ds_human_test import imda_part3_30s_ds_human_test_dataset
+        return imda_part3_30s_ds_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part4_30s_ds_human_test':
+        from dataset_src.imda_part4_30s_ds_human_test import imda_part4_30s_ds_human_test_dataset
+        return imda_part4_30s_ds_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part5_30s_ds_human_test':
+        from dataset_src.imda_part5_30s_ds_human_test import imda_part5_30s_ds_human_test_dataset
+        return imda_part5_30s_ds_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_part6_30s_ds_human_test':
+        from dataset_src.imda_part6_30s_ds_human_test import imda_part6_30s_ds_human_test_dataset
+        return imda_part6_30s_ds_human_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_ar_sentence':
+        from dataset_src.imda_ar_sentence import imda_ar_sentence_dataset
+        return imda_ar_sentence_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_ar_dialogue':
+        from dataset_src.imda_ar_dialogue import imda_ar_dialogue_dataset
+        return imda_ar_dialogue_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_gr_sentence':
+        from dataset_src.imda_gr_sentence import imda_gr_sentence_dataset
+        return imda_gr_sentence_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'imda_gr_dialogue':
+        from dataset_src.imda_gr_dialogue import imda_gr_dialogue_dataset
+        return imda_gr_dialogue_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'mmau_mini':
+        from dataset_src.mmau_mini import mmau_mini_dataset
+        return mmau_mini_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'gigaspeech2_thai':
+        from dataset_src.gigaspeech2_thai import gigaspeech2_thai_dataset
+        return gigaspeech2_thai_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'gigaspeech2_indo':
+        from dataset_src.gigaspeech2_indo import gigaspeech2_indo_dataset
+        return gigaspeech2_indo_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'gigaspeech2_viet':
+        from dataset_src.gigaspeech2_viet import gigaspeech2_viet_dataset
+        return gigaspeech2_viet_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'spoken-mqa_short_digit':
+        from dataset_src.spoken_mqa import spokenmqa_dataset_arithmatic
+        return spokenmqa_dataset_arithmatic(data_loader, number_of_samples)
+
+    elif dataset_name == 'spoken-mqa_long_digit':
+        from dataset_src.spoken_mqa import spokenmqa_dataset_arithmatic
+        return spokenmqa_dataset_arithmatic(data_loader, number_of_samples)
+
+    elif dataset_name == 'spoken-mqa_single_step_reasoning':
+        from dataset_src.spoken_mqa import spokenmqa_dataset_reasoning
+        return spokenmqa_dataset_reasoning(data_loader, number_of_samples)
+
+    elif dataset_name == 'spoken-mqa_multi_step_reasoning':
+        from dataset_src.spoken_mqa import spokenmqa_dataset_reasoning
+        return spokenmqa_dataset_reasoning(data_loader, number_of_samples)
+
+    elif dataset_name == 'ytb_asr_batch1':
+        from dataset_src.ytb_asr_batch1 import ytb_asr_batch1_dataset
+        return ytb_asr_batch1_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'ytb_asr_batch2':
+        from dataset_src.ytb_asr_batch2 import ytb_asr_batch2_dataset
+        return ytb_asr_batch2_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'ytb_sqa_batch1':
+        from dataset_src.ytb_sqa_batch1 import ytb_sqa_batch1_dataset
+        return ytb_sqa_batch1_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'ytb_sds_batch1':
+        from dataset_src.ytb_sds_batch1 import ytb_sds_batch1_dataset
+        return ytb_sds_batch1_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'ytb_pqa_batch1':
+        from dataset_src.ytb_pqa_batch1 import ytb_pqa_batch1_dataset
+        return ytb_pqa_batch1_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'seame_dev_man':
+        from dataset_src.seame_dev_man import seame_dev_man_dataset
+        return seame_dev_man_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'seame_dev_sge':
+        from dataset_src.seame_dev_sge import seame_dev_sge_dataset
+        return seame_dev_sge_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'cna_test':
+        from dataset_src.cna_test import cna_test_dataset
+        return cna_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'idpc_test':
+        from dataset_src.idpc_test import idpc_test_dataset
+        return idpc_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'parliament_test':
+        from dataset_src.parliament_test import parliament_test_dataset
+        return parliament_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'ukusnews_test':
+        from dataset_src.ukusnews_test import ukusnews_test_dataset
+        return ukusnews_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'mediacorp_test':
+        from dataset_src.mediacorp_test import mediacorp_test_dataset
+        return mediacorp_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'idpc_short_test':
+        from dataset_src.idpc_short_test import idpc_short_test_dataset
+        return idpc_short_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'parliament_short_test':
+        from dataset_src.parliament_short_test import parliament_short_test_dataset
+        return parliament_short_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'ukusnews_short_test':
+        from dataset_src.ukusnews_short_test import ukusnews_short_test_dataset
+        return ukusnews_short_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'mediacorp_short_test':
+        from dataset_src.mediacorp_short_test import mediacorp_short_test_dataset
+        return mediacorp_short_test_dataset(data_loader, number_of_samples)
+
+    elif dataset_name == 'audiollm_instructionfollowing':
+        from dataset_src.audiollm_instruction_following_dataset import audiollm_instruction_following_dataset
+        return audiollm_instruction_following_dataset(data_loader, number_of_samples)
+
+    else:
+        raise NotImplementedError("Dataset {} not implemented yet".format(dataset_name))
+
+
+# ---------------------------------------------------------------------------
 # Public factory
 # ---------------------------------------------------------------------------
 def load_dataset_processor(dataset_name, number_of_samples=-1):
-    """Return a BaseDatasetProcessor (data not loaded yet — call .load() first)."""
+    """Return a dataset processor (data not loaded yet — call .load() first)."""
     if dataset_name not in DATASET_SOURCES:
         raise NotImplementedError("Dataset {} not implemented yet".format(dataset_name))
 
     loader = functools.partial(_load_raw_data, dataset_name)
-
-    value = DATASET_PROCESSORS[dataset_name]
-    if value is None:
-        module_path, class_name = f"dataset_src.{dataset_name}", f"{dataset_name}_dataset"
-    elif len(value)==1:
-        module_path, class_name = value[0], f"{dataset_name}_dataset"
-    else:
-        module_path, class_name = value
-    module = importlib.import_module(module_path)
-    processor_class = getattr(module, class_name)
-    return processor_class(loader, number_of_samples)
+    return _create_processor(dataset_name, loader, number_of_samples)
