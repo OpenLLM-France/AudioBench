@@ -62,22 +62,27 @@ def run_evaluation(
     score_path = model_dir / f"{dataset_name}_{metrics}_score.json"
     prediction_path = model_dir / f"{dataset_name}.json"
 
-    # If the final score log exists, skip the evaluation (no data loading needed)
-    if not overwrite and score_path.exists():
-        logger.info("Evaluation has been done before. Skip the evaluation.")
-        results = json.loads(score_path.read_text())
-        logger.info('=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =')
-        logger.info(f'Dataset name: {dataset_name.upper()}')
-        logger.info(f'Model name: {model_name.upper()}')
-        logger.info(json.dumps({metrics: results[metrics]}, indent=4, ensure_ascii=False))
-        logger.info('=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =')
-
-        logger.info("\n\n\n\n\n")
-        return model
 
     if model_name == 'WavLLM_fairseq':
         batch_size = -1
         logger.info("Batch size is set to -1 for WavLLM_fairseq model.")
+
+    if not overwrite and prediction_path.exists():
+        predictions = json.loads(prediction_path.read_text())
+        if number_of_samples>0 and len(predictions)<number_of_samples:
+            overwrite = True
+            logger.info(f"Found {len(predictions)} samples in {prediction_path} instead of {number_of_samples}. Overwrite set to True.")
+    
+    if not overwrite and score_path.exists():
+        results = json.loads(score_path.read_text())
+        logger.info('- '*30)
+        logger.info(f'Model name: {model_name.upper()}')
+        logger.info(f'Dataset name: {dataset_name.upper()}')
+        logger.info(f"Evaluation for {model_name} and {dataset_name} exists. Skip the evaluation.")
+        logger.info(json.dumps({metrics: results[metrics]}, indent=4, ensure_ascii=False))
+        logger.info('- '*30)
+        logger.info("\n"*3)
+        return model
 
     if overwrite or not prediction_path.exists():
         logger.info(f'Overwrite is enabled or the results are not found. Try to infer with the model: {model_name}.')
@@ -106,16 +111,16 @@ def run_evaluation(
 
     results = processor.compute_score(data_with_model_predictions, metrics=metrics)
 
-    # Take only the first 100 samples for record.
     if 'details' in results:
         results['details'] = results['details'][:20]
 
     # Print the result with metrics
-    logger.info('=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =')
-    logger.info(f'Dataset name: {dataset_name.upper()}')
+    logger.info(' ='*30)
     logger.info(f'Model name: {model_name.upper()}')
+    logger.info(f'Dataset name: {dataset_name.upper()}')
     logger.info(json.dumps({metrics: results[metrics]}, indent=4, ensure_ascii=False))
-    logger.info('=  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =')
+    logger.info(' ='*30)
+    logger.info("\n"*3)
 
     # Save the scores
     with open(score_path, 'w') as f:
@@ -134,7 +139,7 @@ def main(
         backend: str = "transformers"
     ):
 
-    logger.info("= = "*20)
+    logger.info(" ="*30)
     logger.info(f"Dataset name: {dataset_name}")
     logger.info(f"Model name: {model_name}")
     logger.info(f"Batch size: {batch_size}")
@@ -142,7 +147,7 @@ def main(
     logger.info(f"Metrics: {metrics}")
     logger.info(f"Number of samples: {number_of_samples}")
     logger.info(f"Backend: {backend}")
-    logger.info("= = "*20)
+    logger.info(" ="*30)
 
     run_evaluation(dataset_name, model_name, batch_size, overwrite, metrics, number_of_samples, log_folder, backend)
 
