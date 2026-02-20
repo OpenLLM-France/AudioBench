@@ -1,0 +1,24 @@
+global:
+  batch_size: 1
+  overwrite: true
+  number_of_samples: 2
+  skip_errors: False
+  
+  datasets:
+    - name: librispeech_test_clean
+    - name: librispeech_test_clean
+      metrics: meteor
+    - name: fleurs_fr_jsonl_test
+      metrics: wer
+      number_of_samples: 5
+      task: asr
+    - name: blabla/nemo/asr/fr/context/FLEURS/dev.jsonl
+      metrics: bleu
+      number_of_samples: 5
+      task: ast
+
+models:
+  - name: canary_qwen
+  - name: qwen2-audio-7b-instruct
+    backend: vllm
+    batch_size: 5
