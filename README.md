@@ -161,6 +161,12 @@ pip install -r requirements.txt
 
 ## ⏩ Quick Start
 
+
+````shell
+python src/run_evaluations.py --config_path configs/example.yaml
+```
+
+
 For model-as-judge evaluation, we serve the judgement model as a service via `vllm` on port `5000`.
 
 The example is hosting a `Llama-3-70B-Instruct` model and running the cascade `Whisper + Llama-3` model.
