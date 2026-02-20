@@ -47,17 +47,19 @@ class BaseDatasetProcessor:
     def load(self):
         """Actually load the raw data. Call before prepare_model_input()."""
         raw_data = self._data_loader()
-        logging.info("Loaded {} samples".format(len(raw_data)))
+        logging.info(f"Loaded {len(raw_data)} samples")
+
+        print(raw_data[0])
 
         if self._number_of_samples != -1:
             if self._number_of_samples > len(raw_data):
                 self._number_of_samples = len(raw_data)
-                logging.info("Requested samples exceed available. Using {}".format(self._number_of_samples))
+                logging.info(f"Requested samples exceed available. Using {self._number_of_samples}")
             raw_data = raw_data.shuffle(seed=42)
             raw_data = raw_data.select(range(self._number_of_samples))
 
         self.raw_data = raw_data
-        logging.info('Number of samples: {}'.format(len(self.raw_data)))
+        logging.info(f'Number of samples: {len(self.raw_data)}')
         return self
 
     @staticmethod

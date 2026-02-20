@@ -1,5 +1,6 @@
 import functools
 import logging
+import os
 
 # add parent directory to sys.path
 import sys
@@ -113,16 +114,29 @@ DATASET_SOURCES = {
     'mediacorp_short_test':             ('data/3_private_data/mediacorp_short_ASR_v1',),
 
     'audiollm_instructionfollowing':    ('YichenG170/AudioLLMInstructionFollowing', 'train'),
+    
+    # jsonl files
+    "fleurs_fr_jsonl_test": (f'{os.getenv("DATA_DIR")}/nemo/asr/fr/context/FLEURS/test.jsonl',)
 }
 
+def load_jsonl(path):
+    import json
+    with open(path, 'r') as f:
+        data = [json.loads(line) for line in f]
+    return data
 
 # ---------------------------------------------------------------------------
 # Internal loader
 # ---------------------------------------------------------------------------
 def _load_raw_data(dataset_name):
-    source = DATASET_SOURCES[dataset_name]
+    source = DATASET_SOURCES.get(dataset_name)
+    if source is None:
+        return load_jsonl(dataset_name)
     if len(source) == 1:
-        return load_from_disk(source[0])
+        if source[0].endswith(".jsonl"):
+            return load_jsonl(source[0]) 
+        else:
+            return load_from_disk(source[0])
     hf_path, split = source[0], source[1]
     kwargs = {}
     if len(source) == 3:
@@ -448,6 +462,10 @@ def _create_processor(dataset_name, data_loader, number_of_samples):
         from dataset_src.audiollm_instruction_following_dataset import audiollm_instruction_following_dataset
         return audiollm_instruction_following_dataset(data_loader, number_of_samples)
 
+    elif dataset_name.endswith(".jsonl") or DATASET_SOURCES[dataset_name][0].endswith(".jsonl"):
+        from dataset_src.json_dataset import jsonl_dataset_processor
+        return jsonl_dataset_processor(data_loader, number_of_samples)
+
     else:
         raise NotImplementedError("Dataset {} not implemented yet".format(dataset_name))
 
@@ -457,7 +475,7 @@ def _create_processor(dataset_name, data_loader, number_of_samples):
 # ---------------------------------------------------------------------------
 def load_dataset_processor(dataset_name, number_of_samples=-1):
     """Return a dataset processor (data not loaded yet — call .load() first)."""
-    if dataset_name not in DATASET_SOURCES:
+    if dataset_name not in DATASET_SOURCES and not dataset_name.endswith(".jsonl"):
         raise NotImplementedError("Dataset {} not implemented yet".format(dataset_name))
 
     loader = functools.partial(_load_raw_data, dataset_name)
