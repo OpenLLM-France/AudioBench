@@ -12,7 +12,8 @@ global:
       metrics: wer
       number_of_samples: 5
       task: asr
-    - name: blabla/nemo/asr/fr/context/FLEURS/dev.jsonl
+    - name: FLEURS
+      path: blabla/nemo/asr/fr/context/FLEURS/dev.jsonl
       metrics: bleu
       number_of_samples: 5
       task: ast

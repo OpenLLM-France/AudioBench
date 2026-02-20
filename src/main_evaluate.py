@@ -47,10 +47,14 @@ def run_evaluation(
         log_folder: str = "log_for_all_models",
     ):
     
-    processor = load_dataset_processor(dataset_name, dataset_config.get("number_of_samples"))
+    if not dataset_config.get("path"):
+        processor = load_dataset_processor(dataset_name, dataset_config.get("number_of_samples"))
+    else:
+        processor = load_dataset_processor(dataset_config.get("path"), dataset_config.get("number_of_samples"))
+    
     if dataset_config.get("task") is not None:
         processor.task_type = dataset_config.get("task").upper()
-    print(processor.task_type)
+
     if dataset_config.get("metrics") is None:
         if processor.metrics is not None:
             dataset_config["metrics"] = processor.metrics
