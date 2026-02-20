@@ -22,7 +22,6 @@ def compute_wer(references, predictions, compute_each_samples=True):
     sample_wer = []
     if compute_each_samples:
         for prediction, reference in zip(predictions, references):
-            measures   = compute_measures(reference, prediction)
 
             wer_score = wer(reference, prediction)
 
@@ -33,7 +32,7 @@ def compute_wer(references, predictions, compute_each_samples=True):
             }
 
             sample_wer.append(sample_wer_score)
-    return {"wer": total_wer["wer"], "sample_wer": sample_wer}
+    return {"wer": total_wer["wer"], "details": sample_wer}
 
 def compute_bleu(references, predictions):
     sacrebleu = evaluate.load("sacrebleu")

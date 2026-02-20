@@ -49,8 +49,6 @@ class BaseDatasetProcessor:
         raw_data = self._data_loader()
         logging.info(f"Loaded {len(raw_data)} samples")
 
-        print(raw_data[0])
-
         if self._number_of_samples != -1:
             if self._number_of_samples > len(raw_data):
                 self._number_of_samples = len(raw_data)
@@ -130,12 +128,12 @@ class BaseDatasetProcessor:
 
     def _compute_wer(self, data_with_model_predictions):
         from dataset_src.eval_methods.metrics import compute_wer, get_predictions_and_references_lists
-        references, predictions = get_predictions_and_references_lists(data_with_model_predictions)
+        predictions, references = get_predictions_and_references_lists(data_with_model_predictions)
         return compute_wer(references, predictions)
 
     def _compute_bleu(self, data_with_model_predictions):
         from dataset_src.eval_methods.metrics import compute_bleu, get_predictions_and_references_lists
-        references, predictions = get_predictions_and_references_lists(data_with_model_predictions)
+        predictions, references = get_predictions_and_references_lists(data_with_model_predictions)
         return compute_bleu(references, predictions)
 
     def _compute_judge(self, data_with_model_predictions, metrics):

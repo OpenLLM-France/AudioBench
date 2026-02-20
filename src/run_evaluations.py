@@ -44,24 +44,23 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
 
         for dataset_config in model_datasets:
             dataset_name = dataset_config["name"]
-            metrics = dataset_config.get("metrics")
 
-            number_of_samples = dataset_config.get("number_of_samples")
-            if number_of_samples is None:
-                number_of_samples = global_params.get("number_of_samples", -1)
+            dataset_config['number_of_samples'] = dataset_config.get("number_of_samples", global_params.get("number_of_samples", -1))            
             
-            model_batch_size = dataset_config.get("batch_size", model_batch_size)
+            evaluation_model_config = dict(
+                batch_size=dataset_config.get("batch_size", model_batch_size), 
+                backend=model_backend
+            )
+            
             try:
                 model = run_evaluation(
                     dataset_name=dataset_name,
+                    dataset_config=dataset_config,
                     model_name=model_name,
-                    batch_size=model_batch_size,
+                    model_config=evaluation_model_config,
+                    model=model,
                     overwrite=global_params.get("overwrite", False),
-                    metrics=metrics,
-                    number_of_samples=number_of_samples,
                     log_folder=global_params.get("output_folder", "results"),
-                    backend=model_backend,
-                    model=model
                 )
             except Exception as e:
                 if global_params.get("skip_errors", False):
