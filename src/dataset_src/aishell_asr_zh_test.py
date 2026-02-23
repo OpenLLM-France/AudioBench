@@ -8,6 +8,8 @@ from dataset_src.prompts.prompts import asr_cn_instructions
 class aishell_asr_zh_test_dataset(BaseDatasetProcessor):
     instructions = asr_cn_instructions
     task_type = "ASR-ZH"
+    language = "ZH"
+    metrics = "wer"
 
     def _compute_wer(self, data_with_model_predictions):
         predictions = []

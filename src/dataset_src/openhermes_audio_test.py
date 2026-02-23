@@ -18,6 +18,8 @@ class openhermes_audio_test_dataset(BaseDatasetProcessor):
     instructions = si_instructions
     task_type = "SI"
     question_key = "audio_text_instruction"
+    language = "EN"
+    metrics = "llama3_70b_judge"
 
     def _process_sample(self, sample):
         base = super()._process_sample(sample)

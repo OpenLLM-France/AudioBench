@@ -11,3 +11,4 @@ ac_instructions = [
 class wavcaps_test_dataset(BaseDatasetProcessor):
     instructions = ac_instructions
     task_type = "AC"
+    metrics = "llama3_70b_judge"

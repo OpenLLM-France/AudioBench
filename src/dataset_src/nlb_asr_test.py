@@ -8,6 +8,8 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class nlb_asr_test_dataset(object):
+    language = "EN_SG"
+    metrics = "wer"
 
     def __init__(self, raw_data, number_of_samples):
 

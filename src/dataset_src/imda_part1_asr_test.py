@@ -4,3 +4,5 @@ from dataset_src.prompts.prompts import asr_instructions
 class imda_part1_asr_test_dataset(BaseDatasetProcessor):
     instructions = asr_instructions
     task_type = "ASR"
+    language = "EN_SG"
+    metrics = "wer"

@@ -12,6 +12,8 @@ def get_seperation_trigger(dataset: str):
 class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
     task_type = "MathQA"
     reference_key = "answer"
+    language = "EN"
+    metrics = "acc"
 
     def _process_sample(self, sample):
         return {
@@ -74,6 +76,8 @@ class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
 class spokenmqa_dataset_reasoning(BaseDatasetProcessor):
     task_type = "MathQA"
     reference_key = "answer"
+    language = "EN"
+    metrics = "acc"
 
     def _process_sample(self, sample):
         return {

@@ -5,6 +5,7 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 class mmau_mini_test_dataset(BaseDatasetProcessor):
     task_type = "Audio-Understanding-Reasoning"
     judge_binary = True
+    metrics = "llama3_70b_judge"
 
     def _get_instruction(self, sample):
         return 'Question:\n' + sample['instruction'] + '\nChoices:\n' + " ".join(sample['choices'])

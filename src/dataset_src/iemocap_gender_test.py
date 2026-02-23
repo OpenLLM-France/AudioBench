@@ -18,6 +18,8 @@ class iemocap_gender_test_dataset(BaseDatasetProcessor):
     instructions = gr_instructions
     task_type = "GR"
     judge_binary = True
+    language = "EN"
+    metrics = "llama3_70b_judge"
 
     def format_model_predictions(self, input_data, model_predictions):
         data_with_model_predictions = []

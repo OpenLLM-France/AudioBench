@@ -18,3 +18,5 @@ class meld_emotion_test_dataset(BaseDatasetProcessor):
     instructions = er_instructions
     task_type = "ER"
     judge_binary = True
+    language = "EN"
+    metrics = "llama3_70b_judge"

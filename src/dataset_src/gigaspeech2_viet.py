@@ -7,6 +7,8 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 
 class gigaspeech2_viet_test_dataset(BaseDatasetProcessor):
     task_type = "ASR"
+    language = "VI"
+    metrics = "wer"
 
     def _compute_wer(self, data_with_model_predictions):
 

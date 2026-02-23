@@ -8,6 +8,8 @@ from dataset_src.prompts.prompts import asr_instructions
 class imda_part4_30s_asr_test_dataset(BaseDatasetProcessor):
     instructions = asr_instructions
     task_type = "ASR"
+    language = "EN_SG"
+    metrics = "wer"
 
     def _compute_wer(self, data_with_model_predictions):
         predictions = []

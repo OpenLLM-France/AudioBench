@@ -8,6 +8,8 @@ from dataset_src.prompts.prompts import asr_instructions
 class seame_dev_sge_dataset(BaseDatasetProcessor):
     instructions = asr_instructions
     task_type = "ASR"
+    language = "ZH"
+    metrics = "wer"
 
     def _compute_wer(self, data_with_model_predictions):
         predictions = []

@@ -7,3 +7,5 @@ class parliament_test_dataset(BaseDatasetProcessor):
     task_type = "ASR"
     audio_path = "context.audio"
     reference_path = "answer.text"
+    language = "EN_SG"
+    metrics = "wer"

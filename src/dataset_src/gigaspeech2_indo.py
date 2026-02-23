@@ -8,6 +8,8 @@ from dataset_src.text_normalizer.preprocess_text import preprocess_text_asr
 
 class gigaspeech2_indo_test_dataset(BaseDatasetProcessor):
     task_type = "ASR"
+    language = "ID"
+    metrics = "wer"
 
     def _compute_wer(self, data_with_model_predictions):
 

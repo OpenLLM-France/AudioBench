@@ -5,6 +5,8 @@ class audiollm_instruction_following_dataset(BaseDatasetProcessor):
     task_type = None
     question_key = "text"
     reference_key = "answer"
+    language = "EN"
+    metrics = "llama3_70b_judge_combined"
 
     def _process_sample(self, sample):
         return {

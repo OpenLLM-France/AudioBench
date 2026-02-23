@@ -18,6 +18,7 @@ class voxceleb_accent_test_dataset(BaseDatasetProcessor):
     instructions = ar_instructions
     task_type = "AR"
     judge_binary = True
+    metrics = "llama3_70b_judge"
 
     def format_model_predictions(self, input_data, model_predictions):
         data_with_model_predictions = []
