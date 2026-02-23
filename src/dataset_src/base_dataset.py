@@ -29,6 +29,7 @@ class BaseDatasetProcessor:
 
     instructions = None
     task_type = "UNKNOWN"
+    language = "UNKNOWN"
     judge_binary = False
     question_key = "instruction"
     reference_key = "reference"

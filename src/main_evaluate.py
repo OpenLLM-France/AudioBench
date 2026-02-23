@@ -54,7 +54,10 @@ def run_evaluation(
     
     if dataset_config.get("task") is not None:
         processor.task_type = dataset_config.get("task").upper()
-
+        
+    if dataset_config.get("language") is not None:
+        processor.language = dataset_config.get("language").upper()
+    
     if dataset_config.get("metrics") is None:
         if processor.metrics is not None:
             dataset_config["metrics"] = processor.metrics
@@ -62,10 +65,17 @@ def run_evaluation(
         else:
             raise NotImplementedError(f"The dataset {dataset_name} does not have a default metrics.")
 
-    model_dir = Path(log_folder) / model_name
-    score_path = model_dir / f"{dataset_name}_{dataset_config["metrics"]}_score.json"
-    prediction_path = model_dir / f"{dataset_name}.json"
+    if isinstance(dataset_config["metrics"], str):
+        dataset_config["metrics"] = [dataset_config["metrics"]]
 
+    if processor.language is not None and processor.language!="UNKNOWN":
+        xp_dir = Path(log_folder) / model_name / processor.language
+    else:
+        xp_dir = xp_dir = Path(log_folder) / model_name
+    score_path = xp_dir / f"{dataset_name}_score.json"
+    prediction_path = xp_dir / f"{dataset_name}.json"
+
+    xp_dir.mkdir(parents=True, exist_ok=True)
 
     if model_name == 'WavLLM_fairseq':
         model_config["batch_size"] = -1
@@ -79,14 +89,13 @@ def run_evaluation(
     
     if not overwrite and score_path.exists():
         results = json.loads(score_path.read_text())
-        logger.info('- '*30)
-        logger.info(f'Model name: {model_name.upper()}')
-        logger.info(f'Dataset name: {dataset_name.upper()}')
-        logger.info(f"Evaluation for {model_name} and {dataset_name} exists. Skip the evaluation.")
-        logger.info(json.dumps({dataset_config["metrics"]: results[dataset_config["metrics"]]}, indent=4, ensure_ascii=False))
-        logger.info('- '*30)
-        logger.info("\n"*3)
-        return model
+        if (all([metric in results for metric in dataset_config["metrics"]])):
+            logger.info('- '*30)
+            logger.info(f"Evaluation for {model_name.upper()} and {dataset_name.upper()} exists. Skip the evaluation.")
+            logger.info(results)
+            logger.info('- '*30)
+            logger.info("\n"*3)
+            return model
 
     if overwrite or not prediction_path.exists():
         logger.info(f'Overwrite is enabled or the results are not found. Try to infer with the model: {model_name}.')
@@ -107,32 +116,28 @@ def run_evaluation(
         data_with_model_predictions = processor.format_model_predictions(input_data, model_predictions)
 
         # Save the result with predictions
-        model_dir.mkdir(parents=True, exist_ok=True)
         with open(prediction_path, 'w') as f:
             json.dump(data_with_model_predictions, f, indent=4, ensure_ascii=False)
 
     data_with_model_predictions = json.loads(prediction_path.read_text())
-
-    results = processor.compute_score(data_with_model_predictions, metrics=dataset_config["metrics"])
-
-    if 'details' in results:
-        results['details'] = results['details'][:20]
-        
+    results = dict()
     results['model_name'] = model_name
     results['dataset_name'] = dataset_name
     results['metrics'] = dataset_config["metrics"]
     results['number_of_samples'] = len(data_with_model_predictions)
     results['task'] = processor.task_type
-
-    # Print the result with metrics
+    results['language'] = processor.language
     logger.info(' ='*30)
     logger.info(f'Model name: {model_name.upper()}')
     logger.info(f'Dataset name: {dataset_name.upper()}')
-    logger.info(json.dumps({dataset_config["metrics"]: results[dataset_config["metrics"]]}, indent=4, ensure_ascii=False))
+    for metric in dataset_config["metrics"]:
+        metric_score = processor.compute_score(data_with_model_predictions, metrics=metric)
+        results.update(metric_score)
+        logger.info(f"{metric}: {results[metric]}")
     logger.info(' ='*30)
     logger.info("\n"*3)
-
-    # Save the scores
+    if 'details' in results:
+        results['details'] = results['details'][:20]
     with open(score_path, 'w') as f:
         json.dump(results, f, indent=4, ensure_ascii=False)
 

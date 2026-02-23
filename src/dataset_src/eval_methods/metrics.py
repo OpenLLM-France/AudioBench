@@ -28,11 +28,11 @@ def compute_wer(references, predictions, compute_each_samples=True):
             sample_wer_score = {
                 "reference" : reference,
                 "prediction": prediction,
-                "wer"       : wer_score,
+                "wer"       : wer_score*100,
             }
 
             sample_wer.append(sample_wer_score)
-    return {"wer": total_wer["wer"], "details": sample_wer}
+    return {"wer": total_wer["wer"]*100, "details": sample_wer}
 
 def compute_bleu(references, predictions):
     sacrebleu = evaluate.load("sacrebleu")
