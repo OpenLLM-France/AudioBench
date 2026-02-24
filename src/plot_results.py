@@ -1,11 +1,36 @@
 #!/usr/bin/env python3
-"""Plot AudioBench evaluation results as bar charts or image tables.
+"""Plot AudioBench evaluation results as bar charts and/or image tables.
+
+Output structure:
+    plots/
+    ├── bar/                    # Bar chart PNGs
+    │   ├── ASR_EN_wer.png
+    │   └── ASR_FR_bleu.png
+    ├── table/                  # Table PNGs
+    │   ├── ASR_EN_wer.png
+    │   └── ASR_FR_bleu.png
+    └── aggregated/             # Aggregate mode only
+        ├── bar/
+        │   └── ASR_MIXED_wer.png
+        └── table/
+            └── ASR_MIXED_wer.png
 
 Usage examples:
+    # Both bar + table (default)
     python src/plot_results.py results/
-    python src/plot_results.py results/ --table
+
+    # Bar charts only
+    python src/plot_results.py results/ --bar-only
+
+    # Tables only
+    python src/plot_results.py results/ --table-only
+
+    # Filter by task / dataset / language
     python src/plot_results.py results/ --task asr
     python src/plot_results.py results/ --dataset librispeech_test_clean
+    python src/plot_results.py results/ --language fr
+
+    # Aggregate mode
     python src/plot_results.py results/ --aggregate --task asr
     python src/plot_results.py results/ --aggregate-by-language --task asr
 """
@@ -13,6 +38,7 @@ Usage examples:
 import argparse
 import json
 import os
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -212,18 +238,18 @@ def aggregate_entries(entries, task_filter=None, by_language=False):
                         continue
 
                     if lang_key is not None:
-                        # by_language mode: lang_key is the actual language
-                        label = f"{agg_task}_{lang_key}_avg"
+                        # by_language mode: use language as subplot title
+                        label = lang_key
                         lang = lang_key
                     else:
-                        # Original mode: detect language from entries
+                        # aggregate mode: use task as subplot title
                         languages = {
                             (e["language"] or "UNKNOWN").upper()
                             for e in lang_entries
                             if e["model_name"] == model and e["metric_name"] == metric
                         }
                         lang = languages.pop() if len(languages) == 1 else "MIXED"
-                        label = f"{agg_task}_avg"
+                        label = agg_task
 
                     aggregated.append({
                         "model_name": model,
@@ -237,7 +263,7 @@ def aggregate_entries(entries, task_filter=None, by_language=False):
     return aggregated
 
 # ---------------------------------------------------------------------------
-# Plotting — Bar Charts
+# Shared plot helpers
 # ---------------------------------------------------------------------------
 
 def _model_color_map(models):
@@ -258,23 +284,53 @@ def _sort_ascending(metric):
     return metric in LOWER_IS_BETTER
 
 
-def plot_bar_charts(entries, title_prefix, output_folder):
-    """Produce bar chart PNGs grouped by metric, one subplot per dataset."""
+def _prepare_metric_data(entries):
+    """Yield (metric, ds_model_score, datasets, models) per metric."""
     by_metric = group_entries_by_metric(entries)
-    all_models = sorted({e["model_name"] for e in entries})
-    color_map = _model_color_map(all_models)
-    os.makedirs(output_folder, exist_ok=True)
-
     for metric, metric_entries in sorted(by_metric.items()):
-        # Organize: dataset -> model -> score
         ds_model_score = defaultdict(dict)
         for e in metric_entries:
             ds_model_score[e["dataset_name"]][e["model_name"]] = e["score"]
-
         datasets = sorted(ds_model_score.keys())
-        if not datasets:
-            continue
+        models = sorted({e["model_name"] for e in metric_entries})
+        if datasets and models:
+            yield metric, ds_model_score, datasets, models
 
+
+def _format_suptitle(title_prefix, metric):
+    """Produce a consistent, unit-aware suptitle."""
+    unit = " (%)" if metric in ZERO_TO_ONE_RANGE else ""
+    return f"{title_prefix} — {metric.upper()}{unit}"
+
+
+def _save_figure(fig, title_prefix, metric, output_folder):
+    """Save figure to output_folder/{safe_prefix}_{metric}.png and close it."""
+    os.makedirs(output_folder, exist_ok=True)
+    safe_prefix = re.sub(r'[^\w-]', '_', title_prefix)
+    safe_prefix = re.sub(r'_+', '_', safe_prefix).strip('_')
+    out_path = Path(output_folder) / f"{safe_prefix}_{metric}.png"
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved {out_path}")
+
+
+def _resolve_output_folder(base, chart_type, is_aggregate=False):
+    """Build the output subfolder path: base/[aggregated/]chart_type."""
+    root = Path(base)
+    if is_aggregate:
+        return str(root / "aggregated" / chart_type)
+    return str(root / chart_type)
+
+# ---------------------------------------------------------------------------
+# Plotting — Bar Charts
+# ---------------------------------------------------------------------------
+
+def plot_bar_charts(entries, title_prefix, output_folder):
+    """Produce bar chart PNGs grouped by metric, one subplot per dataset."""
+    all_models = sorted({e["model_name"] for e in entries})
+    color_map = _model_color_map(all_models)
+
+    for metric, ds_model_score, datasets, _ in _prepare_metric_data(entries):
         ncols = min(3, len(datasets))
         nrows = (len(datasets) + ncols - 1) // ncols
         fig, axes = plt.subplots(nrows, ncols,
@@ -309,14 +365,9 @@ def plot_bar_charts(entries, title_prefix, output_folder):
         for idx in range(len(datasets), nrows * ncols):
             axes[idx // ncols][idx % ncols].set_visible(False)
 
-        fig.suptitle(f"{title_prefix} — {metric.upper()}", fontsize=12)
+        fig.suptitle(_format_suptitle(title_prefix, metric), fontsize=12)
         fig.tight_layout(rect=[0, 0, 1, 0.96])
-
-        safe_prefix = title_prefix.replace("/", "_").replace(" ", "_")
-        out_path = Path(output_folder) / f"{safe_prefix}_{metric}_bar.png"
-        fig.savefig(out_path, dpi=150, bbox_inches="tight")
-        plt.close(fig)
-        print(f"Saved {out_path}")
+        _save_figure(fig, title_prefix, metric, output_folder)
 
 # ---------------------------------------------------------------------------
 # Plotting — Table
@@ -324,20 +375,7 @@ def plot_bar_charts(entries, title_prefix, output_folder):
 
 def plot_table(entries, title_prefix, output_folder):
     """Render a comparison table as a PNG image, one per metric."""
-    by_metric = group_entries_by_metric(entries)
-    os.makedirs(output_folder, exist_ok=True)
-
-    for metric, metric_entries in sorted(by_metric.items()):
-        # Build dataset -> model -> score
-        ds_model_score = defaultdict(dict)
-        for e in metric_entries:
-            ds_model_score[e["dataset_name"]][e["model_name"]] = e["score"]
-
-        datasets = sorted(ds_model_score.keys())
-        all_models = sorted({e["model_name"] for e in metric_entries})
-        if not datasets or not all_models:
-            continue
-
+    for metric, ds_model_score, datasets, all_models in _prepare_metric_data(entries):
         ascending = _sort_ascending(metric)
 
         # Compute average per model (over datasets where score exists)
@@ -411,15 +449,21 @@ def plot_table(entries, title_prefix, output_folder):
                 elif best_per_col[ci] == ri:
                     cell.set_facecolor(HIGHLIGHT_COLOR)
 
-        unit = " (%)" if metric in ZERO_TO_ONE_RANGE else ""
-        fig.suptitle(f"{title_prefix} — {metric.upper()}{unit}", fontsize=12)
+        fig.suptitle(_format_suptitle(title_prefix, metric), fontsize=12)
         fig.tight_layout(rect=[0, 0, 1, 0.94])
+        _save_figure(fig, title_prefix, metric, output_folder)
 
-        safe_prefix = title_prefix.replace("/", "_").replace(" ", "_")
-        out_path = Path(output_folder) / f"{safe_prefix}_{metric}_table.png"
-        fig.savefig(out_path, dpi=150, bbox_inches="tight")
-        plt.close(fig)
-        print(f"Saved {out_path}")
+# ---------------------------------------------------------------------------
+# Plot dispatcher
+# ---------------------------------------------------------------------------
+
+def _generate_plots(entries_groups, base_folder, chart_types, is_aggregate=False):
+    """Generate plots for all (title, entries) groups and requested chart types."""
+    for chart_type in chart_types:
+        output_folder = _resolve_output_folder(base_folder, chart_type, is_aggregate)
+        plot_fn = plot_bar_charts if chart_type == "bar" else plot_table
+        for title, entries in entries_groups:
+            plot_fn(entries, title, output_folder)
 
 # ---------------------------------------------------------------------------
 # Main
@@ -427,10 +471,11 @@ def plot_table(entries, title_prefix, output_folder):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Plot AudioBench evaluation results as bar charts or tables."
+        description="Plot AudioBench evaluation results as bar charts and tables."
     )
     parser.add_argument("input_folder", help="Path to results folder (e.g. results/)")
-    parser.add_argument("--table", action="store_true", help="Render image table instead of bar charts")
+    parser.add_argument("--bar-only", action="store_true", help="Generate only bar charts")
+    parser.add_argument("--table-only", action="store_true", help="Generate only image tables")
     parser.add_argument("--task", type=str, default=None, help="Filter by task (e.g. asr, st)")
     parser.add_argument("--dataset", type=str, default=None, help="Filter by specific dataset name")
     parser.add_argument("--language", type=str, default=None, help="Filter by language (e.g. fr)")
@@ -440,6 +485,17 @@ def main():
     parser.add_argument("--aggregate-by-language", action="store_true",
                         help="Like --aggregate, but average only datasets sharing the same language")
     args = parser.parse_args()
+
+    if args.bar_only and args.table_only:
+        parser.error("--bar-only and --table-only are mutually exclusive")
+
+    # Determine which chart types to produce
+    if args.bar_only:
+        chart_types = ["bar"]
+    elif args.table_only:
+        chart_types = ["table"]
+    else:
+        chart_types = ["bar", "table"]
 
     # Load all scores
     entries = load_all_scores(args.input_folder)
@@ -457,32 +513,38 @@ def main():
 
     print(f"{len(entries)} entries after filtering")
 
-    plot_fn = plot_table if args.table else plot_bar_charts
+    # Build (title, entries) groups
+    is_aggregate = False
 
     if args.dataset:
-        # Single dataset mode
-        title = args.dataset
-        plot_fn(entries, title, args.output_folder)
+        entries_groups = [(args.dataset, entries)]
 
     elif args.aggregate or args.aggregate_by_language:
-        # Aggregate mode
+        is_aggregate = True
         agg_entries = aggregate_entries(
             entries, task_filter=args.task, by_language=args.aggregate_by_language,
         )
         if not agg_entries:
             print("No aggregated entries produced.")
             return
-        groups = group_entries_by_task_language(agg_entries)
-        for (task, lang), group_entries in sorted(groups.items()):
-            title = f"{task}_{lang}"
-            plot_fn(group_entries, title, args.output_folder)
+
+        if args.aggregate:
+            # All tasks as subplots in one figure (grouped by metric internally)
+            title = f"{args.task.upper()} (Aggregated)" if args.task else "Aggregated"
+            entries_groups = [(title, agg_entries)]
+        else:
+            # --aggregate-by-language: group by task, languages become subplots
+            task_groups = defaultdict(list)
+            for e in agg_entries:
+                task_groups[e["task"]].append(e)
+            entries_groups = [(task, ents) for task, ents in sorted(task_groups.items())]
 
     else:
-        # Group by (task, language), entries without metadata go to UNKNOWN
         groups = group_entries_by_task_language(entries)
-        for (task, lang), group_entries in sorted(groups.items()):
-            title = f"{task}_{lang}"
-            plot_fn(group_entries, title, args.output_folder)
+        entries_groups = [(f"{task} \u00b7 {lang}", group_entries)
+                          for (task, lang), group_entries in sorted(groups.items())]
+
+    _generate_plots(entries_groups, args.output_folder, chart_types, is_aggregate)
 
 
 if __name__ == "__main__":
