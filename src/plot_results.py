@@ -33,6 +33,9 @@ Usage examples:
     # Aggregate mode
     python src/plot_results.py results/ --aggregate --task asr
     python src/plot_results.py results/ --aggregate-by-language --task asr
+
+    # Aggregate with one subplot per task, each showing its own metric
+    python src/plot_results.py results/ --aggregate --task-metrics '{"ASR": "wer", "ST": "bleu"}'
 """
 
 import argparse
@@ -113,6 +116,12 @@ def load_all_scores(input_folder):
                     score = data[metric_name]
                 except (KeyError, TypeError):
                     continue
+
+                # Judge metrics store scores as dicts with a "judge_score" key
+                if isinstance(score, dict):
+                    score = score.get("judge_score")
+                    if score is None:
+                        continue
 
                 if not isinstance(score, (int, float)):
                     continue
@@ -454,6 +463,155 @@ def plot_table(entries, title_prefix, output_folder):
         _save_figure(fig, title_prefix, metric, output_folder)
 
 # ---------------------------------------------------------------------------
+# Plotting — Aggregate with per-task metrics
+# ---------------------------------------------------------------------------
+
+def plot_aggregate_bar(entries, task_metrics, output_folder):
+    """Single bar-chart figure: one subplot per task, metric varies by task."""
+    tasks = list(task_metrics.keys())
+    all_models = sorted({e["model_name"] for e in entries})
+    color_map = _model_color_map(all_models)
+
+    ncols = min(3, len(tasks))
+    nrows = (len(tasks) + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols,
+                             figsize=(6 * ncols, 4 * nrows),
+                             squeeze=False)
+
+    for idx, (task, metric) in enumerate(task_metrics.items()):
+        ax = axes[idx // ncols][idx % ncols]
+        task_upper = task.upper()
+        metric_lower = metric.lower()
+
+        prefixes = AGGREGATE_DATASETS.get(task_upper, [])
+        task_entries = [
+            e for e in entries
+            if any(e["dataset_name"].startswith(p) for p in prefixes)
+            and e["metric_name"] == metric_lower
+        ]
+
+        # Average per model
+        model_scores = {}
+        for model in all_models:
+            scores = [e["score"] for e in task_entries if e["model_name"] == model]
+            if scores:
+                model_scores[model] = sum(scores) / len(scores)
+
+        if not model_scores:
+            ax.set_visible(False)
+            continue
+
+        ascending = _sort_ascending(metric_lower)
+        sorted_models = sorted(model_scores.keys(),
+                               key=lambda m: model_scores[m],
+                               reverse=not ascending)
+
+        display_scores = [_display_score(model_scores[m], metric_lower)
+                          for m in sorted_models]
+        colors = [color_map[m] for m in sorted_models]
+
+        bars = ax.bar(range(len(sorted_models)), display_scores, color=colors)
+
+        for bar, val in zip(bars, display_scores):
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
+                    f"{val:.2f}", ha="center", va="bottom", fontsize=7)
+
+        ax.set_xticks(range(len(sorted_models)))
+        ax.set_xticklabels(sorted_models, rotation=45, ha="right", fontsize=7)
+        unit = " (%)" if metric_lower in ZERO_TO_ONE_RANGE else ""
+        ax.set_title(f"{task_upper} — {metric_lower.upper()}{unit}", fontsize=9)
+
+    for idx in range(len(tasks), nrows * ncols):
+        axes[idx // ncols][idx % ncols].set_visible(False)
+
+    fig.suptitle("Aggregated Results", fontsize=12)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    _save_figure(fig, "Aggregated", "all", output_folder)
+
+
+def plot_aggregate_table(entries, task_metrics, output_folder):
+    """Single table figure: columns = tasks (each with its own metric), rows = models."""
+    tasks = list(task_metrics.keys())
+    all_models = sorted({e["model_name"] for e in entries})
+
+    # Compute aggregated score per (model, task)
+    task_model_score = {}
+    for task, metric in task_metrics.items():
+        task_upper = task.upper()
+        metric_lower = metric.lower()
+        prefixes = AGGREGATE_DATASETS.get(task_upper, [])
+        task_entries = [
+            e for e in entries
+            if any(e["dataset_name"].startswith(p) for p in prefixes)
+            and e["metric_name"] == metric_lower
+        ]
+        task_model_score[task_upper] = {}
+        for model in all_models:
+            scores = [e["score"] for e in task_entries if e["model_name"] == model]
+            if scores:
+                task_model_score[task_upper][model] = sum(scores) / len(scores)
+
+    col_labels = [f"{t.upper()}\n({m.upper()})" for t, m in task_metrics.items()]
+
+    # Build cell text
+    cell_text = []
+    for model in all_models:
+        row = []
+        for task, metric in task_metrics.items():
+            score = task_model_score.get(task.upper(), {}).get(model)
+            if score is not None:
+                row.append(f"{_display_score(score, metric.lower()):.2f}")
+            else:
+                row.append("-")
+        cell_text.append(row)
+
+    # Find best per column
+    best_per_col = []
+    for ci, (task, metric) in enumerate(task_metrics.items()):
+        ascending = _sort_ascending(metric.lower())
+        vals = []
+        for ri, model in enumerate(all_models):
+            txt = cell_text[ri][ci]
+            if txt != "-":
+                vals.append((float(txt), ri))
+        if vals:
+            if ascending:
+                best_per_col.append(min(vals, key=lambda x: x[0])[1])
+            else:
+                best_per_col.append(max(vals, key=lambda x: x[0])[1])
+        else:
+            best_per_col.append(None)
+
+    # Draw
+    fig_width = max(8, 1.5 * len(col_labels) + 2)
+    fig_height = max(3, 0.4 * len(all_models) + 1.5)
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    ax.axis("off")
+
+    table = ax.table(
+        cellText=cell_text,
+        rowLabels=all_models,
+        colLabels=col_labels,
+        loc="center",
+        cellLoc="center",
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(8)
+    table.scale(1, 1.3)
+
+    for ri in range(len(all_models)):
+        for ci in range(len(col_labels)):
+            cell = table[ri + 1, ci]
+            if cell_text[ri][ci] == "-":
+                cell.set_facecolor(MISSING_COLOR)
+            elif best_per_col[ci] == ri:
+                cell.set_facecolor(HIGHLIGHT_COLOR)
+
+    fig.suptitle("Aggregated Results", fontsize=12)
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    _save_figure(fig, "Aggregated", "all", output_folder)
+
+# ---------------------------------------------------------------------------
 # Plot dispatcher
 # ---------------------------------------------------------------------------
 
@@ -484,10 +642,26 @@ def main():
                         help="Average scores across curated datasets per task")
     parser.add_argument("--aggregate-by-language", action="store_true",
                         help="Like --aggregate, but average only datasets sharing the same language")
+    parser.add_argument("--task-metrics", type=str, default=None,
+                        help='JSON dict mapping task to metric, e.g. \'{"ASR": "wer", "ST": "bleu"}\'.'
+                             ' Used with --aggregate to produce a single figure with one subplot per task.')
     args = parser.parse_args()
 
     if args.bar_only and args.table_only:
         parser.error("--bar-only and --table-only are mutually exclusive")
+
+    if args.task_metrics and not args.aggregate:
+        parser.error("--task-metrics requires --aggregate")
+
+    # Parse --task-metrics
+    task_metrics = None
+    if args.task_metrics:
+        try:
+            task_metrics = json.loads(args.task_metrics)
+        except json.JSONDecodeError:
+            parser.error(f"--task-metrics must be valid JSON: {args.task_metrics}")
+        if not isinstance(task_metrics, dict):
+            parser.error("--task-metrics must be a JSON object")
 
     # Determine which chart types to produce
     if args.bar_only:
@@ -512,6 +686,16 @@ def main():
         return
 
     print(f"{len(entries)} entries after filtering")
+
+    # --aggregate with --task-metrics: single figure, one subplot per task
+    if args.aggregate and task_metrics:
+        for chart_type in chart_types:
+            output_folder = _resolve_output_folder(args.output_folder, chart_type, is_aggregate=True)
+            if chart_type == "bar":
+                plot_aggregate_bar(entries, task_metrics, output_folder)
+            else:
+                plot_aggregate_table(entries, task_metrics, output_folder)
+        return
 
     # Build (title, entries) groups
     is_aggregate = False
