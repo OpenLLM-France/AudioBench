@@ -164,6 +164,15 @@ class BaseDatasetProcessor:
                 results, all_details = gpt4o_as_judge("", [questions, references, predictions])
             return {'gpt4o_judge': results, 'details': all_details}
 
+        elif metrics == 'flow_judge':
+            if self.judge_binary:
+                from dataset_src.eval_methods.eval_flow_judge import flow_judge_as_judge_binary
+                results, all_details = flow_judge_as_judge_binary("", [questions, references, predictions])
+            else:
+                from dataset_src.eval_methods.eval_flow_judge import flow_judge_as_judge
+                results, all_details = flow_judge_as_judge("", [questions, references, predictions])
+            return {'flow_judge': results, 'details': all_details}
+
         elif metrics == 'meteor':
             import evaluate
             meteor = evaluate.load('meteor')
