@@ -1,4 +1,7 @@
 import logging
+import os
+import tempfile
+from pathlib import Path
 
 from transformers import AudioFlamingo3ForConditionalGeneration, AutoProcessor
 
@@ -8,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class AudioFlamingo(BaseModel):
+
+    supports_vllm = True    # need a very recent version of vllm
 
     def __init__(self):
         super().__init__(model_path="nvidia/audio-flamingo-3-hf")
@@ -44,3 +49,31 @@ class AudioFlamingo(BaseModel):
 
         decoded_outputs = self.processor.batch_decode(outputs[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)
         return decoded_outputs
+
+    # --- VLLM backend ---
+
+    def load_vllm(self):
+        from vllm import LLM, SamplingParams
+
+        os.environ["VLLM_ALLOW_LONG_MAX_MODEL_LEN"] = "1"
+        self.llm = LLM(
+            model=self.model_path,
+            max_model_len=20000,
+            max_num_seqs=5,
+            limit_mm_per_prompt={"audio": 1},
+            gpu_memory_utilization=0.6,
+            allowed_local_media_path=tempfile.gettempdir(),
+        )
+        self.sampling_params = SamplingParams(
+            temperature=0, max_tokens=4096, repetition_penalty=1.2
+        )
+
+    def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
+        audio_path = self._write_temp_audio(audio_array, sampling_rate)
+        audio_url = Path(audio_path).resolve().as_uri()
+        return [
+            {"role": "user", "content": [
+                {"type": "text", "text": instruction},
+                {"type": "audio_url", "audio_url": {"url": audio_url}},
+            ]},
+        ]
