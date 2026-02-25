@@ -74,9 +74,21 @@ class BaseModel:
                     input = [input]
                 return self.generate_vllm(input)
             with torch.no_grad():
+                if isinstance(input, list):
+                    return self._generate_batch(input)
                 return self._generate(input)
         finally:
             self._cleanup_temp_files()
+
+    def _generate_batch(self, inputs):
+        """Batched generation for the transformers backend.
+
+        Must be overridden by subclasses that support batch_size > 1.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not support batched transformers inference. "
+            f"Use batch_size=1 or implement _generate_batch()."
+        )
 
     # --- To be implemented by subclasses ---
 

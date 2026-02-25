@@ -19,14 +19,10 @@ logging.basicConfig(
 
 
 def do_model_prediction(input_data, model, batch_size):
+    if model.backend=="vllm":
+        return model.generate(input_data)
 
-    if batch_size > 1 and not model.supports_vllm:
-        raise NotImplementedError(f"Batch size {batch_size} not implemented yet for {model} (vllm support: {model.supports_vllm})")
-
-    if batch_size > 1:
-        model_predictions = model.generate(input_data)
-
-    else:
+    if batch_size <= 1:
         model_predictions = []
         for inputs in tqdm(input_data, leave=False):
             outputs = model.generate(inputs)
@@ -34,7 +30,18 @@ def do_model_prediction(input_data, model, batch_size):
                 model_predictions.extend(outputs)
             else:
                 model_predictions.append(outputs)
+        return model_predictions
 
+    # batch_size > 1 : chunk and process per batch
+    model_predictions = []
+    num_batches = (len(input_data) + batch_size - 1) // batch_size
+    for i in tqdm(range(0, len(input_data), batch_size), total=num_batches, leave=False, desc=f"Batch inference (bs={batch_size})"):
+        batch = input_data[i:i + batch_size]
+        outputs = model.generate(batch)
+        if isinstance(outputs, list):
+            model_predictions.extend(outputs)
+        else:
+            model_predictions.append(outputs)
     return model_predictions
 
 def run_evaluation(

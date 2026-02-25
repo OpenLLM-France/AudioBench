@@ -68,3 +68,42 @@ class MeralionAudioLLMWhisperSeaLion(BaseModel):
         if mode == 'chunked':
             return ' '.join(_do_sample_inference(self, seg, instruction) for seg in segments)
         return _do_sample_inference(self, segments[0], instruction)
+
+    def _generate_batch(self, inputs):
+        all_texts = []
+        all_audios = []
+
+        for inp in inputs:
+            audio_array = inp["audio"]["array"]
+            sampling_rate = inp["audio"]["sampling_rate"]
+            instruction = inp["instruction"]
+
+            segments, mode = self._prepare_audio_segments(
+                audio_array, sampling_rate, inp['task_type']
+            )
+            if mode == 'chunked':
+                raise RuntimeError(
+                    "Audio chunking is not supported with batch_size > 1. "
+                    "Use batch_size=1 for long ASR audio."
+                )
+
+            prompt = f"Given the following audio context: <SpeechHere>\n\nText instruction: {instruction}"
+            conversation = [{"role": "user", "content": prompt}]
+            chat_prompt = self.processor.tokenizer.apply_chat_template(
+                conversation=conversation,
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            all_texts.append(chat_prompt)
+            all_audios.append(segments[0])
+
+        batch_inputs = self.processor(text=all_texts, audios=all_audios)
+        for key in batch_inputs:
+            if isinstance(batch_inputs[key], torch.Tensor):
+                batch_inputs[key] = batch_inputs[key].to('cuda')
+                if batch_inputs[key].dtype is torch.float32:
+                    batch_inputs[key] = batch_inputs[key].to(torch.bfloat16)
+
+        model_outputs = self.model.generate(**batch_inputs, max_new_tokens=228)
+        generated_ids = model_outputs[:, batch_inputs['input_ids'].size(1):]
+        return self.processor.batch_decode(generated_ids, skip_special_tokens=True)
