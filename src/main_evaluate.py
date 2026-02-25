@@ -54,10 +54,7 @@ def run_evaluation(
         log_folder: str = "log_for_all_models",
     ):
     
-    if not dataset_config.get("path"):
-        processor = load_dataset_processor(dataset_name, dataset_config.get("number_of_samples"))
-    else:
-        processor = load_dataset_processor(dataset_config.get("path"), dataset_config.get("number_of_samples"))
+    processor = load_dataset_processor(dataset_name, number_of_samples=dataset_config.get("number_of_samples"), dataset_path=dataset_config.get("path"))
     
     if dataset_config.get("task") is not None:
         processor.task_type = dataset_config.get("task").upper()
@@ -105,7 +102,10 @@ def run_evaluation(
             return model
 
     if overwrite or not prediction_path.exists():
-        logger.info(f'Overwrite is enabled or the results are not found. Try to infer with the model: {model_name}.')
+        if overwrite:
+             logger.info(f"Overwrite is enabled. Try to infer with the model: {model_name}.")
+        else:
+            logger.info(f"No results are not found. Try to infer with the model: {model_name}.")
 
         # Load dataset (deferred until now to skip download when not needed)
         processor.load()
@@ -113,7 +113,7 @@ def run_evaluation(
 
         # Load model
         if model is None:
-            model = load_model(model_name, backend=model_config["backend"])
+            model = load_model(model_name, backend=model_config["backend"], model_path=model_config.get("path"))
 
         # Specific current dataset name for evaluation
         model.dataset_name = dataset_name

@@ -1,11 +1,13 @@
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 
-def load_model(model_name, backend="transformers"):
+def load_model(model_name, backend="transformers", model_path=None):
     """Factory: return a BaseModel subclass, loaded and ready to generate."""
-
+    if model_path:
+        model_path  = model_path.replace("<MODELS_FOLDER>", os.getenv('MODELS'))
     if model_name == "cascade_whisper_large_v3_llama_3_8b_instruct":
         from model_src.whisper_large_v3_with_llama_3_8b_instruct import WhisperLargeV3WithLlama38BInstruct
         model = WhisperLargeV3WithLlama38BInstruct()
@@ -62,9 +64,9 @@ def load_model(model_name, backend="transformers"):
         from model_src.seallms_audio_7b import SeallmsAudio7B
         model = SeallmsAudio7B()
 
-    elif model_name == 'luciole_audio':
+    elif model_name.startswith('luciole_audio'):
         from model_src.luciole_audio import LucioleAudio
-        model = LucioleAudio()
+        model = LucioleAudio(model_path=model_path)
 
     elif model_name == 'canary_qwen':
         from model_src.canary_qwen import CanaryQwen

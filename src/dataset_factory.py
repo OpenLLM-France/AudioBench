@@ -148,9 +148,13 @@ def _load_raw_data(dataset_name):
 # ---------------------------------------------------------------------------
 # Processor factory (if/elif with explicit imports)
 # ---------------------------------------------------------------------------
-def _create_processor(dataset_name, data_loader, number_of_samples):
+def _create_processor(dataset_name, data_loader, number_of_samples, external_jsonl=False):
 
-    if dataset_name == 'cn_college_listen_mcq_test':
+    if external_jsonl:
+        from dataset_src.json_dataset import jsonl_dataset_processor
+        return jsonl_dataset_processor(data_loader, number_of_samples)
+
+    elif dataset_name == 'cn_college_listen_mcq_test':
         from dataset_src.cn_college_listen_mcq_test import cn_college_listen_mcq_test_dataset
         return cn_college_listen_mcq_test_dataset(data_loader, number_of_samples)
 
@@ -462,21 +466,22 @@ def _create_processor(dataset_name, data_loader, number_of_samples):
         from dataset_src.audiollm_instruction_following_dataset import audiollm_instruction_following_dataset
         return audiollm_instruction_following_dataset(data_loader, number_of_samples)
 
-    elif dataset_name.endswith(".jsonl") or DATASET_SOURCES[dataset_name][0].endswith(".jsonl"):
+    elif DATASET_SOURCES[dataset_name][0].endswith(".jsonl"):
         from dataset_src.json_dataset import jsonl_dataset_processor
         return jsonl_dataset_processor(data_loader, number_of_samples)
 
     else:
-        raise NotImplementedError("Dataset {} not implemented yet".format(dataset_name))
+        raise NotImplementedError(f"Dataset {dataset_name} not implemented yet")
 
 
 # ---------------------------------------------------------------------------
 # Public factory
 # ---------------------------------------------------------------------------
-def load_dataset_processor(dataset_name, number_of_samples=-1):
+def load_dataset_processor(dataset_name, number_of_samples=-1, dataset_path=None):
     """Return a dataset processor (data not loaded yet — call .load() first)."""
-    if dataset_name not in DATASET_SOURCES and not dataset_name.endswith(".jsonl"):
-        raise NotImplementedError("Dataset {} not implemented yet".format(dataset_name))
+    if dataset_name not in DATASET_SOURCES and not dataset_name.endswith(".jsonl") and not dataset_path:
+        raise NotImplementedError(f"Dataset {dataset_name} not implemented yet")
 
-    loader = functools.partial(_load_raw_data, dataset_name)
-    return _create_processor(dataset_name, loader, number_of_samples)
+    loader = functools.partial(_load_raw_data, dataset_path if dataset_path else dataset_name)
+    return _create_processor(dataset_name, loader, number_of_samples, True if dataset_path is not None else False)
+ 

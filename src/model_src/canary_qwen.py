@@ -13,4 +13,4 @@ class CanaryQwen(NeMoModel):
         super().__init__(model_path="nvidia/canary-qwen-2.5b")
 
     def load(self):
-        self.model = slm.models.SALM.from_pretrained(self.model_path).eval()
+        self.model = slm.models.SALM.from_pretrained(self.model_path).to(self.device).eval()

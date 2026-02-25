@@ -18,7 +18,7 @@ class voxceleb_gender_test_dataset(BaseDatasetProcessor):
     instructions = gr_instructions
     task_type = "GR"
     judge_binary = True
-    metrics = "llama3_70b_judge"
+    metrics = "flow_judge"
 
     def format_model_predictions(self, input_data, model_predictions):
         data_with_model_predictions = []
