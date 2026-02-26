@@ -20,7 +20,7 @@ def _do_sample_inference(self, audio_array, prompt):
 
     audio = [audio_array, 16000]
 
-    inputs = self.processor(text=prompt, audios=[audio], return_tensors='pt').to('cuda:0')
+    inputs = self.processor(text=prompt, audios=[audio], return_tensors='pt').to(self.model.device)
     generate_ids = self.model.generate(
             **inputs,
             max_new_tokens=1000,
@@ -49,7 +49,8 @@ class Phi4MultimodalInstruct(BaseModel):
                 trust_remote_code=True,
                 torch_dtype='auto',
                 _attn_implementation='flash_attention_2',
-            ).cuda()
+                device_map="auto",
+            ).eval()
         print("model.config._attn_implementation:", self.model.config._attn_implementation)
         self.generation_config = GenerationConfig.from_pretrained(self.model_path, 'generation_config.json')
         logger.info(f"Model loaded: {self.model_path}")

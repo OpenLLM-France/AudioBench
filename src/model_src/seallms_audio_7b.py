@@ -1,5 +1,6 @@
 import logging
 
+import torch
 import librosa
 from transformers import Qwen2AudioForConditionalGeneration, AutoProcessor
 
@@ -24,8 +25,8 @@ def _response_to_audio(conversation, model=None, processor=None):
         inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True,sampling_rate=16000)
     else:
         inputs = processor(text=text, return_tensors="pt", padding=True)
-    inputs.input_ids = inputs.input_ids.to("cuda")
-    inputs = {k: v.to("cuda") for k, v in inputs.items() if v is not None}
+    inputs.input_ids = inputs.input_ids.to(model.device)
+    inputs = {k: v.to(model.device) for k, v in inputs.items() if v is not None}
     generate_ids = model.generate(**inputs, max_new_tokens=2048, temperature = 0, do_sample=False)
     generate_ids = generate_ids[:, inputs["input_ids"].size(1):]
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
@@ -59,7 +60,7 @@ class SeallmsAudio7B(BaseModel):
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto")
+        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
         logger.info(f"Model loaded: {self.model_path}")
 
     def _build_vllm_messages(self, audio_array, sampling_rate, instruction):

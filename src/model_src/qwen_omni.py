@@ -1,6 +1,7 @@
 import re
 import logging
 
+import torch
 import numpy as np
 from transformers import Qwen2_5OmniForConditionalGeneration, Qwen2_5OmniProcessor
 from qwen_omni_utils import process_mm_info
@@ -33,7 +34,7 @@ class Qwen2Omni(BaseModel):
 
     def load(self):
         self.processor = Qwen2_5OmniProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2_5OmniForConditionalGeneration.from_pretrained(self.model_path, device_map="auto")
+        self.model = Qwen2_5OmniForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
         self.model.disable_talker()
         logger.info(f"Model loaded: {self.model_path}")
 

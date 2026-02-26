@@ -1,6 +1,7 @@
 import re
 import logging
 
+import torch
 import librosa
 from transformers import Qwen2AudioForConditionalGeneration, AutoProcessor
 
@@ -40,7 +41,7 @@ class Qwen2Audio7BInstruct(BaseModel):
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto")
+        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
         logger.info(f"Model loaded: {self.model_path}")
 
     def _infer_single(self, audio_array, sampling_rate, instruction, is_asr):
@@ -68,7 +69,7 @@ class Qwen2Audio7BInstruct(BaseModel):
                         )
 
         inputs = self.processor(text=text, audios=audios, sampling_rate=self.processor.feature_extractor.sampling_rate, return_tensors="pt", padding=True)
-        inputs = inputs.to("cuda")
+        inputs = inputs.to(self.model.device)
 
         generate_ids = self.model.generate(**inputs, max_length=512)
         generate_ids = generate_ids[:, inputs.input_ids.size(1):]

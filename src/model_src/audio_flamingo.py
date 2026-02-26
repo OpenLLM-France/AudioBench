@@ -3,6 +3,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import torch
 from transformers import AudioFlamingo3ForConditionalGeneration, AutoProcessor
 
 from model_src.base_model import BaseModel
@@ -18,7 +19,7 @@ class AudioFlamingo(BaseModel):
         super().__init__(model_path="nvidia/audio-flamingo-3-hf")
 
     def load(self):
-        self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(self.model_path, device_map="auto").eval()
+        self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
         self.processor = AutoProcessor.from_pretrained(self.model_path)
 
     def _generate(self, input):

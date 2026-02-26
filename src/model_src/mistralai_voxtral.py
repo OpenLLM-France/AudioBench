@@ -34,7 +34,7 @@ class Voxtral(BaseModel):
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = VoxtralForConditionalGeneration.from_pretrained(self.model_path, torch_dtype=torch.bfloat16, device_map="cuda")
+        self.model = VoxtralForConditionalGeneration.from_pretrained(self.model_path, torch_dtype=torch.bfloat16, device_map="auto").eval()
         logger.info(f"Model loaded: {self.model_path}")
 
     def _generate(self, input):

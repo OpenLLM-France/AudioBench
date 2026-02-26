@@ -1,6 +1,7 @@
 import re
 import logging
 
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.generation import GenerationConfig
 
@@ -39,7 +40,7 @@ class QwenAudioChat(BaseModel):
 
     def load(self):
         self.tokenizer               = AutoTokenizer.from_pretrained(self.model_path, trust_remote_code=True)
-        self.model                   = AutoModelForCausalLM.from_pretrained(self.model_path, device_map="cuda", trust_remote_code=True).eval()
+        self.model                   = AutoModelForCausalLM.from_pretrained(self.model_path, device_map="auto", trust_remote_code=True, torch_dtype=torch.bfloat16).eval()
         self.model.generation_config = GenerationConfig.from_pretrained(self.model_path, trust_remote_code=True)
         logger.info(f"Model loaded: {self.model_path}")
 

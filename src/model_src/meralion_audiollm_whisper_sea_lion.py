@@ -25,7 +25,7 @@ def _do_sample_inference(self, audio_array, instruction):
 
     for key in inputs:
         if isinstance(inputs[key], torch.Tensor):
-            inputs[key] = inputs[key].to('cuda')
+            inputs[key] = inputs[key].to(self.model.device)
         if inputs[key].dtype is torch.float32:
             inputs[key] = inputs[key].to(torch.bfloat16)
 
@@ -51,9 +51,9 @@ class MeralionAudioLLMWhisperSeaLion(BaseModel):
             use_safetensors=True,
             trust_remote_code=True,
             attn_implementation="flash_attention_2",
-            torch_dtype=torch.bfloat16
-        )
-        self.model.to("cuda")
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+        ).eval()
 
         logger.info(f"Model loaded: {self.model_path}")
 
@@ -100,7 +100,7 @@ class MeralionAudioLLMWhisperSeaLion(BaseModel):
         batch_inputs = self.processor(text=all_texts, audios=all_audios)
         for key in batch_inputs:
             if isinstance(batch_inputs[key], torch.Tensor):
-                batch_inputs[key] = batch_inputs[key].to('cuda')
+                batch_inputs[key] = batch_inputs[key].to(self.model.device)
                 if batch_inputs[key].dtype is torch.float32:
                     batch_inputs[key] = batch_inputs[key].to(torch.bfloat16)
 
