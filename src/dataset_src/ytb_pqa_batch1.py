@@ -7,4 +7,4 @@ class ytb_pqa_batch1_dataset(BaseDatasetProcessor):
     instruction_path = "instruction.text"
     reference_path = "answer.text"
     language = "EN"
-    metrics = "llama3_70b_judge"
+    metrics = "flow_judge"

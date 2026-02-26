@@ -36,6 +36,18 @@ METRIC=wer
 
 
 
+# == == == == == ASR - GigaSpeech2 (Multilingual) == == == == ==
+
+DATASET=gigaspeech2_thai
+METRIC=wer
+
+DATASET=gigaspeech2_indo
+METRIC=wer
+
+DATASET=gigaspeech2_viet
+METRIC=wer
+
+
 # == == == == == ASR - Singlish == == == == ==
 
 DATASET=imda_part1_asr_test
@@ -89,58 +101,58 @@ METRIC=bleu
 # == == == == == Spoken Question Answering == == == == ==
 
 DATASET=cn_college_listen_mcq_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=slue_p2_sqa5_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=dream_tts_mcq_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=public_sg_speech_qa_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=spoken_squad_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 # Singlish SQA
 
 DATASET=imda_part3_30s_sqa_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_part4_30s_sqa_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_part5_30s_sqa_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_part6_30s_sqa_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 
 # == == == == == Spoken Dialogue Summarization == == == == ==
 
 
 DATASET=imda_part3_30s_ds_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_part4_30s_ds_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_part5_30s_ds_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_part6_30s_ds_human_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 
 # == == == == == Speech Instruction == == == == ==
 
 DATASET=openhermes_audio_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=alpaca_audio_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=spoken-mqa_short_digit
 METRIC=acc
@@ -158,13 +170,13 @@ METRIC=acc
 # == == == == == Audio Scene Question Answering == == == == ==
 
 DATASET=clotho_aqa_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=wavcaps_qa_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=audiocaps_qa_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 
 
@@ -172,13 +184,13 @@ METRIC=llama3_70b_judge
 # == == == == == Audio Captioning == == == == ==
 
 DATASET=wavcaps_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=wavcaps_test
 METRIC=meteor
 
 DATASET=audiocaps_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=audiocaps_test
 METRIC=meteor
@@ -188,13 +200,13 @@ METRIC=meteor
 # == == == == == Emotion Recognition == == == == ==
 
 DATASET=iemocap_emotion_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=meld_sentiment_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=meld_emotion_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 
 
@@ -202,32 +214,42 @@ METRIC=llama3_70b_judge
 # == == == == == Accent Recognition == == == == ==
 
 DATASET=voxceleb_accent_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_ar_sentence
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_ar_dialogue
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 # == == == == == Gender Recognition == == == == ==
 
 DATASET=voxceleb_gender_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=iemocap_gender_test
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_gr_sentence
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 DATASET=imda_gr_dialogue
-METRIC=llama3_70b_judge
+METRIC=flow_judge
 
 # == == == == == Music Understanding == == == == ==
 
-DATASET=mu_chomusic_test
-METRIC=llama3_70b_judge
+DATASET=muchomusic_test
+METRIC=flow_judge
+
+# == == == == == Audio Understanding and Reasoning (MCQ) == == == == ==
+
+DATASET=mmau_mini
+METRIC=flow_judge  # also supports: string_match, gpt4o_judge
+
+# == == == == == Instruction Following == == == == ==
+
+DATASET=audiollm_instructionfollowing
+METRIC=llama3_70b_judge_combined
 
 # == == == == == ASR Code-Switching == == == == ==
 

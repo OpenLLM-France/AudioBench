@@ -59,53 +59,54 @@
 - [x] [covost2_id_en_test](./examples/supported_datasets.md), Speech Translation, Indonesian-English, Metric: `bleu`
 - [x] [covost2_zh_en_test](./examples/supported_datasets.md), Speech Translation, Chinese-English, Metric: `bleu`
 - [x] [covost2_ta_en_test](./examples/supported_datasets.md), Speech Translation, Tamil-English, Metric: `bleu`
-- [x] [cn_college_listen_mcq_test](./examples/supported_datasets.md), Speech Question Answering, Multiple Choice, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [slue_p2_sqa5_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [dream_tts_mcq_test](./examples/supported_datasets.md), Speech Question Answering, Multiple Choice, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [public_sg_speech_qa_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [spoken_squad_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [openhermes_audio_test](./examples/supported_datasets.md), Speech Instruction, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [alpaca_audio_test](./examples/supported_datasets.md), Speech Instruction, Metric: `llama3_70b_judge`, `gpt4o_judge`
+- [x] [cn_college_listen_mcq_test](./examples/supported_datasets.md), Speech Question Answering, Multiple Choice, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [slue_p2_sqa5_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [dream_tts_mcq_test](./examples/supported_datasets.md), Speech Question Answering, Multiple Choice, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [public_sg_speech_qa_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [spoken_squad_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [openhermes_audio_test](./examples/supported_datasets.md), Speech Instruction, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [alpaca_audio_test](./examples/supported_datasets.md), Speech Instruction, Metric: `flow_judge`, `gpt4o_judge`
 - [x] [spoken-mqa_short_digit](./examples/supported_datasets.md), Speech Instruction, Metric: `acc`
 - [x] [spoken-mqa_long_digit](./examples/supported_datasets.md), Speech Instruction, Metric: `acc`
 - [x] [spoken-mqa_single_step_reasoning](./examples/supported_datasets.md), Speech Instruction, Metric: `acc`
 - [x] [spoken-mqa_multi_step_reasoning](./examples/supported_datasets.md), Speech Instruction, Metric: `acc`
-- [x] [clotho_aqa_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [wavcaps_qa_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [audiocaps_qa_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [wavcaps_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `llama3_70b_judge`, `meteor`, `gpt4o_judge`
-- [x] [audiocaps_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `llama3_70b_judge`, `meteor`, `gpt4o_judge`
-- [x] [iemocap_emotion_test](./examples/supported_datasets.md), Emotion Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [meld_sentiment_test](./examples/supported_datasets.md), Emotion Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [meld_emotion_test](./examples/supported_datasets.md), Emotion Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [voxceleb_accent_test](./examples/supported_datasets.md), Accent Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [voxceleb_gender_test](./examples/supported_datasets.md), Gender Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [iemocap_gender_test](./examples/supported_datasets.md), Gender Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [muchomusic_test](./examples/supported_datasets.md), Music Understanding, Metric: `llama3_70b_judge`, `gpt4o_judge`
+- [x] [clotho_aqa_test](./examples/supported_datasets.md), Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [wavcaps_qa_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [audiocaps_qa_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [wavcaps_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `flow_judge`, `meteor`, `gpt4o_judge`
+- [x] [audiocaps_test](./examples/supported_datasets.md), Audio Scene Question Answering, Metric: `flow_judge`, `meteor`, `gpt4o_judge`
+- [x] [iemocap_emotion_test](./examples/supported_datasets.md), Emotion Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [meld_sentiment_test](./examples/supported_datasets.md), Emotion Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [meld_emotion_test](./examples/supported_datasets.md), Emotion Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [voxceleb_accent_test](./examples/supported_datasets.md), Accent Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [voxceleb_gender_test](./examples/supported_datasets.md), Gender Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [iemocap_gender_test](./examples/supported_datasets.md), Gender Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [muchomusic_test](./examples/supported_datasets.md), Music Understanding, Metric: `flow_judge`, `gpt4o_judge`
 - [x] [imda_part1_asr_test](./examples/supported_datasets.md), Singlish ASR, Metric: `wer`
 - [x] [imda_part2_asr_test](./examples/supported_datasets.md), Singlish ASR, Metric: `wer`
 - [x] [imda_part3_30s_asr_test](./examples/supported_datasets.md), Singlish ASR, Metric: `wer`
 - [x] [imda_part4_30s_asr_test](./examples/supported_datasets.md), Singlish ASR, Metric: `wer`
 - [x] [imda_part5_30s_asr_test](./examples/supported_datasets.md), Singlish ASR, Metric: `wer`
 - [x] [imda_part6_30s_asr_test](./examples/supported_datasets.md), Singlish ASR, Metric: `wer`
-- [x] [imda_part3_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_part4_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_part5_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_part6_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_part3_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_part4_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_part5_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_part6_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_ar_sentence](./examples/supported_datasets.md), Singlish, Accent Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_ar_dialogue](./examples/supported_datasets.md), Singlish, Accent Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_gr_sentence](./examples/supported_datasets.md), Singlish, Gender Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
-- [x] [imda_gr_dialogue](./examples/supported_datasets.md), Singlish, Gender Recognition, Metric: `llama3_70b_judge`, `gpt4o_judge`
+- [x] [imda_part3_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_part4_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_part5_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_part6_30s_sqa_human_test](./examples/supported_datasets.md), Singlish Speech Question Answering, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_part3_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_part4_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_part5_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_part6_30s_ds_human_test](./examples/supported_datasets.md), Singlish Speech Summarization, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_ar_sentence](./examples/supported_datasets.md), Singlish, Accent Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_ar_dialogue](./examples/supported_datasets.md), Singlish, Accent Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_gr_sentence](./examples/supported_datasets.md), Singlish, Gender Recognition, Metric: `flow_judge`, `gpt4o_judge`
+- [x] [imda_gr_dialogue](./examples/supported_datasets.md), Singlish, Gender Recognition, Metric: `flow_judge`, `gpt4o_judge`
 - [x] [seame_dev_man](./examples/supported_datasets.md), English-Chinese Code-Switching, Metric: `wer`
 - [x] [seame_dev_sge](./examples/supported_datasets.md), English-Chinese Code-Switching, Metric: `wer`
-- [x] [mmau_mini](./examples/supported_datasets.md), Audio Understandign and Reasoning, Multiple Choice Questions, Metric: `llama3_70b_judge`, `string_match`, `gpt4o_judge`
+- [x] [mmau_mini](./examples/supported_datasets.md), Audio Understandign and Reasoning, Multiple Choice Questions, Metric: `flow_judge`, `string_match`, `gpt4o_judge`
 - [x] [gigaspeech2_thai](./examples/supported_datasets.md), ASR for Thai language, Metric: `wer`
 - [x] [gigaspeech2_indo](./examples/supported_datasets.md), ASR for Indonesian language, Metric: `wer`
 - [x] [gigaspeech2_viet](./examples/supported_datasets.md), ASR for Vietnamese language, Metric: `wer`
+- [x] [audiollm_instructionfollowing](./examples/supported_datasets.md), Instruction Following, Metric: `llama3_70b_judge_combined`
 - [ ] [ASCEND](./examples/supported_datasets.md), English-Chinese Code-Switching, Metric: `wer`
 - [ ] [fleurs] speech translation
 - [ ] [AIR-Bench] airbench tasks
@@ -119,7 +120,7 @@ METRIC=wer
 ### How to Evaluation on Your Dataset?
 Two simple steps:
 1. Make a copy of one of the customized dataset loader. Example: [cn_college_listen_mcq_test](src/dataset_src/cn_college_listen_mcq_test.py). Customize it as your like on your own dataset.
-2. Add a new term in [dataset.py](src/dataset.py).
+2. Add a new term in [dataset_factory.py](src/dataset_factory.py).
 3. Done!
 
 
@@ -138,9 +139,13 @@ Two simple steps:
 - [x] [gpt-4o-audio](./examples/adding_new_model.md): key needed
 - [x] [phi_4_multimodal_instruct](./examples/adding_new_model.md)
 - [x] [seallms_audio_7b](https://huggingface.co/SeaLLMs/SeaLLMs-Audio-7B)
+- [x] [audio_flamingo](./examples/adding_new_model.md)
+- [x] [canary_qwen](./examples/adding_new_model.md): NeMo-based
+- [x] [luciole_audio*](./examples/adding_new_model.md): NeMo-based, prefix match
+- [x] [qwen2_omni*](./examples/adding_new_model.md): prefix match, e.g. `qwen2_omni-7b`
+- [x] [voxtral*](./examples/adding_new_model.md): prefix match
 - [ ] [ultravox](./examples/adding_new_model.md) https://huggingface.co/fixie-ai/ultravox-v0_5-llama-3_1-8b / https://www.ultravox.ai/
 - [ ] [llama3_s](./examples/adding_new_model.md) 
-- [ ] [audio-flamingo-2](./examples/adding_new_model.md)
 - [ ] [GLM4-Voice]
 - [ ] [Mini-Omni]
 - [ ] [SLAM-Omni]
@@ -183,10 +188,10 @@ BATCH_SIZE=1
 OVERWRITE=True
 NUMBER_OF_SAMPLES=-1 # indicate all test samples if number_of_samples=-1
 
-MODEL_NAME=Qwen2-Audio-7B-Instruct
+MODEL_NAME=qwen2-audio-7b-instruct
 
 DATASET=cn_college_listen_mcq_test
-METRICS=llama3_70b_judge
+METRICS=flow_judge
 
 bash eval.sh $DATASET $MODEL_NAME $GPU $BATCH_SIZE $OVERWRITE $METRICS $NUMBER_OF_SAMPLES
 

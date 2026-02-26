@@ -11,4 +11,4 @@ ac_instructions = [
 class audiocaps_test_dataset(BaseDatasetProcessor):
     instructions = ac_instructions
     task_type = "AC"
-    metrics = "llama3_70b_judge"
+    metrics = "flow_judge"

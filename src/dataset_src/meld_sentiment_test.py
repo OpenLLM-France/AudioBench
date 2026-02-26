@@ -19,4 +19,4 @@ class meld_sentiment_test_dataset(BaseDatasetProcessor):
     task_type = "ER"
     judge_binary = True
     language = "EN"
-    metrics = "llama3_70b_judge"
+    metrics = "flow_judge"
