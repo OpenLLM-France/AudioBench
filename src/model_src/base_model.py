@@ -13,7 +13,7 @@ class BaseModel:
     """Base class for all AudioBench models."""
 
     supports_vllm = False
-    max_audio_duration = 30
+    max_audio_duration = 60
 
     def __init__(self, model_path=None):
         self.model_path = model_path
