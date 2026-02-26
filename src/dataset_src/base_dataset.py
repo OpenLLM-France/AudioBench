@@ -173,6 +173,15 @@ class BaseDatasetProcessor:
                 results, all_details = flow_judge_as_judge("", [questions, references, predictions])
             return {'flow_judge': results, 'details': all_details}
 
+        elif metrics == 'flow_judge_api':
+            if self.judge_binary:
+                from dataset_src.eval_methods.eval_flow_judge_api import flow_judge_api_as_judge_binary
+                results, all_details = flow_judge_api_as_judge_binary("", [questions, references, predictions])
+            else:
+                from dataset_src.eval_methods.eval_flow_judge_api import flow_judge_api_as_judge
+                results, all_details = flow_judge_api_as_judge("", [questions, references, predictions])
+            return {'flow_judge_api': results, 'details': all_details}
+
         elif metrics == 'linagora_api_oss120':
             if self.judge_binary:
                 from dataset_src.eval_methods.eval_linagora_api_oss120 import gpt4o_as_judge_binary
