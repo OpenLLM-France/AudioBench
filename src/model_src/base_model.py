@@ -59,9 +59,10 @@ class BaseModel:
             logger.info(f'Audio duration is more than {max_dur} seconds. Taking first {max_dur} seconds.')
             return [audio_array[:max_dur * sampling_rate]], 'truncated'
 
-        if audio_duration < 1:
-            logger.info('Audio duration is less than 1 second. Padding the audio to 1 second.')
-            audio_array = np.pad(audio_array, (0, sampling_rate), 'constant')
+        if audio_duration < 0.5:
+            logger.info('Audio duration is less than 0.5 second. Padding the audio to 0.5 second.')
+            pad_samples = int(0.5 * sampling_rate) - len(audio_array)
+            audio_array = np.pad(audio_array, (0, pad_samples), 'constant')
 
         return [audio_array], 'normal'
 

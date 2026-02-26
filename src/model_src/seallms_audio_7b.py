@@ -63,9 +63,13 @@ class SeallmsAudio7B(BaseModel):
         self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
         logger.info(f"Model loaded: {self.model_path}")
 
+    def _vllm_chat_kwargs(self):
+        return {"chat_template_content_format": "string"}
+
     def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
         from model_src.vllm_backend import _input_audio_part
         return [
+            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": [
                 _input_audio_part(audio_array, sampling_rate),
                 {"type": "text", "text": instruction},
