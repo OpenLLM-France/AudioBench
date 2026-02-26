@@ -95,10 +95,14 @@ def load_model(model_name, backend="transformers", model_path=None):
 
     if backend == "vllm":
         if not model.supports_vllm:
-            raise NotImplementedError(
-                f"VLLM backend not supported for model '{model_name}'."
+            logger.warning(
+                f"VLLM backend not supported for model '{model_name}'. "
+                f"Falling back to transformers backend."
             )
-        model.load_vllm()
+            model.backend = "transformers"
+            model.load()
+        else:
+            model.load_vllm()
     else:
         model.load()
 

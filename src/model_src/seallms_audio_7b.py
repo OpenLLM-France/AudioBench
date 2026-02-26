@@ -52,6 +52,7 @@ def _do_sample_inference(self, audio_array, prompt):
 class SeallmsAudio7B(BaseModel):
 
     max_audio_duration = 40
+    supports_vllm = True
 
     def __init__(self):
         super().__init__(model_path="SeaLLMs/SeaLLMs-Audio-7B")
@@ -60,6 +61,15 @@ class SeallmsAudio7B(BaseModel):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
         self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto")
         logger.info(f"Model loaded: {self.model_path}")
+
+    def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
+        from model_src.vllm_backend import _input_audio_part
+        return [
+            {"role": "user", "content": [
+                _input_audio_part(audio_array, sampling_rate),
+                {"type": "text", "text": instruction},
+            ]},
+        ]
 
     def _generate(self, input):
 
@@ -72,52 +82,3 @@ class SeallmsAudio7B(BaseModel):
         if mode == 'chunked':
             return ' '.join(_do_sample_inference(self, seg, instruction) for seg in segments)
         return _do_sample_inference(self, segments[0], instruction)
-
-    def _generate_batch(self, inputs):
-        target_sr = self.processor.feature_extractor.sampling_rate
-
-        all_texts = []
-        all_audios = []
-
-        for inp in inputs:
-            audio_array = inp["audio"]["array"]
-            sampling_rate = inp["audio"]["sampling_rate"]
-            instruction = inp["instruction"]
-
-            segments, mode = self._prepare_audio_segments(
-                audio_array, sampling_rate, inp['task_type']
-            )
-            if mode == 'chunked':
-                raise RuntimeError(
-                    "Audio chunking is not supported with batch_size > 1. "
-                    "Use batch_size=1 for long ASR audio."
-                )
-
-            audio_path = self._write_temp_audio(segments[0], sampling_rate)
-            conversation = [
-                {"role": "user", "content": [
-                    {"type": "audio", "audio_url": audio_path},
-                    {"type": "text", "text": instruction},
-                ]},
-            ]
-            text = self.processor.apply_chat_template(
-                conversation, add_generation_prompt=True, tokenize=False
-            )
-            audio = librosa.load(audio_path, sr=target_sr)[0]
-
-            all_texts.append(text)
-            all_audios.append(audio)
-
-        batch_inputs = self.processor(
-            text=all_texts, audios=all_audios,
-            return_tensors="pt", padding=True, sampling_rate=16000
-        )
-        batch_inputs = {k: v.to("cuda") for k, v in batch_inputs.items() if v is not None}
-
-        generate_ids = self.model.generate(
-            **batch_inputs, max_new_tokens=2048, temperature=0, do_sample=False
-        )
-        generate_ids = generate_ids[:, batch_inputs["input_ids"].size(1):]
-        return self.processor.batch_decode(
-            generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
-        )
