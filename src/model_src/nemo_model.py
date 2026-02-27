@@ -22,12 +22,10 @@ class NeMoModel(BaseModel):
         ]
 
     def _generate(self, input):
-        audio_array = input["audio"]["array"]
-        sampling_rate = input["audio"]["sampling_rate"]
         prompt = input["instruction"]
 
-        segments, mode = self._prepare_audio_segments(
-            audio_array, sampling_rate, input['task_type']
+        segments, sampling_rate, mode = self._prepare_audio_segments(
+            input["audio"], input['task_type']
         )
 
         if mode == 'chunked':
@@ -48,12 +46,10 @@ class NeMoModel(BaseModel):
         all_prompts = []
 
         for inp in inputs:
-            audio_array = inp["audio"]["array"]
-            sampling_rate = inp["audio"]["sampling_rate"]
             prompt = inp["instruction"]
 
-            segments, mode = self._prepare_audio_segments(
-                audio_array, sampling_rate, inp['task_type']
+            segments, sampling_rate, mode = self._prepare_audio_segments(
+                inp["audio"], inp['task_type']
             )
             if mode == 'chunked':
                 raise RuntimeError(

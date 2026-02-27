@@ -57,8 +57,6 @@ class Phi4MultimodalInstruct(BaseModel):
 
     def _generate(self, input):
 
-        audio_array   = input["audio"]["array"]
-        sampling_rate = input["audio"]["sampling_rate"]
         instruction   = input['instruction']
 
         user_prompt      = '<|user|>'
@@ -66,7 +64,7 @@ class Phi4MultimodalInstruct(BaseModel):
         prompt_suffix    = '<|end|>'
         prompt = f'{user_prompt}<|audio_1|>{instruction}{prompt_suffix}{assistant_prompt}'
 
-        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
+        segments, sampling_rate, mode = self._prepare_audio_segments(input["audio"], input['task_type'])
 
         if mode == 'chunked':
             return ' '.join(_do_sample_inference(self, seg, prompt) for seg in segments)

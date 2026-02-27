@@ -34,10 +34,7 @@ class Salmonn7B(BaseModel):
 
     def _generate(self, input):
 
-        audio_array   = input["audio"]["array"]
-        sampling_rate = input["audio"]["sampling_rate"]
-
-        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
+        segments, sampling_rate, mode = self._prepare_audio_segments(input["audio"], input['task_type'])
 
         if mode == 'chunked':
             model_predictions = []

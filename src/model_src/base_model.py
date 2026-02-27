@@ -40,31 +40,38 @@ class BaseModel:
 
     # --- Audio preprocessing ---
 
-    def _prepare_audio_segments(self, audio_array, sampling_rate, task_type):
+    def _prepare_audio_segments(self, audio, task_type):
         """Chunk / truncate / pad audio based on max_audio_duration.
 
-        Returns (segments, mode) where mode is 'chunked', 'truncated', or 'normal'.
+        Args:
+            audio: dict with keys 'array', 'sampling_rate', and optionally 'path'.
+            task_type: e.g. 'ASR'.
+
+        Returns (segments, sampling_rate, mode) where mode is 'chunked', 'truncated', or 'normal'.
         """
+        audio_array = audio["array"]
+        sampling_rate = audio["sampling_rate"]
+        audio_path = audio.get("path")
         audio_duration = len(audio_array) / sampling_rate
         max_dur = self.max_audio_duration
 
         if audio_duration > max_dur and task_type == 'ASR':
-            logger.info(f'Audio duration is more than {max_dur} seconds. Chunking and inferring separately.')
+            logger.info(f'Audio duration is more than {max_dur}s. Chunking and inferring separately. Path: {audio_path}')
             chunks = []
             for i in range(0, len(audio_array), max_dur * sampling_rate):
                 chunks.append(audio_array[i:i + max_dur * sampling_rate])
-            return chunks, 'chunked'
+            return chunks, sampling_rate, 'chunked'
 
         if audio_duration > max_dur:
-            logger.info(f'Audio duration is more than {max_dur} seconds. Taking first {max_dur} seconds.')
-            return [audio_array[:max_dur * sampling_rate]], 'truncated'
+            logger.info(f'Audio duration is more than {max_dur}s. Taking first {max_dur}s. Path: {audio_path}')
+            return [audio_array[:max_dur * sampling_rate]], sampling_rate, 'truncated'
 
         if audio_duration < 0.5:
-            logger.info('Audio duration is less than 0.5 second. Padding the audio to 0.5 second.')
+            logger.info(f'Audio duration is less than 0.5s. Padding to 0.5s. Path: {audio_path}')
             pad_samples = int(0.5 * sampling_rate) - len(audio_array)
             audio_array = np.pad(audio_array, (0, pad_samples), 'constant')
 
-        return [audio_array], 'normal'
+        return [audio_array], sampling_rate, 'normal'
 
     # --- Public API (called by main_evaluate) ---
 
@@ -126,12 +133,10 @@ class BaseModel:
         chunk_buffers = {}
 
         for i, inp in enumerate(inputs):
-            audio_array = inp["audio"]["array"]
-            sampling_rate = inp["audio"]["sampling_rate"]
             instruction = inp["instruction"]
             is_asr = inp['task_type'] == 'ASR'
 
-            segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, inp['task_type'])
+            segments, sampling_rate, mode = self._prepare_audio_segments(inp["audio"], inp['task_type'])
 
             if mode == 'chunked':
                 chunk_buffers[i] = []

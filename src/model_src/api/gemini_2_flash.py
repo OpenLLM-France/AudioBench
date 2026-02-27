@@ -47,11 +47,9 @@ class Gemini2Flash(BaseModel):
 
     def _generate(self, input):
 
-        audio_array   = input["audio"]["array"]
-        sampling_rate = input["audio"]["sampling_rate"]
         instruction   = input["instruction"]
 
-        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
+        segments, sampling_rate, mode = self._prepare_audio_segments(input["audio"], input['task_type'])
 
         if mode == 'chunked':
             return ' '.join(_do_sample_inference(self, seg, instruction) for seg in segments)

@@ -83,12 +83,10 @@ class Qwen2Audio7BInstruct(BaseModel):
 
     def _generate(self, input):
 
-        audio_array   = input["audio"]["array"]
-        sampling_rate = input["audio"]["sampling_rate"]
         instruction   = input["instruction"]
         is_asr        = input['task_type'] == 'ASR'
 
-        segments, mode = self._prepare_audio_segments(audio_array, sampling_rate, input['task_type'])
+        segments, sampling_rate, mode = self._prepare_audio_segments(input["audio"], input['task_type'])
 
         if mode == 'chunked':
             return ' '.join(self._infer_single(seg, sampling_rate, instruction, is_asr) for seg in segments)
