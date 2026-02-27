@@ -3,6 +3,7 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 
 class mu_chomusic_test_dataset(BaseDatasetProcessor):
     task_type = "Music Question Answering"
+    sub_task = "MCQ (Text Instruction + Audio Context)"
     language = "EN"
     judge_binary = True
     metrics = "flow_judge"
