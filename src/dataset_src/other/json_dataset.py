@@ -42,4 +42,6 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
             "instruction": instruction,
             "reference": reference,
             "task_type": self.task_type,
+            "sub_task": self.sub_task,
+            "language": self.language,
         }

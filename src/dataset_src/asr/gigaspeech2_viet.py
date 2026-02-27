@@ -7,6 +7,7 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 
 class gigaspeech2_viet_test_dataset(BaseDatasetProcessor):
     task_type = "ASR"
+    sub_task = "Reading"
     language = "VI"
     metrics = "wer"
 

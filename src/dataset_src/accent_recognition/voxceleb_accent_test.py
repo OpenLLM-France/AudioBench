@@ -16,7 +16,8 @@ ar_instructions = [
 
 class voxceleb_accent_test_dataset(BaseDatasetProcessor):
     instructions = ar_instructions
-    task_type = "AR"
+    task_type = "Accent Recognition"
+    language = "EN"
     judge_binary = True
     metrics = "flow_judge"
 

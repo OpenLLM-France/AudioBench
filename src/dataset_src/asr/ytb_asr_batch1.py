@@ -5,6 +5,7 @@ from dataset_src.prompts.prompts import asr_instructions
 class ytb_asr_batch1_dataset(BaseDatasetProcessor):
     instructions = asr_instructions
     task_type = "ASR"
+    sub_task = "Youtube"
     language = "EN"
     metrics = "wer"
     audio_path = "context.audio"

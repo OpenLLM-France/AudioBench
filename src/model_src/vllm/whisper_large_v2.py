@@ -36,18 +36,15 @@ class WhisperLargeV2(BaseModel):
 
     def _generate(self, sample):
 
-        if sample['task_type'] == 'ASR':
-            whisper_output = self.whisper_pipe(sample['audio'])['text'].strip()
-            return whisper_output
-
-        elif sample['task_type'] == "ASR-ZH":
+        if sample['task_type'] == 'ASR' and sample.get('language') == 'ZH':
             whisper_output = self.whisper_pipe(sample['audio'], generate_kwargs={"language": "zh"})['text'].strip()
             return whisper_output
 
-        elif sample['task_type'] in ["ST-ID-EN",
-                                     "ST-TA-EN",
-                                     "ST-ZH-EN",
-                                     ]:
+        elif sample['task_type'] == 'ASR':
+            whisper_output = self.whisper_pipe(sample['audio'])['text'].strip()
+            return whisper_output
+
+        elif sample['task_type'] == 'AST':
             whisper_output = self.whisper_pipe(sample['audio'], generate_kwargs={"task": "translate", "language": "en"})['text'].strip()
             return whisper_output
 
@@ -72,7 +69,7 @@ class WhisperLargeV2(BaseModel):
 
         all_prompts = [
             TextPrompt(
-                prompt=_whisper_task_prompt(s['task_type']),
+                prompt=_whisper_task_prompt(s['task_type'], s.get('language')),
                 multi_modal_data={"audio": [(s["audio"]["array"], s["audio"]["sampling_rate"])]},
             )
             for s in samples

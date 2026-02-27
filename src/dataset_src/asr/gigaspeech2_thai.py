@@ -10,6 +10,7 @@ from pythainlp.tokenize import word_tokenize
 
 class gigaspeech2_thai_test_dataset(BaseDatasetProcessor):
     task_type = "ASR"
+    sub_task = "Reading"
     language = "TH"
     metrics = "wer"
 

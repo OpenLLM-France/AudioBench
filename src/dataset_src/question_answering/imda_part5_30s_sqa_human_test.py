@@ -2,6 +2,7 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 
 
 class imda_part5_30s_sqa_human_test_dataset(BaseDatasetProcessor):
-    task_type = "SQA"
+    task_type = "Question Answering"
+    sub_task = "QA (Text Instruction + Audio Context)"
     language = "EN_SG"
     metrics = "flow_judge"

@@ -8,7 +8,8 @@ ac_instructions = [
     "Could you assist me in creating a caption for the audio clip?",
 ]
 
-class wavcaps_test_dataset(BaseDatasetProcessor):
+class audiocaps_test_dataset(BaseDatasetProcessor):
     instructions = ac_instructions
-    task_type = "AC"
+    task_type = "Audio Captioning"
+    language = "EN"
     metrics = "flow_judge"

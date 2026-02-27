@@ -9,6 +9,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 class nlb_asr_test_dataset(object):
     language = "EN_SG"
+    sub_task = "Conversation"
     metrics = "wer"
 
     def __init__(self, raw_data, number_of_samples):
@@ -33,7 +34,9 @@ class nlb_asr_test_dataset(object):
                                 "audio"      : audio,
                                 "instruction": instruction,
                                 "reference"  : reference,
-                                "task_type"  : "ASR"
+                                "task_type"  : "ASR",
+                                "sub_task"   : self.sub_task,
+                                "language"   : self.language,
                                 })
 
         logging.info('\n=  =  =  Dataset Sample  =  =  =')

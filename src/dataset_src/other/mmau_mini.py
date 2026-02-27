@@ -4,6 +4,7 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 
 class mmau_mini_test_dataset(BaseDatasetProcessor):
     task_type = "Audio-Understanding-Reasoning"
+    language = "EN"
     judge_binary = True
     metrics = "flow_judge"
 

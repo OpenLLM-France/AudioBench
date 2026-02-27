@@ -4,5 +4,6 @@ from dataset_src.prompts.prompts import asr_instructions
 class gigaspeech_test_dataset(BaseDatasetProcessor):
     instructions = asr_instructions
     task_type = "ASR"
+    sub_task = "Youtube"
     language = "EN"
     metrics = "wer"

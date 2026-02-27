@@ -59,6 +59,9 @@ def run_evaluation(
     if dataset_config.get("task") is not None:
         processor.task_type = dataset_config.get("task").upper()
         
+    if dataset_config.get("sub_task") is not None:
+        processor.sub_task = dataset_config.get("sub_task")
+
     if dataset_config.get("language") is not None:
         processor.language = dataset_config.get("language").upper()
     
@@ -133,6 +136,7 @@ def run_evaluation(
     results['metrics'] = dataset_config["metrics"]
     results['number_of_samples'] = len(data_with_model_predictions)
     results['task'] = processor.task_type
+    results['sub_task'] = processor.sub_task
     results['language'] = processor.language
     logger.info(' ='*30)
     logger.info(f'Model name: {model_name.upper()}')

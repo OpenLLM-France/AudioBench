@@ -8,6 +8,7 @@ from dataset_src.prompts.prompts import asr_instructions
 class seame_dev_sge_dataset(BaseDatasetProcessor):
     instructions = asr_instructions
     task_type = "ASR"
+    sub_task = "Code Switching"
     language = "ZH"
     metrics = "wer"
 

@@ -14,9 +14,10 @@ si_instructions = [
 ]
 
 
-class openhermes_audio_test_dataset(BaseDatasetProcessor):
+class alpaca_audio_test_dataset(BaseDatasetProcessor):
     instructions = si_instructions
-    task_type = "SI"
+    task_type = "Instruction Following"
+    sub_task = "Spoken Instruction"
     question_key = "audio_text_instruction"
     language = "EN"
     metrics = "flow_judge"

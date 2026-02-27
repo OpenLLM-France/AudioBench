@@ -10,7 +10,8 @@ def get_seperation_trigger(dataset: str):
 
 
 class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
-    task_type = "MathQA"
+    task_type = "Question Answering"
+    sub_task = "Math (Text Instruction + Audio Context)"
     reference_key = "answer"
     language = "EN"
     metrics = "acc"
@@ -18,10 +19,13 @@ class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
     def _process_sample(self, sample):
         return {
             "audio": sample['context'],
-            "audio_gt": sample['context_transcript'],
+            "
+            ": sample['context_transcript'],
             "instruction": sample['instruction']['text'],
             "answer": sample['answer']['text'],
             "task_type": self.task_type,
+            "sub_task": self.sub_task,
+            "language": self.language,
         }
 
     def format_model_predictions(self, input_data, model_predictions, llm_text_inputs=None):
@@ -74,7 +78,8 @@ class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
 
 
 class spokenmqa_dataset_reasoning(BaseDatasetProcessor):
-    task_type = "MathQA"
+    task_type = "Question Answering"
+    sub_task = "Math (Text Instruction + Audio Context)"
     reference_key = "answer"
     language = "EN"
     metrics = "acc"
@@ -86,6 +91,8 @@ class spokenmqa_dataset_reasoning(BaseDatasetProcessor):
             "instruction": sample['instruction']['text'],
             "answer": sample['answer']['text'],
             "task_type": self.task_type,
+            "sub_task": self.sub_task,
+            "language": self.language,
         }
 
     def format_model_predictions(self, input_data, model_predictions, llm_text_inputs=None):

@@ -1,4 +1,30 @@
 
+Tasks:
+- ASR (Automatic Speech Recognition)
+    - sub_tasks: Reading, Conversation, Youtube, Speech, Code Switching
+- AST (Automatic Speech Translation)
+    - sub_tasks: EN-ID, EN-ZH, EN-TA, ID-EN, ZH-EN, TA-EN
+- Question Answering
+    - sub_tasks: MCQ (Text Instruction + Audio Context), QA (Text Instruction + Audio Context), PQA (Text Instruction + Audio Context), Math (Text Instruction + Audio Context)
+- Emotion Recognition
+    - sub_tasks: Emotion, Sentiment
+- Gender Recognition
+    - sub_tasks: Sentence, Dialogue
+- Accent Recognition
+    - sub_tasks: Sentence, Dialogue
+- Language Recognition
+- Audio Question Answering
+- Audio Captioning
+- Music Question Answering
+- Music Captioning
+- Dialogue Summarization
+- Instruction Following
+    - sub_tasks: Spoken Instruction, Format Following
+- Speaker Verification
+- Speaker Diarization
+- Others
+
+
 Supported datasets:
 
 
@@ -76,7 +102,7 @@ METRIC=wer
 
 
 
-# == == == == == Speech Translation == == == == ==
+# == == == == == AST (Automatic Speech Translation) == == == == ==
 
 DATASET=covost2_en_id_test
 METRIC=bleu
@@ -98,7 +124,7 @@ METRIC=bleu
 
 
 
-# == == == == == Spoken Question Answering == == == == ==
+# == == == == == Question Answering == == == == ==
 
 DATASET=cn_college_listen_mcq_test
 METRIC=flow_judge
@@ -129,8 +155,22 @@ METRIC=flow_judge
 DATASET=imda_part6_30s_sqa_human_test
 METRIC=flow_judge
 
+# Math QA
 
-# == == == == == Spoken Dialogue Summarization == == == == ==
+DATASET=spoken-mqa_short_digit
+METRIC=acc
+
+DATASET=spoken-mqa_long_digit
+METRIC=acc
+
+DATASET=spoken-mqa_single_step_reasoning
+METRIC=acc
+
+DATASET=spoken-mqa_multi_step_reasoning
+METRIC=acc
+
+
+# == == == == == Dialogue Summarization == == == == ==
 
 
 DATASET=imda_part3_30s_ds_human_test
@@ -146,7 +186,7 @@ DATASET=imda_part6_30s_ds_human_test
 METRIC=flow_judge
 
 
-# == == == == == Speech Instruction == == == == ==
+# == == == == == Instruction Following == == == == ==
 
 DATASET=openhermes_audio_test
 METRIC=flow_judge
@@ -154,20 +194,11 @@ METRIC=flow_judge
 DATASET=alpaca_audio_test
 METRIC=flow_judge
 
-DATASET=spoken-mqa_short_digit
-METRIC=acc
-
-DATASET=spoken-mqa_long_digit
-METRIC=acc
-
-DATASET=spoken-mqa_single_step_reasoning
-METRIC=acc
-
-DATASET=spoken-mqa_multi_step_reasoning
-METRIC=acc
+DATASET=audiollm_instructionfollowing
+METRIC=llama3_70b_judge_combined
 
 
-# == == == == == Audio Scene Question Answering == == == == ==
+# == == == == == Audio Question Answering == == == == ==
 
 DATASET=clotho_aqa_test
 METRIC=flow_judge
@@ -236,7 +267,7 @@ METRIC=flow_judge
 DATASET=imda_gr_dialogue
 METRIC=flow_judge
 
-# == == == == == Music Understanding == == == == ==
+# == == == == == Music Question Answering == == == == ==
 
 DATASET=muchomusic_test
 METRIC=flow_judge
@@ -246,14 +277,9 @@ METRIC=flow_judge
 DATASET=mmau_mini
 METRIC=flow_judge  # also supports: string_match, gpt4o_judge
 
-# == == == == == Instruction Following == == == == ==
-
-DATASET=audiollm_instructionfollowing
-METRIC=llama3_70b_judge_combined
-
 # == == == == == ASR Code-Switching == == == == ==
 
-# SEAME dataset for Madarine-English code-switching with Singapore accent.
+# SEAME dataset for Mandarin-English code-switching with Singapore accent.
 #Lyu, Dau-Cheng, Tien Ping Tan, Engsiong Chng, and Haizhou Li. "SEAME: a Mandarin-English code-switching speech corpus in south-east asia." In Interspeech, vol. 10, pp. 1986-1989. 2010.
 
 DATASET=seame_dev_man

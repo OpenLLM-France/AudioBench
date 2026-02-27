@@ -21,12 +21,12 @@ def _input_audio_part(audio_array, sampling_rate):
     }
 
 
-def _whisper_task_prompt(task_type):
-    if task_type == 'ASR':
-        return "<|startoftranscript|>"
-    elif task_type == 'ASR-ZH':
+def _whisper_task_prompt(task_type, language=None):
+    if task_type == 'ASR' and language == 'ZH':
         return "<|startoftranscript|><|zh|><|transcribe|>"
-    elif task_type in ["ST-ID-EN", "ST-TA-EN", "ST-ZH-EN"]:
+    elif task_type == 'ASR':
+        return "<|startoftranscript|>"
+    elif task_type == 'AST':
         return "<|startoftranscript|><|en|><|translate|>"
     else:
         raise NotImplementedError(f"Whisper does not support other task: {task_type}.")

@@ -2,7 +2,8 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 
 
 class audiollm_instruction_following_dataset(BaseDatasetProcessor):
-    task_type = None
+    task_type = "Instruction Following"
+    sub_task = "Format Following"
     question_key = "text"
     reference_key = "answer"
     language = "EN"
@@ -16,7 +17,9 @@ class audiollm_instruction_following_dataset(BaseDatasetProcessor):
             "dimension": sample['instruction_type'],
             "rule_type": sample['rule'],
             "rule_target": sample['rule_content'],
-            "task_type": sample['instruction_type'],
+            "task_type": self.task_type,
+            "sub_task": self.sub_task,
+            "language": self.language,
         }
 
     def compute_score(self, data_with_model_predictions, metrics=None):

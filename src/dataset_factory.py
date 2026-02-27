@@ -207,19 +207,19 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
         return tedlium3_long_form_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'openhermes_audio_test':
-        from dataset_src.spoken_instruction.openhermes_audio_test import openhermes_audio_test_dataset
+        from dataset_src.instruction_following.openhermes_audio_test import openhermes_audio_test_dataset
         return openhermes_audio_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'alpaca_audio_test':
-        from dataset_src.spoken_instruction.alpaca_audio_test import alpaca_audio_test_dataset
+        from dataset_src.instruction_following.alpaca_audio_test import alpaca_audio_test_dataset
         return alpaca_audio_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'audiocaps_test':
-        from dataset_src.audio_question_answering.audiocaps_test import audiocaps_test_dataset
+        from dataset_src.audio_captioning.audiocaps_test import audiocaps_test_dataset
         return audiocaps_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'wavcaps_test':
-        from dataset_src.audio_question_answering.wavcaps_test import wavcaps_test_dataset
+        from dataset_src.audio_captioning.wavcaps_test import wavcaps_test_dataset
         return wavcaps_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'clotho_aqa_test':
@@ -367,8 +367,8 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
         return imda_gr_dialogue_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'mmau_mini':
-        from dataset_src.other.mmau_mini import mmau_mini_dataset
-        return mmau_mini_dataset(data_loader, number_of_samples)
+        from dataset_src.other.mmau_mini import mmau_mini_test_dataset
+        return mmau_mini_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'gigaspeech2_thai':
         from dataset_src.asr.gigaspeech2_thai import gigaspeech2_thai_dataset
@@ -463,7 +463,7 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
         return mediacorp_short_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'audiollm_instructionfollowing':
-        from dataset_src.other.audiollm_instruction_following_dataset import audiollm_instruction_following_dataset
+        from dataset_src.instruction_following.audiollm_instruction_following_dataset import audiollm_instruction_following_dataset
         return audiollm_instruction_following_dataset(data_loader, number_of_samples)
 
     elif DATASET_SOURCES[dataset_name][0].endswith(".jsonl"):

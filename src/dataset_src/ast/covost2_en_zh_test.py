@@ -26,6 +26,7 @@ st_instructions = [
 
 class covost2_en_zh_test_dataset(BaseDatasetProcessor):
     instructions = st_instructions
-    task_type = "ST-EN-ZH"
+    task_type = "AST"
+    sub_task = "EN-ZH"
     language = "EN-ZH"
     metrics = "bleu"

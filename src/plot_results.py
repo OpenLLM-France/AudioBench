@@ -61,16 +61,16 @@ ZERO_TO_ONE_RANGE = {"wer", "meteor"}
 AGGREGATE_DATASETS = {
     "ASR": ["fleurs", "common_voice", "librispeech", "gigaspeech", "aishell",
             "earnings", "peoples_speech", "tedlium"],
-    "ST":  ["covost2"],
-    "SQA": ["slue_p2_sqa5", "spoken_squad", "public_sg_speech_qa",
+    "AST":  ["covost2"],
+    "Question Answering": ["slue_p2_sqa5", "spoken_squad", "public_sg_speech_qa",
             "cn_college_listen_mcq", "dream_tts_mcq"],
-    "ASQA": ["clotho_aqa", "audiocaps_qa", "wavcaps_qa"],
-    "AC":  ["audiocaps", "wavcaps"],
-    "ER":  ["iemocap_emotion", "meld_sentiment", "meld_emotion"],
-    "GR":  ["voxceleb_gender", "iemocap_gender"],
-    "AR":  ["voxceleb_accent", "imda_ar"],
-    "SI":  ["openhermes_audio", "alpaca_audio"],
-    "SDS": ["imda_part3_30s_ds", "imda_part4_30s_ds",
+    "Audio Question Answering": ["clotho_aqa", "audiocaps_qa", "wavcaps_qa"],
+    "Audio Captioning":  ["audiocaps", "wavcaps"],
+    "Emotion Recognition":  ["iemocap_emotion", "meld_sentiment", "meld_emotion"],
+    "Gender Recognition":  ["voxceleb_gender", "iemocap_gender"],
+    "Accent Recognition":  ["voxceleb_accent", "imda_ar"],
+    "Instruction Following":  ["openhermes_audio", "alpaca_audio"],
+    "Dialogue Summarization": ["imda_part3_30s_ds", "imda_part4_30s_ds",
             "imda_part5_30s_ds", "imda_part6_30s_ds"],
 }
 
@@ -141,12 +141,35 @@ def load_all_scores(input_folder):
 # Filtering
 # ---------------------------------------------------------------------------
 
+_LEGACY_TASK_MAP = {
+    "ST": "AST",
+    "SQA": "Question Answering",
+    "PQA": "Question Answering",
+    "MATHQA": "Question Answering",
+    "ASQA": "Audio Question Answering",
+    "AC": "Audio Captioning",
+    "ER": "Emotion Recognition",
+    "GR": "Gender Recognition",
+    "AR": "Accent Recognition",
+    "SI": "Instruction Following",
+    "SDS": "Dialogue Summarization",
+    "MUSIC-QA": "Music Question Answering",
+}
+
 def normalize_task(task_str):
-    """Normalize task string: 'ST-EN-ZH' -> 'ST', 'ASR-ZH' -> 'ASR'."""
+    """Normalize task string to canonical form.
+
+    Handles both new human-readable names (returned as-is) and legacy short
+    codes (e.g. 'ST-EN-ZH' -> 'AST', 'ASR-ZH' -> 'ASR', 'SQA' -> 'Question Answering').
+    """
     if task_str is None:
         return None
-    parts = task_str.upper().split("-")
-    return parts[0] if parts else None
+    # New human-readable names already in AGGREGATE_DATASETS — return as-is
+    if task_str in AGGREGATE_DATASETS:
+        return task_str
+    # Legacy short codes: strip language suffix first (e.g. ST-EN-ZH -> ST, ASR-ZH -> ASR)
+    base = task_str.upper().split("-")[0]
+    return _LEGACY_TASK_MAP.get(task_str.upper(), _LEGACY_TASK_MAP.get(base, base))
 
 
 def filter_entries(entries, task=None, dataset=None, language=None):

@@ -16,7 +16,7 @@ gr_instructions = [
 
 class iemocap_gender_test_dataset(BaseDatasetProcessor):
     instructions = gr_instructions
-    task_type = "GR"
+    task_type = "Gender Recognition"
     judge_binary = True
     language = "EN"
     metrics = "flow_judge"

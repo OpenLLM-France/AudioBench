@@ -39,18 +39,15 @@ class WhisperLargeV2Gemma29BCptSeaLionV3Instruct(BaseModel):
 
     def _generate(self, sample):
 
-        if sample['task_type'] == 'ASR':
-            whisper_output = self.whisper_pipe(sample['audio'], generate_kwargs={"language": "en"})['text'].strip()
-            return whisper_output
-
-        elif sample['task_type'] == "ASR-ZH":
+        if sample['task_type'] == 'ASR' and sample.get('language') == 'ZH':
             whisper_output = self.whisper_pipe(sample['audio'], generate_kwargs={"language": "zh"})['text'].strip()
             return whisper_output
 
-        elif sample['task_type'] in ["ST-ID-EN",
-                                     "ST-TA-EN",
-                                     "ST-ZH-EN",
-                                     ]:
+        elif sample['task_type'] == 'ASR':
+            whisper_output = self.whisper_pipe(sample['audio'], generate_kwargs={"language": "en"})['text'].strip()
+            return whisper_output
+
+        elif sample['task_type'] == 'AST':
             whisper_output = self.whisper_pipe(sample['audio'], generate_kwargs={"task": "translate", "language": "en"})['text'].strip()
             return whisper_output
 
@@ -75,8 +72,8 @@ class WhisperLargeV2Gemma29BCptSeaLionV3Instruct(BaseModel):
 
             batch_input = [prompt]
 
-            # If speech instruction task, then only use whisper_output
-            if sample['task_type'] == "SI":
+            # If instruction following task, then only use whisper_output
+            if sample['task_type'] == "Instruction Following":
                 batch_input = [whisper_output]
 
             batch_input_templated = []

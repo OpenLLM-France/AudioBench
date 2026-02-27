@@ -11,7 +11,7 @@ class BaseDatasetProcessor:
     Class Attributes:
         instructions: List of instruction prompts to randomly sample from.
             If None, instruction is taken from the dataset sample.
-        task_type: Task type label (e.g., "ASR", "SQA", "ER", "ST-EN-ZH").
+        task_type: Task type label (e.g., "ASR", "AST", "Question Answering").
         judge_binary: If True, use binary judge variants for scoring.
         question_key: Key in prediction dicts used as question for judge scoring.
         reference_key: Key in prediction dicts used as reference for scoring.
@@ -29,6 +29,7 @@ class BaseDatasetProcessor:
 
     instructions = None
     task_type = "UNKNOWN"
+    sub_task = None
     language = "UNKNOWN"
     judge_binary = False
     question_key = "instruction"
@@ -93,6 +94,8 @@ class BaseDatasetProcessor:
             "instruction": self._get_instruction(sample),
             "reference": self._get_reference(sample),
             "task_type": self.task_type,
+            "sub_task": self.sub_task,
+            "language": self.language,
         }
 
     def prepare_model_input(self):
