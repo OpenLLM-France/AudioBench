@@ -87,6 +87,10 @@ def load_model(model_name, backend="transformers", model_path=None):
         from model_src.transformers.mistralai_voxtral import Voxtral
         model = Voxtral()
 
+    elif model_name == 'kimi-audio-7b-instruct':
+        from model_src.transformers.kimi_audio_7b_instruct import KimiAudio7BInstruct
+        model = KimiAudio7BInstruct(model_path=model_path)
+
     else:
         raise NotImplementedError(f"Model {model_name} not implemented yet")
 
