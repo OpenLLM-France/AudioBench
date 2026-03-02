@@ -12,15 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 def _post_process_qwen2_omni_asr(model_output):
-    match = re.search(r"\nassistant\n(.*)", model_output, re.DOTALL)
-    if match:
-        model_output = match.group(1)
+    # Try \boxed{"..."}
+    m = re.search(r'\\boxed\{"(.*?)"\}', model_output, re.DOTALL)
+    if m and m.group(1).strip():
+        return m.group(1).strip()
 
-    match = re.search(r"\\boxed\{\"?(.*?)\"?\}", model_output, re.DOTALL)
-    if match:
-        model_output = match.group(1)
-    else:
-        model_output = ""
+    # Try \boxed{...}
+    m = re.search(r"\\boxed\{(.+?)\}", model_output)
+    if m and m.group(1).strip():
+        return m.group(1).strip()
 
     return model_output
 

@@ -11,18 +11,29 @@ logger = logging.getLogger(__name__)
 
 
 def _post_process_voxtral_asr(model_output):
+    # Try \boxed{\text{...}}
+    m = re.search(r"\\boxed\{\\text\{(.*?)\}\}", model_output, re.DOTALL)
+    if m and m.group(1).strip():
+        return m.group(1).strip()
 
-    match = re.search(r"\n\n(.*)", model_output, re.DOTALL)
-    if match:
-        model_output = match.group(1)
-    else:
-        model_output = model_output
+    # Try \boxed{...} (non-empty) — take last occurrence
+    matches = list(re.finditer(r"\\boxed\{(.+?)\}", model_output))
+    if matches:
+        content = matches[-1].group(1).strip()
+        # Clean up escaped braces \{...\}
+        if content.startswith("\\{"):
+            content = content[2:]
+        if content.endswith("\\"):
+            content = content[:-1]
+        content = content.strip()
+        if content:
+            return content
 
-    match = re.search(r"\\boxed\{\\text\{?(.*?)\}?\}", model_output, re.DOTALL)
-    if match:
-        model_output = match.group(1)
-    else:
-        model_output = ""
+    # \boxed{} empty → text is before it
+    if r"\boxed{}" in model_output:
+        text = model_output.split(r"\boxed{}")[0].strip()
+        if text:
+            return text
 
     return model_output
 
