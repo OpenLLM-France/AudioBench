@@ -128,7 +128,8 @@ def load_jsonl(path):
 # ---------------------------------------------------------------------------
 # Internal loader
 # ---------------------------------------------------------------------------
-def _load_raw_data(dataset_name):
+def  _load_raw_data(dataset_name):
+    dataset_name = dataset_name.replace("<DATA_DIR>",os.getenv("DATA_DIR"))
     source = DATASET_SOURCES.get(dataset_name)
     if source is None:
         return load_jsonl(dataset_name)

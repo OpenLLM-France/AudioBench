@@ -83,7 +83,7 @@ Install any other required dependencies depending on your use case.
 If needed, you can also define:
 
 ```bash
-export MODELS=<YOUR-MODELS-PATH>
+export MODELS_DIR=<YOUR-MODELS-PATH>
 export DATA_DIR=<YOUR-DATA-PATH>
 ```
 *Adjust paths if necessary.*

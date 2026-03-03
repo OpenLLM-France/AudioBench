@@ -49,7 +49,8 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
             
             evaluation_model_config = dict(
                 batch_size=dataset_config.get("batch_size", model_batch_size), 
-                backend=model_backend
+                backend=model_backend,
+                path=model_config.get("path")
             )
             
             try:

@@ -7,13 +7,13 @@ global:
   datasets:
     - name: librispeech_test_clean
     - name: librispeech_test_clean
-      metrics: meteor
+      metrics: flow_judge
     - name: fleurs_fr_jsonl_test
       metrics: wer
       number_of_samples: 5
       task: asr
     - name: FLEURS
-      path: blabla/nemo/asr/fr/context/FLEURS/dev.jsonl
+      path: <DATA_DIR>/nemo/asr/fr/context/FLEURS/dev.jsonl
       metrics: bleu
       number_of_samples: 5
       task: ast

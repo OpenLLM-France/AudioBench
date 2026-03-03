@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 def load_model(model_name, backend="transformers", model_path=None):
     """Factory: return a BaseModel subclass, loaded and ready to generate."""
     if model_path:
-        model_path  = model_path.replace("<MODELS_FOLDER>", os.getenv('MODELS'))
+        model_path  = model_path.replace("<MODELS_DIR>", os.getenv('MODELS_DIR'))
     if model_name == "cascade_whisper_large_v3_llama_3_8b_instruct":
         from model_src.transformers.whisper_large_v3_with_llama_3_8b_instruct import WhisperLargeV3WithLlama38BInstruct
         model = WhisperLargeV3WithLlama38BInstruct()
