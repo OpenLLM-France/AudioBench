@@ -134,7 +134,7 @@ def  _load_raw_data(dataset_name):
     if source is None:
         return load_jsonl(dataset_name)
     if len(source) == 1:
-        if source[0].endswith(".jsonl"):
+        if source[0].endswith(".jsonl") or source[0].endswith(".json"):
             return load_jsonl(source[0]) 
         else:
             return load_from_disk(source[0])

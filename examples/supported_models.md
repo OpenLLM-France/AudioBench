@@ -10,16 +10,16 @@ MODEL_NAME=cascade_whisper_large_v3_llama_3_8b_instruct
 MODEL_NAME=cascade_whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct
 
 # The Qwen2-Audio Model: https://huggingface.co/Qwen/Qwen2-Audio-7B-Instruct
-MODEL_NAME=qwen2-audio-7b-instruct
+MODEL_NAME=qwen2_audio_7b_instruct
 
 # The Qwen-Audio Model: https://huggingface.co/Qwen/Qwen-Audio-Chat
-MODEL_NAME=qwen-audio-chat
+MODEL_NAME=qwen_audio_chat
 
 # This is the SALMONN model: https://arxiv.org/abs/2310.13289
 MODEL_NAME=salmonn_7b
 
 # MERaLiON-AudioLLM: https://huggingface.co/MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION
-MODEL_NAME=meralion-audiollm-whisper-sea-lion
+MODEL_NAME=meralion_audiollm_whisper_sea_lion
 
 # Only whisper - for ASR / ST Tasks
 MODEL_NAME=whisper_large_v3
@@ -27,11 +27,11 @@ MODEL_NAME=whisper_large_v2
 
 # Google Gemini
 export GOOGLE_API_KEY=AIzxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-MODEL_NAME=gemini-1.5-flash
-MODEL_NAME=gemini-2-flash
+MODEL_NAME=gemini_1_5_flash
+MODEL_NAME=gemini_2_flash
 
 # OpenAI GPT-4o Audio
-MODEL_NAME=gpt-4o-audio
+MODEL_NAME=gpt_4o_audio
 
 # Microsoft Phi-4 Multimodal
 MODEL_NAME=phi_4_multimodal_instruct
@@ -47,7 +47,7 @@ MODEL_NAME=canary_qwen
 MODEL_NAME=luciole_audio  # prefix match: luciole_audio*
 
 # Qwen2-Omni (prefix match: qwen2_omni*)
-MODEL_NAME=qwen2_omni-7b
+MODEL_NAME=qwen2_omni_7b
 
 # Voxtral (prefix match: voxtral*)
 MODEL_NAME=voxtral

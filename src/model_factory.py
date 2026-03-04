@@ -16,7 +16,7 @@ def load_model(model_name, backend="transformers", model_path=None):
         from model_src.transformers.whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct import WhisperLargeV2Gemma29BCptSeaLionV3Instruct
         model = WhisperLargeV2Gemma29BCptSeaLionV3Instruct()
 
-    elif model_name == "qwen2-audio-7b-instruct":
+    elif model_name == "qwen2_audio_7b_instruct":
         from model_src.vllm.qwen2_audio_7b_instruct import Qwen2Audio7BInstruct
         model = Qwen2Audio7BInstruct()
 
@@ -28,19 +28,19 @@ def load_model(model_name, backend="transformers", model_path=None):
         from model_src.transformers.wavllm_fairseq import WavLLMFairseq
         model = WavLLMFairseq()
 
-    elif model_name == 'qwen-audio-chat':
+    elif model_name == 'qwen_audio_chat':
         from model_src.transformers.qwen_audio_chat import QwenAudioChat
         model = QwenAudioChat()
 
-    elif model_name == 'meralion-audiollm-whisper-sea-lion':
+    elif model_name == 'meralion_audiollm_whisper_sea_lion':
         from model_src.transformers.meralion_audiollm_whisper_sea_lion import MeralionAudioLLMWhisperSeaLion
         model = MeralionAudioLLMWhisperSeaLion()
 
-    elif model_name == 'gemini-1.5-flash':
+    elif model_name == 'gemini_1_5_flash':
         from model_src.api.gemini_1_5_flash import Gemini15Flash
         model = Gemini15Flash()
 
-    elif model_name == 'gemini-2-flash':
+    elif model_name == 'gemini_2_flash':
         from model_src.api.gemini_2_flash import Gemini2Flash
         model = Gemini2Flash()
 
@@ -52,7 +52,7 @@ def load_model(model_name, backend="transformers", model_path=None):
         from model_src.vllm.whisper_large_v2 import WhisperLargeV2
         model = WhisperLargeV2()
 
-    elif model_name == 'gpt-4o-audio':
+    elif model_name == 'gpt_4o_audio':
         from model_src.api.gpt_4o_audio import GPT4oAudio
         model = GPT4oAudio()
 
@@ -72,13 +72,13 @@ def load_model(model_name, backend="transformers", model_path=None):
         from model_src.nemo.canary_qwen import CanaryQwen
         model = CanaryQwen()
 
-    elif model_name == 'audio_flamingo':
+    elif model_name.startswith('audio_flamingo'):
         from model_src.vllm.audio_flamingo import AudioFlamingo
         model = AudioFlamingo()
 
     elif model_name.startswith('qwen2_omni'):
         from model_src.vllm.qwen_omni import Qwen2Omni
-        if model_name == 'qwen2_omni-7b':
+        if model_name == 'qwen2_omni_7b':
             model = Qwen2Omni(model_path="Qwen/Qwen2.5-Omni-7B")
         else:
             model = Qwen2Omni()
@@ -87,7 +87,7 @@ def load_model(model_name, backend="transformers", model_path=None):
         from model_src.transformers.mistralai_voxtral import Voxtral
         model = Voxtral()
 
-    elif model_name == 'kimi-audio-7b-instruct':
+    elif model_name == 'kimi_audio_7b_instruct':
         from model_src.transformers.kimi_audio_7b_instruct import KimiAudio7BInstruct
         model = KimiAudio7BInstruct(model_path=model_path)
 

@@ -8,15 +8,15 @@ data = {
 }
 
 # Add model information to the
-data['Original Name'].append('SALMONN_7B')
+data['Original Name'].append('salmonn_7b')
 data['Proper Display Name'].append('Fusion: SALMONN-7B')
 data['Link'].append('https://arxiv.org/html/2310.13289v2')
 
-data['Original Name'].append('WavLLM_fairseq')
+data['Original Name'].append('wavllm_fairseq')
 data['Proper Display Name'].append('Fusion: WavLLM')
 data['Link'].append('https://arxiv.org/abs/2404.00656')
 
-data['Original Name'].append('Qwen2-Audio-7B-Instruct')
+data['Original Name'].append('qwen2_audio_7b_instruct')
 data['Proper Display Name'].append('Fusion: Qwen2-Audio-7B-Instruct')
 data['Link'].append('https://arxiv.org/abs/2407.10759')
 
@@ -28,11 +28,11 @@ data['Original Name'].append('mowe_audio')
 data['Proper Display Name'].append('Fusion: MOWE-Audio')
 data['Link'].append('https://arxiv.org/abs/2409.06635')
 
-data['Original Name'].append('Qwen-Audio-Chat')
+data['Original Name'].append('qwen_audio_chat')
 data['Proper Display Name'].append('Fusion: Qwen-Audio-Chat')
 data['Link'].append('https://arxiv.org/abs/2311.07919')
 
-data['Original Name'].append('MERaLiON-AudioLLM-Whisper-SEA-LION')
+data['Original Name'].append('meralion_audiollm_whisper_sea_lion')
 data['Proper Display Name'].append('Fusion: MERaLiON-AudioLLM-Whisper-SEA-LION')
 data['Link'].append('https://huggingface.co/MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION')
 
@@ -44,7 +44,7 @@ data['Original Name'].append('whisper_large_v3')
 data['Proper Display Name'].append('Whisper-large-v3')
 data['Link'].append('https://huggingface.co/openai/whisper-large-v3')
 
-data['Original Name'].append('gemini-1.5-flash')
+data['Original Name'].append('gemini_1_5_flash')
 data['Proper Display Name'].append('Gemini-1.5-Flash')
 data['Link'].append('https://ai.google.dev/gemini-api/docs/models/gemini')
 

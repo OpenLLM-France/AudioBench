@@ -84,9 +84,9 @@ def run_evaluation(
 
     xp_dir.mkdir(parents=True, exist_ok=True)
 
-    if model_name == 'WavLLM_fairseq':
+    if model_name == 'wavllm_fairseq':
         model_config["batch_size"] = -1
-        logger.info("Batch size is set to -1 for WavLLM_fairseq model.")
+        logger.info("Batch size is set to -1 for wavllm_fairseq model.")
 
     if not overwrite and prediction_path.exists():
         predictions = json.loads(prediction_path.read_text())
