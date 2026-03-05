@@ -54,7 +54,13 @@ def run_evaluation(
         log_folder: str = "log_for_all_models",
     ):
     
-    processor = load_dataset_processor(dataset_name, number_of_samples=dataset_config.get("number_of_samples"), dataset_path=dataset_config.get("path"))
+    processor = load_dataset_processor(
+        dataset_name,
+        number_of_samples=dataset_config.get("number_of_samples"),
+        dataset_path=dataset_config.get("path"),
+        min_audio_duration=dataset_config.get("min_audio_duration"),
+        max_audio_duration=dataset_config.get("max_audio_duration"),
+    )
     
     if dataset_config.get("task") is not None:
         processor.task_type = dataset_config.get("task").upper()
@@ -162,7 +168,9 @@ def main(
         metrics           : str  = None,
         number_of_samples : int  = -1,
         log_folder: str = "log_for_all_models",
-        backend: str = "transformers"
+        backend: str = "transformers",
+        min_audio_duration: float = None,
+        max_audio_duration: float = None,
     ):
 
     logger.info(" ="*30)
@@ -174,8 +182,13 @@ def main(
     logger.info(f"Number of samples: {number_of_samples}")
     logger.info(f"Backend: {backend}")
     logger.info(" ="*30)
-    
-    dataset_config = dict(number_of_samples=number_of_samples, metrics=metrics)
+
+    dataset_config = dict(
+        number_of_samples=number_of_samples,
+        metrics=metrics,
+        min_audio_duration=min_audio_duration,
+        max_audio_duration=max_audio_duration,
+    )
     model_config = dict(batch_size=batch_size, backend=backend)
 
     run_evaluation(dataset_name, dataset_config, model_name, model_config, overwrite, log_folder)

@@ -149,11 +149,11 @@ def  _load_raw_data(dataset_name):
 # ---------------------------------------------------------------------------
 # Processor factory (if/elif with explicit imports)
 # ---------------------------------------------------------------------------
-def _create_processor(dataset_name, data_loader, number_of_samples, external_jsonl=False):
+def _create_processor(dataset_name, data_loader, number_of_samples, external_jsonl=False, min_audio_duration=None, max_audio_duration=None):
 
     if external_jsonl:
         from dataset_src.other.json_dataset import jsonl_dataset_processor
-        return jsonl_dataset_processor(data_loader, number_of_samples)
+        return jsonl_dataset_processor(data_loader, number_of_samples, min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration)
 
     elif dataset_name == 'cn_college_listen_mcq_test':
         from dataset_src.question_answering.cn_college_listen_mcq_test import cn_college_listen_mcq_test_dataset
@@ -469,7 +469,7 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
 
     elif DATASET_SOURCES[dataset_name][0].endswith(".jsonl"):
         from dataset_src.other.json_dataset import jsonl_dataset_processor
-        return jsonl_dataset_processor(data_loader, number_of_samples)
+        return jsonl_dataset_processor(data_loader, number_of_samples, min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration)
 
     else:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented yet")
@@ -478,11 +478,12 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
 # ---------------------------------------------------------------------------
 # Public factory
 # ---------------------------------------------------------------------------
-def load_dataset_processor(dataset_name, number_of_samples=-1, dataset_path=None):
+def load_dataset_processor(dataset_name, number_of_samples=-1, dataset_path=None, min_audio_duration=None, max_audio_duration=None):
     """Return a dataset processor (data not loaded yet — call .load() first)."""
     if dataset_name not in DATASET_SOURCES and not dataset_name.endswith(".jsonl") and not dataset_path:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented yet")
 
     loader = functools.partial(_load_raw_data, dataset_path if dataset_path else dataset_name)
-    return _create_processor(dataset_name, loader, number_of_samples, True if dataset_path is not None else False)
+    return _create_processor(dataset_name, loader, number_of_samples, True if dataset_path is not None else False,
+                             min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration)
  

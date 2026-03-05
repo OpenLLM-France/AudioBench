@@ -13,6 +13,12 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
         raw_data = self._data_loader()
         logging.info(f"Loaded {len(raw_data)} samples")
 
+        if self._min_audio_duration is not None or self._max_audio_duration is not None:
+            before = len(raw_data)
+            raw_data = [s for s in raw_data if self._check_duration(s)]
+            logging.info(f"Duration filter: {before} -> {len(raw_data)} samples "
+                         f"(min={self._min_audio_duration}, max={self._max_audio_duration})")
+
         if self._number_of_samples != -1:
             if self._number_of_samples > len(raw_data):
                 self._number_of_samples = len(raw_data)
@@ -30,6 +36,22 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
 
         return input_data
     
+    def _check_duration(self, sample):
+        dur = self._get_sample_duration(sample)
+        if self._min_audio_duration is not None and dur < self._min_audio_duration:
+            return False
+        if self._max_audio_duration is not None and dur > self._max_audio_duration:
+            return False
+        return True
+
+    @staticmethod
+    def _get_sample_duration(sample):
+        conversations = sample["conversations"]
+        audio_entry = conversations[1] if conversations[0]["type"] == "text" else conversations[0]
+        if "duration" in audio_entry:
+            return audio_entry["duration"]
+        return sf.info(audio_entry["value"]).duration
+
     def _process_sample(self, sample):
         """Build one input dict from a raw sample. Override to add extra fields."""
         conversations = sample["conversations"]
