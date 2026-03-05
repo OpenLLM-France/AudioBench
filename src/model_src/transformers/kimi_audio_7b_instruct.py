@@ -39,12 +39,18 @@ class KimiAudio7BInstruct(BaseModel):
         return self._infer_single(segments[0], sampling_rate, instruction)
 
     def _infer_single(self, audio_array, sampling_rate, instruction):
+        import tqdm as tqdm_module
         audio_path = self._write_temp_audio(audio_array, sampling_rate)
         messages = [
             {"role": "user", "message_type": "text", "content": instruction},
             {"role": "user", "message_type": "audio", "content": audio_path},
         ]
-        _, text_output = self.model.generate(
-            messages, **SAMPLING_PARAMS, output_type="text"
-        )
+        original_tqdm = tqdm_module.tqdm
+        tqdm_module.tqdm = lambda *args, **kwargs: original_tqdm(*args, **{**kwargs, "disable": True})
+        try:
+            _, text_output = self.model.generate(
+                messages, **SAMPLING_PARAMS, output_type="text"
+            )
+        finally:
+            tqdm_module.tqdm = original_tqdm
         return text_output
