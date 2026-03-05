@@ -96,9 +96,14 @@ def run_evaluation(
 
     if not overwrite and prediction_path.exists():
         predictions = json.loads(prediction_path.read_text())
-        if dataset_config.get("number_of_samples")>0 and len(predictions)<dataset_config.get("number_of_samples"):
-            overwrite = True
-            logger.info(f"Found {len(predictions)} samples in {prediction_path} instead of {dataset_config.get('number_of_samples')}. Overwrite set to True.")
+        requested = dataset_config.get("number_of_samples", -1)
+        if requested > 0 and len(predictions) < requested:
+            prev_dataset_size = None
+            if score_path.exists():
+                prev_dataset_size = json.loads(score_path.read_text()).get("dataset_size")
+            if prev_dataset_size is None or len(predictions) < prev_dataset_size:
+                overwrite = True
+                logger.info(f"Found {len(predictions)} samples in {prediction_path} instead of {requested}. Overwrite set to True.")
     
     if not overwrite and score_path.exists():
         results = json.loads(score_path.read_text())
@@ -140,6 +145,7 @@ def run_evaluation(
     results['dataset_name'] = dataset_name
     results['metrics'] = dataset_config["metrics"]
     results['number_of_samples'] = len(data_with_model_predictions)
+    results['dataset_size'] = processor._dataset_size
     results['task'] = processor.task_type
     results['sub_task'] = processor.sub_task
     results['language'] = processor.language

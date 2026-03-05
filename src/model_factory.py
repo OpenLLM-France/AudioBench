@@ -85,7 +85,7 @@ def load_model(model_name, backend="transformers", model_path=None):
             model = Qwen2Omni()
 
     elif model_name.startswith('voxtral'):
-        from model_src.transformers.mistralai_voxtral import Voxtral
+        from model_src.vllm.mistralai_voxtral import Voxtral
         model = Voxtral()
 
     elif model_name == 'kimi_audio_7b_instruct':

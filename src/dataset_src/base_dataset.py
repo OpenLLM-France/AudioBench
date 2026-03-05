@@ -54,6 +54,7 @@ class BaseDatasetProcessor:
         """Actually load the raw data. Call before prepare_model_input()."""
         raw_data = self._data_loader()
         logging.info(f"Loaded {len(raw_data)} samples")
+        self._dataset_size = len(raw_data)
 
         if self._number_of_samples != -1:
             if self._number_of_samples > len(raw_data):

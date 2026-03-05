@@ -90,13 +90,16 @@ class BaseModel:
 
     def _generate_batch(self, inputs):
         """Batched generation for the transformers backend.
-
-        Must be overridden by subclasses that support batch_size > 1.
+        Default: sequential fallback. Override for true batching.
         """
-        raise NotImplementedError(
-            f"{type(self).__name__} does not support batched transformers inference. "
-            f"Use batch_size=1 or implement _generate_batch()."
-        )
+        results = []
+        for inp in inputs:
+            result = self._generate(inp)
+            if isinstance(result, list):
+                results.extend(result)
+            else:
+                results.append(result)
+        return results
 
     # --- To be implemented by subclasses ---
 

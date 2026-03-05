@@ -19,6 +19,8 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
             logging.info(f"Duration filter: {before} -> {len(raw_data)} samples "
                          f"(min={self._min_audio_duration}, max={self._max_audio_duration})")
 
+        self._dataset_size = len(raw_data)
+
         if self._number_of_samples != -1:
             if self._number_of_samples > len(raw_data):
                 self._number_of_samples = len(raw_data)

@@ -6,6 +6,7 @@ import torch
 from transformers import VoxtralForConditionalGeneration, AutoProcessor
 
 from model_src.base_model import BaseModel
+from model_src.vllm_backend import _input_audio_part
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,12 @@ def _post_process_voxtral_asr(model_output):
 
 class Voxtral(BaseModel):
 
+    supports_vllm = True
+
     def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507"):
         super().__init__(model_path=model_path)
+
+    # --- Transformers backend ---
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
@@ -77,3 +82,16 @@ class Voxtral(BaseModel):
         if input['task_type'] == 'ASR': text = _post_process_voxtral_asr(text)
 
         return text
+
+    # --- vLLM backend ---
+
+    def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
+        return [
+            {"role": "user", "content": [
+                _input_audio_part(audio_array, sampling_rate),
+                {"type": "text", "text": instruction + "\nPut the result in the following format: \\boxed{.}"},
+            ]},
+        ]
+
+    def _postprocess_asr_text(self, text):
+        return _post_process_voxtral_asr(text)
