@@ -83,11 +83,12 @@ class Phi4MultimodalInstruct(BaseModel):
         self.llm = LLM(
             model=model_path,
             trust_remote_code=True,
-            max_model_len=12800,
+            max_model_len=4096,
             max_num_seqs=2,
             enable_lora=True,
             max_lora_rank=320,
             limit_mm_per_prompt={"audio": 1},
+            gpu_memory_utilization=0.6,
         )
         self.lora_request = LoRARequest("speech", 1, speech_lora_path)
         self.sampling_params = SamplingParams(temperature=0, max_tokens=1000)

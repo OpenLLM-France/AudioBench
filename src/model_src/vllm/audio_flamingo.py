@@ -59,7 +59,7 @@ class AudioFlamingo(BaseModel):
         os.environ["VLLM_ALLOW_LONG_MAX_MODEL_LEN"] = "1"
         self.llm = LLM(
             model=self.model_path,
-            max_model_len=20000,
+            max_model_len=4096,
             max_num_seqs=5,
             limit_mm_per_prompt={"audio": 1},
             gpu_memory_utilization=0.6,
