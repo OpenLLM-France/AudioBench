@@ -92,6 +92,7 @@ class BaseModel:
         """Batched generation for the transformers backend.
         Default: sequential fallback. Override for true batching.
         """
+        logger.warning(f"{type(self).__name__} does not support batching. Falling back to sequential generation.")
         results = []
         for inp in inputs:
             result = self._generate(inp)

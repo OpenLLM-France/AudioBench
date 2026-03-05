@@ -111,6 +111,6 @@ def load_model(model_name, backend="transformers", model_path=None):
     else:
         model.load()
 
-    logger.info(f"Loaded model: {model_name} (backend: {backend})")
+    logger.info(f"Loaded model: {model_name} (backend: {model.backend})")
     logger.info("= = "*20)
     return model

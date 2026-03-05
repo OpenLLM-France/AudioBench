@@ -85,6 +85,21 @@ class Voxtral(BaseModel):
 
     # --- vLLM backend ---
 
+    def load_vllm(self):
+        from vllm import LLM, SamplingParams
+
+        self.llm = LLM(
+            model=self.model_path,
+            tokenizer_mode="mistral",
+            config_format="mistral",
+            load_format="mistral",
+            max_model_len=4096,
+            max_num_seqs=5,
+            limit_mm_per_prompt={"audio": 1},
+            gpu_memory_utilization=0.6,
+        )
+        self.sampling_params = SamplingParams(temperature=0, max_tokens=512)
+
     def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
         return [
             {"role": "user", "content": [
