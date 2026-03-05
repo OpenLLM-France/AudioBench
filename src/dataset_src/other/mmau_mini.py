@@ -1,5 +1,6 @@
 import pandas as pd
 from dataset_src.base_dataset import BaseDatasetProcessor
+from dataset_src.eval_methods.metrics import build_metric_stats
 
 
 class mmau_mini_test_dataset(BaseDatasetProcessor):
@@ -28,7 +29,10 @@ class mmau_mini_test_dataset(BaseDatasetProcessor):
                 result['task'] = sample_other_attributes['task']
             df = pd.DataFrame(all_details)
             task_scores = df.groupby('task')['rate_score'].mean().to_dict()
-            return {'llama3_70b_judge': llama3_70b_judge_results, "task_scores": task_scores, 'details': all_details}
+            all_scores = [d["rate_score"] for d in all_details]
+            enriched = build_metric_stats(all_scores, llama3_70b_judge_results["judge_score"])
+            enriched["success_rate"] = llama3_70b_judge_results["success_rate"]
+            return {'llama3_70b_judge': enriched, "task_scores": task_scores, 'details': all_details}
 
         elif metrics == 'string_match':
             choices = [item for item in self.raw_data['choices']]
@@ -38,7 +42,10 @@ class mmau_mini_test_dataset(BaseDatasetProcessor):
                 result['task'] = sample_other_attributes['task']
             df = pd.DataFrame(all_details)
             task_scores = df.groupby('task')['rate_score'].mean().to_dict()
-            return {'string_match': string_match_results, 'task_scores': task_scores, 'details': all_details}
+            all_scores = [d["rate_score"] for d in all_details]
+            enriched = build_metric_stats(all_scores, string_match_results["judge_score"])
+            enriched["success_rate"] = string_match_results["success_rate"]
+            return {'string_match': enriched, 'task_scores': task_scores, 'details': all_details}
 
         elif metrics == 'gpt4o_judge':
             from dataset_src.eval_methods.eval_gpt4o import gpt4o_as_judge_binary
@@ -47,7 +54,10 @@ class mmau_mini_test_dataset(BaseDatasetProcessor):
                 result['task'] = sample_other_attributes['task']
             df = pd.DataFrame(all_details)
             task_scores = df.groupby('task')['rate_score'].mean().to_dict()
-            return {'gpt4o_judge': gpt4o_judge_results, "task_scores": task_scores, 'details': all_details}
+            all_scores = [d["rate_score"] for d in all_details]
+            enriched = build_metric_stats(all_scores, gpt4o_judge_results["judge_score"])
+            enriched["success_rate"] = gpt4o_judge_results["success_rate"]
+            return {'gpt4o_judge': enriched, "task_scores": task_scores, 'details': all_details}
 
         else:
             raise ValueError("Invalid metrics: {}".format(metrics))

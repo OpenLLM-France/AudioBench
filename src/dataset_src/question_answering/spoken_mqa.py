@@ -1,4 +1,5 @@
 from dataset_src.base_dataset import BaseDatasetProcessor
+from dataset_src.eval_methods.metrics import build_metric_stats
 from dataset_src.math_utils import utils
 
 
@@ -62,6 +63,7 @@ class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
             references.append(answer)
 
         details = []
+        per_sample_scores = []
         correct, wrong = 0, 0
         for prediction, reference in zip(predictions, references):
             if isinstance(reference, str):
@@ -70,11 +72,13 @@ class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
                 prediction = prediction[:100]
             if utils.compare_answer_with_groundtruth(prediction, *reference):
                 correct += 1
+                per_sample_scores.append(1.0)
             else:
                 wrong += 1
+                per_sample_scores.append(0.0)
             details.append({"reference": reference, "prediction": prediction})
 
-        return {"acc": correct / (correct + wrong), "details": details}
+        return {"acc": build_metric_stats(per_sample_scores, correct / (correct + wrong)), "details": details}
 
 
 class spokenmqa_dataset_reasoning(BaseDatasetProcessor):
@@ -134,6 +138,7 @@ class spokenmqa_dataset_reasoning(BaseDatasetProcessor):
             references.append(answer)
 
         details = []
+        per_sample_scores = []
         correct, wrong = 0, 0
         for prediction, reference in zip(predictions, references):
             if isinstance(reference, str):
@@ -142,8 +147,10 @@ class spokenmqa_dataset_reasoning(BaseDatasetProcessor):
                 prediction = prediction[:100]
             if utils.compare_answer_with_groundtruth(prediction, *reference):
                 correct += 1
+                per_sample_scores.append(1.0)
             else:
                 wrong += 1
+                per_sample_scores.append(0.0)
             details.append({"reference": reference, "prediction": prediction})
 
-        return {"acc": correct / (correct + wrong), "details": details}
+        return {"acc": build_metric_stats(per_sample_scores, correct / (correct + wrong)), "details": details}

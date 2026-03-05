@@ -1,4 +1,5 @@
 from dataset_src.base_dataset import BaseDatasetProcessor
+from dataset_src.eval_methods.metrics import build_metric_stats
 
 
 class audiollm_instruction_following_dataset(BaseDatasetProcessor):
@@ -44,6 +45,13 @@ class audiollm_instruction_following_dataset(BaseDatasetProcessor):
                 "meta-llama/Meta-Llama-3-70B-Instruct",
                 [questions, references, predictions, dimensions, rules, rule_targets]
             )
-            return {'llama3_70b_judge_combined': llama3_70b_judge_results, 'details': all_details}
+            correctness_scores = [d["correctness_rating"] for d in all_details]
+            instruction_scores = [d["instruction_following_rating"] for d in all_details]
+            success_scores = [float(d["success"]) for d in all_details]
+            enriched = build_metric_stats(success_scores, llama3_70b_judge_results["success_rate"])
+            enriched["judge_correctness_rating"] = build_metric_stats(correctness_scores, llama3_70b_judge_results["judge_correctness_rating"])
+            enriched["judge_instruction_following_ratings"] = build_metric_stats(instruction_scores, llama3_70b_judge_results["judge_instruction_following_ratings"])
+            enriched["dimensional_success_rate"] = llama3_70b_judge_results.get("dimensional_success_rate")
+            return {'llama3_70b_judge_combined': enriched, 'details': all_details}
         else:
             raise ValueError(f"Unsupported metric: {metrics}. Supported metric: 'llama3_70b_combined', 'llama3_70b_judge_binary'")

@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 def load_model(model_name, backend="transformers", model_path=None):
     """Factory: return a BaseModel subclass, loaded and ready to generate."""
+    logger.info(f"Loading {model_name} model (path: {model_path}).")
     if model_path:
         model_path  = model_path.replace("<MODELS_DIR>", os.getenv('MODELS_DIR'))
     if model_name == "cascade_whisper_large_v3_llama_3_8b_instruct":

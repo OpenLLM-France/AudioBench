@@ -92,7 +92,7 @@ def run_evaluation(
         predictions = json.loads(prediction_path.read_text())
         if dataset_config.get("number_of_samples")>0 and len(predictions)<dataset_config.get("number_of_samples"):
             overwrite = True
-            logger.info(f"Found {len(predictions)} samples in {prediction_path} instead of {dataset_config.get("number_of_samples")}. Overwrite set to True.")
+            logger.info(f"Found {len(predictions)} samples in {prediction_path} instead of {dataset_config.get('number_of_samples')}. Overwrite set to True.")
     
     if not overwrite and score_path.exists():
         results = json.loads(score_path.read_text())
@@ -106,13 +106,12 @@ def run_evaluation(
 
     if overwrite or not prediction_path.exists():
         if overwrite:
-             logger.info(f"Overwrite is enabled. Try to infer with the model: {model_name}.")
+             logger.info(f"Overwrite is enabled. Try to infer {dataset_name} with {model_name}.")
         else:
-            logger.info(f"No results are not found. Try to infer with the model: {model_name}.")
+            logger.info(f"No results found for {dataset_name} with {model_name}.")
 
         # Load dataset (deferred until now to skip download when not needed)
-        processor.load()
-        input_data = processor.prepare_model_input()
+        input_data = processor.load()
 
         # Load model
         if model is None:
@@ -144,14 +143,15 @@ def run_evaluation(
     for metric in dataset_config["metrics"]:
         metric_score = processor.compute_score(data_with_model_predictions, metrics=metric)
         results.update(metric_score)
-        logger.info(f"{metric}: {results[metric]}")
+        score_val = results[metric]
+        logger.info(f"{metric}: {score_val['score'] if isinstance(score_val, dict) else score_val}")
     logger.info(' ='*30)
     logger.info("\n"*3)
     if 'details' in results:
         results['details'] = results['details'][:20]
     with open(score_path, 'w') as f:
         json.dump(results, f, indent=4, ensure_ascii=False)
-
+    del processor
     return model
 
 def main(

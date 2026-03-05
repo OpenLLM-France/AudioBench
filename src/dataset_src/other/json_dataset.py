@@ -1,6 +1,7 @@
 import logging
 import random
 import soundfile as sf
+from tqdm import tqdm
 
 from dataset_src.base_dataset import BaseDatasetProcessor
 
@@ -18,25 +19,45 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
                 logging.info(f"Requested samples exceed available. Using {self._number_of_samples}")
             raw_data = raw_data[:self._number_of_samples]
 
-        self.raw_data = raw_data
-        logging.info(f'Number of samples: {len(self.raw_data)}')
-        return self
+        logging.info(f'Number of samples: {len(raw_data)}')
+        input_data = []
+        for sample in tqdm(raw_data, desc="Processing samples"):
+            input_data.append(self._process_sample(sample))
+
+        logging.info('\n=  =  =  Dataset Sample  =  =  =')
+        logging.info(random.sample(input_data, 1)[0])
+        logging.info('=  =  =  =  =  =  =  =  =  =  =  =\n')
+
+        return input_data
     
     def _process_sample(self, sample):
         """Build one input dict from a raw sample. Override to add extra fields."""
         conversations = sample["conversations"]
         instruction = conversations[0]["value"] if conversations[0]["type"]=="text" else None
         if instruction:
-            audio = conversations[1]["value"]
+            audio_entry = conversations[1]
+            audio = audio_entry["value"]
             reference = conversations[2]["value"]
         else:
-            audio = conversations[0]["value"]
+            audio_entry = conversations[0]
+            audio = audio_entry["value"]
             reference = conversations[1]["value"]
             if self.instructions is not None:
                 instruction = random.choice(self.instructions)
             else:
                 raise ValueError(f"Missing instructions for sample {sample}")
-        array, sr = sf.read(audio)
+
+        # Handle offset/duration for audio segment extraction
+        read_kwargs = {}
+        if "offset" in audio_entry or "duration" in audio_entry:
+            info = sf.info(audio)
+            sr = info.samplerate
+            if "offset" in audio_entry:
+                read_kwargs["start"] = int(audio_entry["offset"] * sr)
+            if "duration" in audio_entry:
+                read_kwargs["frames"] = int(audio_entry["duration"] * sr)
+
+        array, sr = sf.read(audio, **read_kwargs)
         return {
             "audio": dict(array=array, sampling_rate=sr),
             "instruction": instruction,

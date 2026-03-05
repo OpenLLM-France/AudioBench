@@ -1,5 +1,8 @@
 import random
 import logging
+from tqdm import tqdm
+
+from dataset_src.eval_methods.metrics import build_metric_stats
 
 
 class BaseDatasetProcessor:
@@ -42,7 +45,6 @@ class BaseDatasetProcessor:
     def __init__(self, data_loader, number_of_samples):
         self._data_loader = data_loader
         self._number_of_samples = number_of_samples
-        self.raw_data = None
         if self.instructions is not None:
             self.prompt = self.instructions
 
@@ -58,9 +60,16 @@ class BaseDatasetProcessor:
             raw_data = raw_data.shuffle(seed=42)
             raw_data = raw_data.select(range(self._number_of_samples))
 
-        self.raw_data = raw_data
-        logging.info(f'Number of samples: {len(self.raw_data)}')
-        return self
+        logging.info(f'Number of samples: {len(raw_data)}')
+        input_data = []
+        for sample in tqdm(raw_data, desc="Processing samples"):
+            input_data.append(self._process_sample(sample))
+
+        logging.info('\n=  =  =  Dataset Sample  =  =  =')
+        logging.info(random.sample(input_data, 1)[0])
+        logging.info('=  =  =  =  =  =  =  =  =  =  =  =\n')
+
+        return input_data
 
     @staticmethod
     def _resolve_path(sample, path):
@@ -97,17 +106,6 @@ class BaseDatasetProcessor:
             "sub_task": self.sub_task,
             "language": self.language,
         }
-
-    def prepare_model_input(self):
-        input_data = []
-        for sample in self.raw_data:
-            input_data.append(self._process_sample(sample))
-
-        logging.info('\n=  =  =  Dataset Sample  =  =  =')
-        logging.info(random.sample(input_data, 1)[0])
-        logging.info('=  =  =  =  =  =  =  =  =  =  =  =\n')
-
-        return input_data
 
     def format_model_predictions(self, input_data, model_predictions):
         data_with_model_predictions = []
@@ -156,7 +154,7 @@ class BaseDatasetProcessor:
                     "meta-llama/Meta-Llama-3-70B-Instruct",
                     [questions, references, predictions]
                 )
-            return {'llama3_70b_judge': results, 'details': all_details}
+            return self._enrich_judge('llama3_70b_judge', results, all_details)
 
         elif metrics == 'gpt4o_judge':
             if self.judge_binary:
@@ -165,7 +163,7 @@ class BaseDatasetProcessor:
             else:
                 from dataset_src.eval_methods.eval_gpt4o import gpt4o_as_judge
                 results, all_details = gpt4o_as_judge("", [questions, references, predictions])
-            return {'gpt4o_judge': results, 'details': all_details}
+            return self._enrich_judge('gpt4o_judge', results, all_details)
 
         elif metrics == 'flow_judge':
             if self.judge_binary:
@@ -174,7 +172,7 @@ class BaseDatasetProcessor:
             else:
                 from dataset_src.eval_methods.eval_flow_judge import flow_judge_as_judge
                 results, all_details = flow_judge_as_judge("", [questions, references, predictions])
-            return {'flow_judge': results, 'details': all_details}
+            return self._enrich_judge('flow_judge', results, all_details)
 
         elif metrics == 'flow_judge_api':
             if self.judge_binary:
@@ -183,7 +181,7 @@ class BaseDatasetProcessor:
             else:
                 from dataset_src.eval_methods.eval_flow_judge_api import flow_judge_api_as_judge
                 results, all_details = flow_judge_api_as_judge("", [questions, references, predictions])
-            return {'flow_judge_api': results, 'details': all_details}
+            return self._enrich_judge('flow_judge_api', results, all_details)
 
         elif metrics == 'linagora_api_oss120':
             if self.judge_binary:
@@ -192,15 +190,27 @@ class BaseDatasetProcessor:
             else:
                 from dataset_src.eval_methods.eval_linagora_api_oss120 import gpt4o_as_judge
                 results, all_details = gpt4o_as_judge("", [questions, references, predictions])
-            return {'linagora_api_oss120': results, 'details': all_details}
+            return self._enrich_judge('linagora_api_oss120', results, all_details)
 
         elif metrics == 'meteor':
             import evaluate
             meteor = evaluate.load('meteor')
-            meteor_results = meteor.compute(predictions=predictions, references=references)
-            return {'meteor': float(meteor_results['meteor'])}
+            corpus_meteor = float(meteor.compute(predictions=predictions, references=references)['meteor'])
+            per_sample_meteors = []
+            for p, r in zip(predictions, references):
+                s = float(meteor.compute(predictions=[p], references=[r])['meteor'])
+                per_sample_meteors.append(s)
+            return {'meteor': build_metric_stats(per_sample_meteors, corpus_meteor)}
 
         return None
+
+    @staticmethod
+    def _enrich_judge(metric_name, results, all_details):
+        """Wrap judge results with per-sample statistics."""
+        all_scores = [d["rate_score"] for d in all_details]
+        enriched = build_metric_stats(all_scores, results["judge_score"])
+        enriched["success_rate"] = results["success_rate"]
+        return {metric_name: enriched, 'details': all_details}
 
     def compute_score(self, data_with_model_predictions, metrics=None):
         if metrics == 'wer':
