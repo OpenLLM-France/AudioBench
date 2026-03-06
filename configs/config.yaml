@@ -250,10 +250,10 @@ global:
             - name: iemocap_emotion_test
             - name: meld_sentiment_test
             - name: meld_emotion_test
-            - name: MELD_EmotionDS
-              path: <DATA_DIR>/misc/en/context/MELD/EmotionDS/test.jsonl
             - name: Ssi-speech-emotion-recognition
               path: <DATA_DIR>/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
+            # - name: MELD_EmotionDS
+            #   path: <DATA_DIR>/misc/en/context/MELD/EmotionDS/test.jsonl
 
     # Accent Recognition
     - group: accent_recognition
@@ -306,6 +306,14 @@ global:
           path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/MTG-Jamendo/test.jsonl
         - name: AIR_bench_Foundation_FMA
           path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
+    # Music Captioning
+    - group: music_captioning
+      metrics: flow_judge
+      task: Music Captioning
+      language: en
+      datasets:
+        - name: MusicCaps
+          path: <DATA_DIR>/music/music-captioning/en/context/MusicCaps/test.jsonl
 
     # Spoken Language Identification
     - group: language_identification
