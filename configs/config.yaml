@@ -249,11 +249,11 @@ global:
           datasets:
             - name: iemocap_emotion_test
             - name: meld_sentiment_test
-            - name: meld_emotion_test
+            # - name: meld_emotion_test
             - name: Ssi-speech-emotion-recognition
               path: <DATA_DIR>/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
-            # - name: MELD_EmotionDS
-            #   path: <DATA_DIR>/misc/en/context/MELD/EmotionDS/test.jsonl
+            - name: MELD_EmotionDS
+              path: <DATA_DIR>/misc/en/context/MELD/EmotionDS/test.jsonl
 
     # Accent Recognition
     - group: accent_recognition
