@@ -124,6 +124,229 @@ global:
           path: <DATA_DIR>/nemo/ast/es-it/context/Multilingual_TEDx/test.jsonl
           language: es-it
 
+    # Spoken Question Answering
+    - group: sqa
+      metrics: flow_judge
+      task: Question Answering
+      sub_task: QA
+      datasets:
+        - group: sqa_fr
+          language: fr
+          datasets:
+            - name: VoxPopuli-QA
+              path: <DATA_DIR>/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
+
+        - group: sqa_en
+          language: en
+          datasets:
+            - name: slue_p2_sqa5_test
+            - name: public_sg_speech_qa_test
+            - name: dream_tts_mcq_test
+            - name: spoken_mqa
+            - name: spoken_squad_test
+            - name: multitask_SQA
+              path: <DATA_DIR>/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SQA/test.jsonl
+            - name: AIR_bench_Chat_fisher
+              path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
+            - name: AIR_bench_Chat_spokenwoz
+              path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
+            - name: ContextDialog
+              path: <DATA_DIR>/question-answering/qa_audio-question-text-context/en/ContextDialog/test.jsonl
+            - name: HeySQuAD_human
+              path: <DATA_DIR>/question-answering/qa_audio-question-text-context/en/yijingwu--HeySQuAD_human/test.jsonl
+            - name: MELD_AcousticDS
+              path: <DATA_DIR>/misc/en/context/MELD/AcousticDS/test.jsonl
+
+    # Math Question Answering
+    - group: math_qa
+      metrics: flow_judge
+      task: Math Question Answering
+      language: en
+      datasets:
+        - name: spoken-mqa_short_digit
+        - name: spoken-mqa_long_digit
+        - name: spoken-mqa_single_step_reasoning
+        - name: spoken-mqa_multi_step_reasoning
+
+    # Dialogue Summarization
+    - group: dialogue_summarization
+      metrics: flow_judge
+      task: Dialogue Summarization
+      language: en
+      datasets:
+        - name: multitask_SDS
+          path: <DATA_DIR>/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SDS/test.jsonl
+
+    # Instruction Following
+    - group: instruction_following
+      metrics: flow_judge
+      task: Instruction Following
+      sub_task: Spoken Instruction
+      datasets:
+        - group: instruction_following_fr
+          language: fr
+          datasets:
+            - name: CohereLabs-Aya_collection
+              path: <DATA_DIR>/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
+            - name: ComparIA
+              path: <DATA_DIR>/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
+            - name: Vigogne--Alpaca
+              path: <DATA_DIR>/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
+
+        - group: instruction_following_en
+          language: en
+          datasets:
+            - name: alpaca_audio_test
+            - name: openhermes_audio_test
+            - name: Fixie-ai--oo-gpt4-200k-audio
+              path: <DATA_DIR>/question-answering/qa_audio-question-only/en/fixie-ai--oo-gpt4-200k-audio/test.jsonl
+            - name: JST-SUPERB--NMSQA-test-gpt4
+              path: <DATA_DIR>/question-answering/qa_audio-question-only/en/JST-SUPERB--NMSQA-test-gpt4/test.jsonl
+            - name: UltraChat-300K-SLAM-Omni
+              path: <DATA_DIR>/qa_audio-question-only/en/worstchan--UltraChat-300K-SLAM-Omni/test.jsonl
+
+    # Audio Question Answering
+    - group: audio_qa
+      metrics: flow_judge
+      task: Audio Question Answering
+      language: en
+      datasets:
+        - name: clotho_aqa_test
+        - name: wavcaps_qa_test
+        - name: audiocaps_qa_test
+        - name: AIR_bench_Chat-audiocaps_cv
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/mixed/audiocaps_cv/test.jsonl
+        - name: AIR_bench_Chat-musiccaps_cv
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/mixed/musiccaps_cv/test.jsonl
+        - name: AIR_bench_Foundation_TUT2017
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/sound/TUT2017/test.jsonl
+
+    # Audio Captioning
+    - group: audio_captioning
+      metrics: flow_judge
+      task: Audio Captioning
+      language: en
+      datasets:
+        - name: wavcaps_test
+        - name: audiocaps_test
+
+    # Emotion Recognition
+    - group: emotion_recognition
+      metrics: flow_judge
+      task: Emotion Recognition
+      sub_task: Emotion
+      datasets:
+        - group: emotion_recognition_fr
+          language: fr
+          datasets:
+            - name: MELD_EmotionDS
+              path: <DATA_DIR>/misc/fr/context/MELD/EmotionDS/test.jsonl
+            - name: Ssi-speech-emotion-recognition
+              path: <DATA_DIR>/misc/fr/context/ssi-speech-emotion-recognition/test.jsonl
+
+        - group: emotion_recognition_en
+          language: en
+          datasets:
+            - name: iemocap_emotion_test
+            - name: meld_sentiment_test
+            - name: meld_emotion_test
+            - name: MELD_EmotionDS
+              path: <DATA_DIR>/misc/en/context/MELD/EmotionDS/test.jsonl
+            - name: Ssi-speech-emotion-recognition
+              path: <DATA_DIR>/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
+
+    # Accent Recognition
+    - group: accent_recognition
+      metrics: flow_judge
+      task: Accent Recognition
+      language: en
+      datasets:
+        - name: voxceleb_accent_test
+        - name: imda_ar_sentence
+        - name: imda_ar_dialogue
+
+    # Gender Recognition
+    - group: gender_recognition
+      metrics: flow_judge
+      task: Gender Recognition
+      datasets:
+        - group: gender_recognition_fr
+          language: fr
+          datasets:
+            - name: CommonVoice_Age-Gender_reco
+              path: <DATA_DIR>/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
+
+        - group: gender_recognition_en
+          language: en
+          datasets:
+            - name: iemocap_gender_test
+            - name: voxceleb_gender_test
+            - name: CommonVoice_Age-Gender_reco
+              path: <DATA_DIR>/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
+
+    # Music Question Answering
+    - group: music_qa
+      metrics: flow_judge
+      task: Music Question Answering
+      language: en
+      datasets:
+        - name: muchomusic_test
+        - name: AIR_bench_Foundation_MUSIC-AVQA
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/music_avqa/test.jsonl
+
+    # Music Understanding
+    - group: music_understanding
+      metrics: flow_judge
+      task: Music Understanding
+      language: en
+      datasets:
+        - name: AIR_bench_Foundation_NSynth
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/nsynth/test.jsonl
+        - name: AIR_bench_Foundation_MTG-Jamendo
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/MTG-Jamendo/test.jsonl
+        - name: AIR_bench_Foundation_FMA
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
+
+    # Spoken Language Identification
+    - group: language_identification
+      metrics: flow_judge
+      task: Spoken Language Identification
+      language: en
+      datasets:
+        - name: AIR_bench_Foundation_covost2
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
+
+    # Speaker Verification
+    - group: speaker_verification
+      metrics: flow_judge
+      task: Speaker Verification
+      language: en
+      datasets:
+        - name: AIR_bench_Foundation_voxceleb
+          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
+
+    # Stress Test
+    - group: stress_test
+      metrics: flow_judge
+      task: Stress Test
+      datasets:
+        - group: stress_test_fr
+          language: fr
+          datasets:
+            - name: Stress_SSD
+              path: <DATA_DIR>/misc/fr/context/Stress/ssd/test.jsonl
+              sub_task: Sentence Stress Detection
+
+        - group: stress_test_en
+          language: en
+          datasets:
+            - name: Stress_SSD
+              path: <DATA_DIR>/misc/en/context/Stress/ssd/test.jsonl
+              sub_task: Sentence Stress Detection
+            - name: Stress_SSR
+              path: <DATA_DIR>/misc/en/context/Stress/ssr/test.jsonl
+              sub_task: Sentence Stress Reasoning
+
 models:
   - name: luciole_audio_canary_qwen3_1b_v2
     path: <MODELS_DIR>/Canary-Qwen3-1.7B-v2
