@@ -17,11 +17,15 @@ Tasks:
 - Audio Captioning
 - Music Question Answering
 - Music Captioning
+- Music Understanding
 - Dialogue Summarization
 - Instruction Following
     - sub_tasks: Spoken Instruction, Format Following
 - Speaker Verification
 - Speaker Diarization
+- Spoken Language Identification
+- Stress Test
+    - sub_tasks: SSD (Sentence Stress Detection), SSR (Sentence Stress Reasoning)
 - Others
 
 
