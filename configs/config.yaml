@@ -4,182 +4,125 @@ global:
   number_of_samples: 500
   skip_errors: False
   backend: vllm
-  min_audio_duration: 1
-  max_audio_duration: 30
-  
+
   datasets:
-    # ASR - FR
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/fr/context/FLEURS/test.jsonl
+    # ASR
+    - group: asr
       metrics: wer
       task: asr
-      language: fr
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/fr/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: fr
-    - name: Multilingual_LibriSpeech
-      ignore_offsets: true
-      path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_LibriSpeech/test.jsonl
-      metrics: wer
-      task: asr
-      language: fr
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_TEDx/test.jsonl
-      metrics: wer
-      task: asr
-      language: fr
-    - name: VoxPopuli
-      path: <DATA_DIR>/nemo/asr/fr/context/VoxPopuli/test.jsonl
-      metrics: wer
-      task: asr
-      language: fr
-    - name: SUMM-RE
-      path: <DATA_DIR>/nemo/asr/fr/context/SUMM-RE/test.jsonl
-      metrics: wer
-      task: asr
-      language: fr
-      min_audio_duration: 2
-    - name: YouTubeFr
-      path: <DATA_DIR>/nemo/asr/fr/context/YouTubeFr/test_split6.jsonl
-      metrics: wer
-      task: asr
-      language: fr
-    # ASR - EN
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/en/context/FLEURS/test.jsonl
-      metrics: wer
-      task: asr
-      language: en
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/en/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: en
-    - name: Multilingual_LibriSpeech
-      path: <DATA_DIR>/nemo/asr/en/context/Multilingual_LibriSpeech/test.jsonl
-      metrics: wer
-      task: asr
-      language: en
-      ignore_offsets: true
-    - name: VoxPopuli
-      path: <DATA_DIR>/nemo/asr/en/context/VoxPopuli/test.jsonl
-      metrics: wer
-      task: asr
-      language: en
-    # ASR - IT
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/it/context/FLEURS/test.jsonl
-      metrics: wer
-      task: asr
-      language: it
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/it/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: it
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/asr/it/context/Multilingual_TEDx/test.jsonl
-      metrics: wer
-      task: asr
-      language: it
-    # ASR - DE
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/de/context/FLEURS/test.jsonl
-      metrics: wer
-      task: asr
-      language: de
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/de/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: de
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/asr/de/context/Multilingual_TEDx/test.jsonl
-      metrics: wer
-      task: asr
-      language: de
-    # ASR - NL
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/nl/context/FLEURS/test.jsonl
-      metrics: wer
-      task: asr
-      language: nl
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/nl/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: nl
-    # ASR - ES
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/es/context/FLEURS/test.jsonl
-      metrics: wer
-      task: asr
-      language: es
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/es/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: es
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/asr/es/context/Multilingual_TEDx/test.jsonl
-      metrics: wer
-      task: asr
-      language: es
-    # ASR - PT
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/pt/context/FLEURS/test.jsonl
-      metrics: wer
-      task: asr
-      language: pt
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/pt/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: pt
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
-      metrics: wer
-      task: asr
-      language: pt
-    # ASR - AR
-    - name: Fleurs
-      path: <DATA_DIR>/nemo/asr/ar/context/FLEURS/test.jsonl
-      metrics: wer
-      task: asr
-      language: ar
-    - name: CommonVoice
-      path: <DATA_DIR>/nemo/asr/ar/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: ar
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
-      metrics: wer
-      task: asr
-      language: ar
+      min_audio_duration: 1
+      max_audio_duration: 30
+      datasets:
+        - group: asr_fr
+          language: fr
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/fr/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/fr/context/CommonVoice/test.jsonl
+            - name: Multilingual_LibriSpeech
+              path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_LibriSpeech/test.jsonl
+              ignore_offsets: true
+            - name: Multilingual_TEDx
+              path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_TEDx/test.jsonl
+            - name: VoxPopuli
+              path: <DATA_DIR>/nemo/asr/fr/context/VoxPopuli/test.jsonl
+            - name: SUMM-RE
+              path: <DATA_DIR>/nemo/asr/fr/context/SUMM-RE/test.jsonl
+              min_audio_duration: 2
+            - name: YouTubeFr
+              path: <DATA_DIR>/nemo/asr/fr/context/YouTubeFr/test_split6.jsonl
+
+        - group: asr_en
+          language: en
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/en/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/en/context/CommonVoice/test.jsonl
+            - name: Multilingual_LibriSpeech
+              path: <DATA_DIR>/nemo/asr/en/context/Multilingual_LibriSpeech/test.jsonl
+              ignore_offsets: true
+            - name: VoxPopuli
+              path: <DATA_DIR>/nemo/asr/en/context/VoxPopuli/test.jsonl
+
+        - group: asr_it
+          language: it
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/it/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/it/context/CommonVoice/test.jsonl
+            - name: Multilingual_TEDx
+              path: <DATA_DIR>/nemo/asr/it/context/Multilingual_TEDx/test.jsonl
+
+        - group: asr_de
+          language: de
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/de/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/de/context/CommonVoice/test.jsonl
+            - name: Multilingual_TEDx
+              path: <DATA_DIR>/nemo/asr/de/context/Multilingual_TEDx/test.jsonl
+
+        - group: asr_nl
+          language: nl
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/nl/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/nl/context/CommonVoice/test.jsonl
+
+        - group: asr_es
+          language: es
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/es/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/es/context/CommonVoice/test.jsonl
+            - name: Multilingual_TEDx
+              path: <DATA_DIR>/nemo/asr/es/context/Multilingual_TEDx/test.jsonl
+
+        - group: asr_pt
+          language: pt
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/pt/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/pt/context/CommonVoice/test.jsonl
+            - name: Multilingual_TEDx
+              path: <DATA_DIR>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
+
+        - group: asr_ar
+          language: ar
+          datasets:
+            - name: Fleurs
+              path: <DATA_DIR>/nemo/asr/ar/context/FLEURS/test.jsonl
+            - name: CommonVoice
+              path: <DATA_DIR>/nemo/asr/ar/context/CommonVoice/test.jsonl
+            - name: Multilingual_TEDx
+              path: <DATA_DIR>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
+
     # AST
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/ast/fr-en/context/Multilingual_TEDx/test.jsonl
+    - group: ast
       metrics: [bleu, meteor]
       task: ast
-      language: fr-en
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/ast/fr-es/context/Multilingual_TEDx/test.jsonl
-      metrics: [bleu, meteor]
-      task: ast
-      language: fr-es
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/ast/es-fr/context/Multilingual_TEDx/test.jsonl
-      metrics: [bleu, meteor]
-      task: ast
-      language: es-fr
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/ast/es-it/context/Multilingual_TEDx/test.jsonl
-      metrics: [bleu, meteor]
-      task: ast
-      language: es-it
+      min_audio_duration: 1
+      max_audio_duration: 30
+      datasets:
+        - name: Multilingual_TEDx
+          path: <DATA_DIR>/nemo/ast/fr-en/context/Multilingual_TEDx/test.jsonl
+          language: fr-en
+        - name: Multilingual_TEDx
+          path: <DATA_DIR>/nemo/ast/fr-es/context/Multilingual_TEDx/test.jsonl
+          language: fr-es
+        - name: Multilingual_TEDx
+          path: <DATA_DIR>/nemo/ast/es-fr/context/Multilingual_TEDx/test.jsonl
+          language: es-fr
+        - name: Multilingual_TEDx
+          path: <DATA_DIR>/nemo/ast/es-it/context/Multilingual_TEDx/test.jsonl
+          language: es-it
 
 models:
   - name: luciole_audio_canary_qwen3_1b_v2
@@ -195,5 +138,6 @@ models:
   # - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
   #   batch_size: 25
   - name: salmonn_7b              # transformers only - very slow
+    batch_size: 1
   - name: kimi_audio_7b_instruct  # transformers only - very slow
-    batch_size: 2
+    batch_size: 1
