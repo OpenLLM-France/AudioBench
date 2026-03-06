@@ -48,6 +48,7 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
             dataset_config['number_of_samples'] = dataset_config.get("number_of_samples", global_params.get("number_of_samples", -1))
             dataset_config['min_audio_duration'] = dataset_config.get("min_audio_duration", global_params.get("min_audio_duration"))
             dataset_config['max_audio_duration'] = dataset_config.get("max_audio_duration", global_params.get("max_audio_duration"))
+            dataset_config['ignore_offsets'] = dataset_config.get("ignore_offsets", global_params.get("ignore_offsets", False))
             
             evaluation_model_config = dict(
                 batch_size=dataset_config.get("batch_size", model_batch_size), 

@@ -42,11 +42,12 @@ class BaseDatasetProcessor:
     reference_path = None
     metrics = None
 
-    def __init__(self, data_loader, number_of_samples, min_audio_duration=None, max_audio_duration=None):
+    def __init__(self, data_loader, number_of_samples, min_audio_duration=None, max_audio_duration=None, ignore_offsets=False):
         self._data_loader = data_loader
         self._number_of_samples = number_of_samples
         self._min_audio_duration = min_audio_duration
         self._max_audio_duration = max_audio_duration
+        self._ignore_offsets = ignore_offsets
         if self.instructions is not None:
             self.prompt = self.instructions
 

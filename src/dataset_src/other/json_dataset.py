@@ -77,11 +77,22 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
             info = sf.info(audio)
             sr = info.samplerate
             if "offset" in audio_entry:
-                read_kwargs["start"] = int(audio_entry["offset"] * sr)
+                start = int(audio_entry["offset"] * sr)
+                if start >= info.frames:
+                    if not self._ignore_offsets:
+                        raise ValueError(
+                            f"Offset {audio_entry['offset']}s (frame {start}) exceeds "
+                            f"file length {info.frames} frames for {audio}. "
+                            f"Set ignore_offsets=True in config to read from file start instead."
+                        )
+                else:
+                    read_kwargs["start"] = start
             if "duration" in audio_entry:
                 read_kwargs["frames"] = int(audio_entry["duration"] * sr)
 
         array, sr = sf.read(audio, **read_kwargs)
+        if len(array)==0:
+            raise ValueError(f"Audio file {audio} is empty.")
         return {
             "audio": dict(array=array, sampling_rate=sr),
             "instruction": instruction,

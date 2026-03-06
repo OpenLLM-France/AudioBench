@@ -60,6 +60,7 @@ def run_evaluation(
         dataset_path=dataset_config.get("path"),
         min_audio_duration=dataset_config.get("min_audio_duration"),
         max_audio_duration=dataset_config.get("max_audio_duration"),
+        ignore_offsets=dataset_config.get("ignore_offsets", False),
     )
     
     if dataset_config.get("task") is not None:
