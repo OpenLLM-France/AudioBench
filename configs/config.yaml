@@ -1,9 +1,11 @@
 global:
   batch_size: 25
   overwrite: False
-  number_of_samples: 1000
+  number_of_samples: 500
   skip_errors: False
   backend: vllm
+  min_audio_duration: 1
+  max_audio_duration: 30
   
   datasets:
     # ASR - FR
@@ -18,6 +20,7 @@ global:
       task: asr
       language: fr
     - name: Multilingual_LibriSpeech
+      ignore_offsets: true
       path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_LibriSpeech/test.jsonl
       metrics: wer
       task: asr
@@ -37,6 +40,7 @@ global:
       metrics: wer
       task: asr
       language: fr
+      min_audio_duration: 2
     - name: YouTubeFr
       path: <DATA_DIR>/nemo/asr/fr/context/YouTubeFr/test_split6.jsonl
       metrics: wer
@@ -58,6 +62,7 @@ global:
       metrics: wer
       task: asr
       language: en
+      ignore_offsets: true
     - name: VoxPopuli
       path: <DATA_DIR>/nemo/asr/en/context/VoxPopuli/test.jsonl
       metrics: wer
@@ -103,11 +108,6 @@ global:
       language: nl
     - name: CommonVoice
       path: <DATA_DIR>/nemo/asr/nl/context/CommonVoice/test.jsonl
-      metrics: wer
-      task: asr
-      language: nl
-    - name: Multilingual_TEDx
-      path: <DATA_DIR>/nemo/asr/nl/context/Multilingual_TEDx/test.jsonl
       metrics: wer
       task: asr
       language: nl
@@ -162,22 +162,22 @@ global:
     # AST
     - name: Multilingual_TEDx
       path: <DATA_DIR>/nemo/ast/fr-en/context/Multilingual_TEDx/test.jsonl
-      metrics: bleu
+      metrics: [bleu, meteor]
       task: ast
       language: fr-en
     - name: Multilingual_TEDx
       path: <DATA_DIR>/nemo/ast/fr-es/context/Multilingual_TEDx/test.jsonl
-      metrics: bleu
+      metrics: [bleu, meteor]
       task: ast
       language: fr-es
     - name: Multilingual_TEDx
       path: <DATA_DIR>/nemo/ast/es-fr/context/Multilingual_TEDx/test.jsonl
-      metrics: bleu
+      metrics: [bleu, meteor]
       task: ast
       language: es-fr
     - name: Multilingual_TEDx
       path: <DATA_DIR>/nemo/ast/es-it/context/Multilingual_TEDx/test.jsonl
-      metrics: bleu
+      metrics: [bleu, meteor]
       task: ast
       language: es-it
 
@@ -189,8 +189,11 @@ models:
   - name: qwen2_omni_3b
   # - name: qwen2_omni_7b         # Do we need the 3 Qwen?
   - name: qwen2_audio_7b_instruct
+    batch_size: 25
   - name: phi_4_multimodal_instruct
-  - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
-  - name: salmonn_7b              # transformers only
-  - name: voxtral_mini_3b_2507    # transformers only
+  - name: voxtral_mini_3b_2507
+  # - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
+  #   batch_size: 25
+  - name: salmonn_7b              # transformers only - very slow
   - name: kimi_audio_7b_instruct  # transformers only - very slow
+    batch_size: 2
