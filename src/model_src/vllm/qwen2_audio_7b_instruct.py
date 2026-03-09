@@ -36,8 +36,8 @@ class Qwen2Audio7BInstruct(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self):
-        super().__init__(model_path="Qwen/Qwen2-Audio-7B-Instruct")
+    def __init__(self, gpu_memory_utilization=0.4):
+        super().__init__(model_path="Qwen/Qwen2-Audio-7B-Instruct", gpu_memory_utilization=gpu_memory_utilization)
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)

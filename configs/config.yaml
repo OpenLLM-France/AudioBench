@@ -4,6 +4,9 @@ global:
   number_of_samples: 500
   skip_errors: False
   backend: vllm
+  gpu_memory_utilization: 0.4
+  compute_metrics: True
+  skip_inference: False
 
   datasets:
     # ASR
@@ -135,6 +138,12 @@ global:
           datasets:
             - name: VoxPopuli-QA
               path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
+            - name: CohereLabs-Aya_collection
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
+            - name: ComparIA
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
+            - name: Vigogne--Alpaca
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
 
         - group: sqa_en
           language: en
@@ -152,15 +161,15 @@ global:
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
             - name: AIR_bench_Chat_spokenwoz
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
-            - name: ContextDialog
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/ContextDialog/test.jsonl
-            - name: HeySQuAD_human
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/yijingwu--HeySQuAD_human/test.jsonl
-            - name: MELD_AcousticDS
-              path: <DATA_DIR>/nemo/misc/en/context/MELD/AcousticDS/test.jsonl
+            # - name: ContextDialog
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/ContextDialog/test.jsonl
+            # - name: HeySQuAD_human
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/yijingwu--HeySQuAD_human/test.jsonl
+            # - name: MELD_AcousticDS
+            #   path: <DATA_DIR>/nemo/misc/en/context/MELD/AcousticDS/test.jsonl
     # Math Question Answering
     - group: math_qa
-      metrics: flow_judge
+      metrics: acc
       task: Math Question Answering
       language: en
       datasets:
@@ -201,10 +210,10 @@ global:
             - name: openhermes_audio_test
             - name: Fixie-ai--oo-gpt4-200k-audio
               path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/fixie-ai--oo-gpt4-200k-audio/test.jsonl
-            - name: JST-SUPERB--NMSQA-test-gpt4
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/JST-SUPERB--NMSQA-test-gpt4/test.jsonl
-            - name: UltraChat-300K-SLAM-Omni
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/worstchan--UltraChat-300K-SLAM-Omni/test.jsonl
+            # - name: JST-SUPERB--NMSQA-test-gpt4
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/JST-SUPERB--NMSQA-test-gpt4/test.jsonl
+            # - name: UltraChat-300K-SLAM-Omni
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/worstchan--UltraChat-300K-SLAM-Omni/test_updated.jsonl
 
     # Audio Question Answering
     - group: audio_qa
@@ -249,8 +258,8 @@ global:
           language: en
           datasets:
             - name: iemocap_emotion_test
-            - name: meld_sentiment_test
-            - name: meld_emotion_test
+            # - name: meld_sentiment_test
+            # - name: meld_emotion_test
             - name: Ssi-speech-emotion-recognition
               path: <DATA_DIR>/nemo/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
             - name: MELD_EmotionDS
@@ -263,8 +272,8 @@ global:
       language: en
       datasets:
         - name: voxceleb_accent_test
-        - name: imda_ar_sentence
-        - name: imda_ar_dialogue
+        # - name: imda_ar_sentence
+        # - name: imda_ar_dialogue
 
     # Gender Recognition
     - group: gender_recognition
@@ -281,7 +290,7 @@ global:
           language: en
           datasets:
             - name: iemocap_gender_test
-            - name: voxceleb_gender_test
+            # - name: voxceleb_gender_test
             - name: CommonVoice_Age-Gender_reco
               path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
 
@@ -303,8 +312,8 @@ global:
       datasets:
         - name: AIR_bench_Foundation_NSynth
           path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/nsynth/test.jsonl
-        - name: AIR_bench_Foundation_MTG-Jamendo
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTG-Jamendo/test.jsonl
+        - name: AIR_bench_Foundation_MTJ-Jamendo
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
         - name: AIR_bench_Foundation_FMA
           path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
     # Music Captioning
@@ -369,7 +378,7 @@ models:
   - name: voxtral_mini_3b_2507
   # - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
   #   batch_size: 25
-  - name: salmonn_7b              # transformers only - very slow
-    batch_size: 1
+  # - name: salmonn_7b              # transformers only - very slow
+  #   batch_size: 1
   - name: kimi_audio_7b_instruct  # transformers only - very slow
     batch_size: 1

@@ -55,8 +55,8 @@ class SeallmsAudio7B(BaseModel):
     max_audio_duration = 40
     supports_vllm = True
 
-    def __init__(self):
-        super().__init__(model_path="SeaLLMs/SeaLLMs-Audio-7B")
+    def __init__(self, gpu_memory_utilization=0.4):
+        super().__init__(model_path="SeaLLMs/SeaLLMs-Audio-7B", gpu_memory_utilization=gpu_memory_utilization)
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)

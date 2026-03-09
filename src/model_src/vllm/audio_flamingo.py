@@ -62,7 +62,7 @@ class AudioFlamingo(BaseModel):
             max_model_len=4096,
             max_num_seqs=5,
             limit_mm_per_prompt={"audio": 1},
-            gpu_memory_utilization=0.6,
+            gpu_memory_utilization=self.gpu_memory_utilization,
             allowed_local_media_path=tempfile.gettempdir(),
         )
         self.sampling_params = SamplingParams(

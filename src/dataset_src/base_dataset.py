@@ -48,6 +48,7 @@ class BaseDatasetProcessor:
         self._min_audio_duration = min_audio_duration
         self._max_audio_duration = max_audio_duration
         self._ignore_offsets = ignore_offsets
+        self._dataset_size = None
         if self.instructions is not None:
             self.prompt = self.instructions
 

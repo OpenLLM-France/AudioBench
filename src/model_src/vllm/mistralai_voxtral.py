@@ -43,8 +43,8 @@ class Voxtral(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507"):
-        super().__init__(model_path=model_path)
+    def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507", gpu_memory_utilization=0.4):
+        super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization)
 
     # --- Transformers backend ---
 
@@ -96,7 +96,7 @@ class Voxtral(BaseModel):
             max_model_len=4096,
             max_num_seqs=5,
             limit_mm_per_prompt={"audio": 1},
-            gpu_memory_utilization=0.6,
+            gpu_memory_utilization=self.gpu_memory_utilization,
         )
         self.sampling_params = SamplingParams(temperature=0, max_tokens=512)
 

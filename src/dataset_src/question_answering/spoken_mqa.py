@@ -20,8 +20,7 @@ class spokenmqa_dataset_arithmatic(BaseDatasetProcessor):
     def _process_sample(self, sample):
         return {
             "audio": sample['context'],
-            "
-            ": sample['context_transcript'],
+            "audio_gt": sample['context_transcript'],
             "instruction": sample['instruction']['text'],
             "answer": sample['answer']['text'],
             "task_type": self.task_type,

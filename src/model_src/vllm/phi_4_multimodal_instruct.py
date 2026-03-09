@@ -39,8 +39,8 @@ class Phi4MultimodalInstruct(BaseModel):
     supports_vllm = True
     max_audio_duration = 40
 
-    def __init__(self):
-        super().__init__(model_path="microsoft/Phi-4-multimodal-instruct")
+    def __init__(self, gpu_memory_utilization=0.4):
+        super().__init__(model_path="microsoft/Phi-4-multimodal-instruct", gpu_memory_utilization=gpu_memory_utilization)
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path, trust_remote_code=True)
@@ -88,7 +88,7 @@ class Phi4MultimodalInstruct(BaseModel):
             enable_lora=True,
             max_lora_rank=320,
             limit_mm_per_prompt={"audio": 1},
-            gpu_memory_utilization=0.6,
+            gpu_memory_utilization=self.gpu_memory_utilization,
         )
         self.lora_request = LoRARequest("speech", 1, speech_lora_path)
         self.sampling_params = SamplingParams(temperature=0, max_tokens=1000)

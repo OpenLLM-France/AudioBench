@@ -75,6 +75,8 @@ Otherwise, packages will install in `.local` and cause permission issues.
 Example:
 ```bash
 pip install flow_judge
+pip install latex2sympy2
+pip install qwen_omni_utils
 ```
 Install any other required dependencies depending on your use case.
 

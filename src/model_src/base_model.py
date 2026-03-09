@@ -15,13 +15,15 @@ class BaseModel:
     supports_vllm = False
     max_audio_duration = 60
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None, gpu_memory_utilization=0.4):
         self.model_path = model_path
+        self.gpu_memory_utilization = gpu_memory_utilization
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dataset_name = None
         self.model_name = None
         self.backend = None
         self._temp_files = []
+        self.llm = None
 
     # --- Temp file helpers ---
 
@@ -122,7 +124,7 @@ class BaseModel:
             max_model_len=4096,
             max_num_seqs=5,
             limit_mm_per_prompt={"audio": 1},
-            gpu_memory_utilization=0.6,
+            gpu_memory_utilization=self.gpu_memory_utilization,
         )
         self.sampling_params = SamplingParams(temperature=0, max_tokens=512)
 
@@ -189,3 +191,41 @@ class BaseModel:
     def _vllm_chat_kwargs(self):
         """Extra kwargs passed to llm.chat(). Default: empty dict."""
         return {}
+
+    def destroy(self):
+        """Explicitly release resources."""
+        if self.llm is not None:
+            # vLLM V1 engine (and some older versions) uses separate processes.
+            # We try to trigger cleanup by following vLLM's recommended patterns if available.
+            try:
+                # vLLM v0.6+ cleanup
+                if hasattr(self.llm, "llm_engine"):
+                    engine = self.llm.llm_engine
+                    if hasattr(engine, "model_executor"):
+                        executor = engine.model_executor
+                        if hasattr(executor, "shutdown"):
+                            executor.shutdown()
+                
+                # Try to trigger the distributed cleanup if parallel_state exists
+                from vllm.model_executor.parallel_utils.parallel_state import destroy_model_parallel
+                destroy_model_parallel()
+            except Exception as e:
+                logger.debug(f"Error during parallel state cleanup: {e}")
+
+            import gc
+            # Delete the high-level LLM object to trigger its __del__
+            del self.llm
+            self.llm = None
+            
+            # Additional cleanup for V1 engine (if applicable)
+            try:
+                import vllm.v1.engine.core_client as core_client
+                if hasattr(core_client, "launch_core_engines"):
+                    # This is reaching deep, but we need that memory back.
+                    pass 
+            except ImportError:
+                pass
+
+            gc.collect()
+            torch.cuda.empty_cache()
+            logger.info(f"Model {self.model_name} resources released.")

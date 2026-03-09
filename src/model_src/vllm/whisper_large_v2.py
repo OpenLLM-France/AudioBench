@@ -12,8 +12,8 @@ class WhisperLargeV2(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self):
-        super().__init__(model_path="openai/whisper-large-v2")
+    def __init__(self, gpu_memory_utilization=0.4):
+        super().__init__(model_path="openai/whisper-large-v2", gpu_memory_utilization=gpu_memory_utilization)
 
     def load(self):
         self.whisper_model     = AutoModelForSpeechSeq2Seq.from_pretrained(self.model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, use_safetensors=True, device_map="auto")

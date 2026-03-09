@@ -28,8 +28,8 @@ class Qwen2Omni(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self, model_path="Qwen/Qwen2.5-Omni-3B"):
-        super().__init__(model_path=model_path)
+    def __init__(self, model_path="Qwen/Qwen2.5-Omni-3B", gpu_memory_utilization=0.4):
+        super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization)
         self._asr_text_processor = _post_process_qwen2_omni_asr
 
     def load(self):

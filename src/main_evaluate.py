@@ -20,7 +20,14 @@ logging.basicConfig(
 
 def do_model_prediction(input_data, model, batch_size):
     if model.backend=="vllm":
-        return model.generate(input_data)
+        # Process in batches to avoid massive RAM spike from building chat messages
+        vllm_batch_size = 32 
+        model_predictions = []
+        for i in tqdm(range(0, len(input_data), vllm_batch_size), desc="vLLM Inference Batches", leave=False):
+            batch = input_data[i:i + vllm_batch_size]
+            results = model.generate(batch)
+            model_predictions.extend(results)
+        return model_predictions
 
     if batch_size <= 1:
         model_predictions = []
@@ -52,6 +59,8 @@ def run_evaluation(
         model = None,
         overwrite: bool = False,
         log_folder: str = "log_for_all_models",
+        compute_metrics: bool = True,
+        skip_inference: bool = False,
     ):
     
     processor = load_dataset_processor(
@@ -116,7 +125,7 @@ def run_evaluation(
             logger.info("\n"*3)
             return model
 
-    if overwrite or not prediction_path.exists():
+    if not skip_inference and (overwrite or not prediction_path.exists()):
         if overwrite:
              logger.info(f"Overwrite is enabled. Try to infer {dataset_name} with {model_name}.")
         else:
@@ -135,12 +144,26 @@ def run_evaluation(
         # Infer with model
         model_predictions = do_model_prediction(input_data, model, batch_size=model_config["batch_size"])
         data_with_model_predictions = processor.format_model_predictions(input_data, model_predictions)
-
+        
+        # Free memory associated with raw audio data
+        del model_predictions
+        input_data.clear() # If it's a list, clear it.
+        del input_data
         # Save the result with predictions
         with open(prediction_path, 'w') as f:
             json.dump(data_with_model_predictions, f, indent=4, ensure_ascii=False)
+        del data_with_model_predictions
 
-        del input_data, model_predictions, data_with_model_predictions
+    if not compute_metrics:
+        if 'processor' in locals() and processor is not None:
+            del processor
+        return model
+
+    if not prediction_path.exists():
+        logger.error(f"Prediction file {prediction_path} not found. Cannot compute metrics.")
+        if 'processor' in locals() and processor is not None:
+            del processor
+        return model
 
     data_with_model_predictions = json.loads(prediction_path.read_text())
     results = dict()
@@ -148,7 +171,7 @@ def run_evaluation(
     results['dataset_name'] = dataset_name
     results['metrics'] = dataset_config["metrics"]
     results['number_of_samples'] = len(data_with_model_predictions)
-    results['dataset_size'] = processor._dataset_size if hasattr(processor, '_dataset_size') else processor._load_size()
+    results['dataset_size'] = processor._dataset_size if processor._dataset_size is not None else len(data_with_model_predictions)
     results['task'] = processor.task_type
     results['sub_task'] = processor.sub_task
     results['language'] = processor.language
@@ -180,6 +203,8 @@ def main(
         backend: str = "transformers",
         min_audio_duration: float = None,
         max_audio_duration: float = None,
+        compute_metrics: bool = True,
+        skip_inference: bool = False,
     ):
 
     logger.info(" ="*30)
@@ -200,7 +225,7 @@ def main(
     )
     model_config = dict(batch_size=batch_size, backend=backend)
 
-    run_evaluation(dataset_name, dataset_config, model_name, model_config, overwrite, log_folder)
+    run_evaluation(dataset_name, dataset_config, model_name, model_config, None, overwrite, log_folder, compute_metrics, skip_inference)
 
 
 

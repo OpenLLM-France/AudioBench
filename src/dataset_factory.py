@@ -352,20 +352,20 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
         return imda_part6_30s_ds_human_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'imda_ar_sentence':
-        from dataset_src.accent_recognition.imda_ar_sentence import imda_ar_sentence_dataset
-        return imda_ar_sentence_dataset(data_loader, number_of_samples)
+        from dataset_src.accent_recognition.imda_ar_sentence import imda_ar_sentence_test_dataset
+        return imda_ar_sentence_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'imda_ar_dialogue':
-        from dataset_src.accent_recognition.imda_ar_dialogue import imda_ar_dialogue_dataset
-        return imda_ar_dialogue_dataset(data_loader, number_of_samples)
+        from dataset_src.accent_recognition.imda_ar_dialogue import imda_ar_dialogue_test_dataset
+        return imda_ar_dialogue_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'imda_gr_sentence':
-        from dataset_src.gender_recognition.imda_gr_sentence import imda_gr_sentence_dataset
-        return imda_gr_sentence_dataset(data_loader, number_of_samples)
+        from dataset_src.gender_recognition.imda_gr_sentence import imda_gr_sentence_test_dataset
+        return imda_gr_sentence_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'imda_gr_dialogue':
-        from dataset_src.gender_recognition.imda_gr_dialogue import imda_gr_dialogue_dataset
-        return imda_gr_dialogue_dataset(data_loader, number_of_samples)
+        from dataset_src.gender_recognition.imda_gr_dialogue import imda_gr_dialogue_test_dataset
+        return imda_gr_dialogue_test_dataset(data_loader, number_of_samples)
 
     elif dataset_name == 'mmau_mini':
         from dataset_src.other.mmau_mini import mmau_mini_test_dataset

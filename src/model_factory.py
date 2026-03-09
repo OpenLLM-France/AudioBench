@@ -4,7 +4,7 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def load_model(model_name, backend="transformers", model_path=None):
+def load_model(model_name, backend="transformers", model_path=None, gpu_memory_utilization=0.4):
     """Factory: return a BaseModel subclass, loaded and ready to generate."""
     logger.info(f"Loading {model_name} model (path: {model_path}).")
     if model_path:
@@ -19,7 +19,7 @@ def load_model(model_name, backend="transformers", model_path=None):
 
     elif model_name == "qwen2_audio_7b_instruct":
         from model_src.vllm.qwen2_audio_7b_instruct import Qwen2Audio7BInstruct
-        model = Qwen2Audio7BInstruct()
+        model = Qwen2Audio7BInstruct(gpu_memory_utilization=gpu_memory_utilization)
 
     elif model_name == "salmonn_7b":
         from model_src.transformers.salmonn_7b import Salmonn7B
@@ -59,11 +59,11 @@ def load_model(model_name, backend="transformers", model_path=None):
 
     elif model_name == 'phi_4_multimodal_instruct':
         from model_src.vllm.phi_4_multimodal_instruct import Phi4MultimodalInstruct
-        model = Phi4MultimodalInstruct()
+        model = Phi4MultimodalInstruct(gpu_memory_utilization=gpu_memory_utilization)
 
     elif model_name == 'seallms_audio_7b':
         from model_src.vllm.seallms_audio_7b import SeallmsAudio7B
-        model = SeallmsAudio7B()
+        model = SeallmsAudio7B(gpu_memory_utilization=gpu_memory_utilization)
 
     elif model_name.startswith('luciole_audio'):
         from model_src.nemo.luciole_audio import LucioleAudio
@@ -75,18 +75,18 @@ def load_model(model_name, backend="transformers", model_path=None):
 
     elif model_name.startswith('audio_flamingo'):
         from model_src.vllm.audio_flamingo import AudioFlamingo
-        model = AudioFlamingo()
+        model = AudioFlamingo(gpu_memory_utilization=gpu_memory_utilization)
 
     elif model_name.startswith('qwen2_omni'):
         from model_src.vllm.qwen_omni import Qwen2Omni
         if model_name == 'qwen2_omni_7b':
-            model = Qwen2Omni(model_path="Qwen/Qwen2.5-Omni-7B")
+            model = Qwen2Omni(model_path="Qwen/Qwen2.5-Omni-7B", gpu_memory_utilization=gpu_memory_utilization)
         else:
-            model = Qwen2Omni()
+            model = Qwen2Omni(gpu_memory_utilization=gpu_memory_utilization)
 
     elif model_name.startswith('voxtral'):
         from model_src.vllm.mistralai_voxtral import Voxtral
-        model = Voxtral()
+        model = Voxtral(gpu_memory_utilization=gpu_memory_utilization)
 
     elif model_name == 'kimi_audio_7b_instruct':
         from model_src.transformers.kimi_audio_7b_instruct import KimiAudio7BInstruct
