@@ -93,7 +93,7 @@ export DATA_DIR=<YOUR-DATA-PATH>
 To run an evaluation, ensure you are in the `AudioBench` repository root and use the following command:
 
 ```bash
-python src/run_evaluations.py --config_path pathtoyaml
+python src/run_evaluations.py --config_path path/to/your/config.yaml
 ```
 
 🎯 **Example Use Case**

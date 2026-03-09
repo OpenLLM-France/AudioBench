@@ -134,30 +134,30 @@ global:
           language: fr
           datasets:
             - name: VoxPopuli-QA
-              path: <DATA_DIR>/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
 
         - group: sqa_en
           language: en
           datasets:
+            - name: cn_college_listen_mcq_test
             - name: slue_p2_sqa5_test
-            - name: public_sg_speech_qa_test
             - name: dream_tts_mcq_test
-            - name: spoken_mqa
+            - name: public_sg_speech_qa_test
             - name: spoken_squad_test
             - name: VoxPopuli-QA
-              path: <DATA_DIR>/question-answering/qa_audio-context-text-question/en/VoxPopuli-QA/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/en/VoxPopuli-QA/test.jsonl
             - name: multitask_SQA
-              path: <DATA_DIR>/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SQA/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SQA/test.jsonl
             - name: AIR_bench_Chat_fisher
-              path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
             - name: AIR_bench_Chat_spokenwoz
-              path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
             - name: ContextDialog
-              path: <DATA_DIR>/question-answering/qa_audio-question-text-context/en/ContextDialog/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/ContextDialog/test.jsonl
             - name: HeySQuAD_human
-              path: <DATA_DIR>/question-answering/qa_audio-question-text-context/en/yijingwu--HeySQuAD_human/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/yijingwu--HeySQuAD_human/test.jsonl
             - name: MELD_AcousticDS
-              path: <DATA_DIR>/misc/en/context/MELD/AcousticDS/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/MELD/AcousticDS/test.jsonl
     # Math Question Answering
     - group: math_qa
       metrics: flow_judge
@@ -176,7 +176,7 @@ global:
       language: en
       datasets:
         - name: multitask_SDS
-          path: <DATA_DIR>/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SDS/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SDS/test.jsonl
 
     # Instruction Following
     - group: instruction_following
@@ -188,11 +188,11 @@ global:
           language: fr
           datasets:
             - name: CohereLabs-Aya_collection
-              path: <DATA_DIR>/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
             - name: ComparIA
-              path: <DATA_DIR>/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
             - name: Vigogne--Alpaca
-              path: <DATA_DIR>/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
 
         - group: instruction_following_en
           language: en
@@ -200,11 +200,11 @@ global:
             - name: alpaca_audio_test
             - name: openhermes_audio_test
             - name: Fixie-ai--oo-gpt4-200k-audio
-              path: <DATA_DIR>/question-answering/qa_audio-question-only/en/fixie-ai--oo-gpt4-200k-audio/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/fixie-ai--oo-gpt4-200k-audio/test.jsonl
             - name: JST-SUPERB--NMSQA-test-gpt4
-              path: <DATA_DIR>/question-answering/qa_audio-question-only/en/JST-SUPERB--NMSQA-test-gpt4/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/JST-SUPERB--NMSQA-test-gpt4/test.jsonl
             - name: UltraChat-300K-SLAM-Omni
-              path: <DATA_DIR>/qa_audio-question-only/en/worstchan--UltraChat-300K-SLAM-Omni/test.jsonl
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/worstchan--UltraChat-300K-SLAM-Omni/test.jsonl
 
     # Audio Question Answering
     - group: audio_qa
@@ -216,11 +216,11 @@ global:
         - name: wavcaps_qa_test
         - name: audiocaps_qa_test
         - name: AIR_bench_Chat-audiocaps_cv
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/mixed/audiocaps_cv/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/audiocaps_cv/test.jsonl
         - name: AIR_bench_Chat-musiccaps_cv
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Chat/mixed/musiccaps_cv/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/musiccaps_cv/test.jsonl
         - name: AIR_bench_Foundation_TUT2017
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/sound/TUT2017/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/sound/TUT2017/test.jsonl
 
     # Audio Captioning
     - group: audio_captioning
@@ -241,9 +241,9 @@ global:
           language: fr
           datasets:
             - name: MELD_EmotionDS
-              path: <DATA_DIR>/misc/fr/context/MELD/EmotionDS/test.jsonl
+              path: <DATA_DIR>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
             - name: Ssi-speech-emotion-recognition
-              path: <DATA_DIR>/misc/fr/context/ssi-speech-emotion-recognition/test.jsonl
+              path: <DATA_DIR>/nemo/misc/fr/context/ssi-speech-emotion-recognition/test.jsonl
 
         - group: emotion_recognition_en
           language: en
@@ -252,9 +252,9 @@ global:
             - name: meld_sentiment_test
             - name: meld_emotion_test
             - name: Ssi-speech-emotion-recognition
-              path: <DATA_DIR>/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
             - name: MELD_EmotionDS
-              path: <DATA_DIR>/misc/en/context/MELD/EmotionDS/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
 
     # Accent Recognition
     - group: accent_recognition
@@ -275,7 +275,7 @@ global:
           language: fr
           datasets:
             - name: CommonVoice_Age-Gender_reco
-              path: <DATA_DIR>/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
+              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
 
         - group: gender_recognition_en
           language: en
@@ -283,7 +283,7 @@ global:
             - name: iemocap_gender_test
             - name: voxceleb_gender_test
             - name: CommonVoice_Age-Gender_reco
-              path: <DATA_DIR>/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
 
     # Music Question Answering
     - group: music_qa
@@ -293,7 +293,7 @@ global:
       datasets:
         - name: muchomusic_test
         - name: AIR_bench_Foundation_MUSIC-AVQA
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/music_avqa/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/music_avqa/test.jsonl
 
     # Music Understanding
     - group: music_understanding
@@ -302,11 +302,11 @@ global:
       language: en
       datasets:
         - name: AIR_bench_Foundation_NSynth
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/nsynth/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/nsynth/test.jsonl
         - name: AIR_bench_Foundation_MTG-Jamendo
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/MTG-Jamendo/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTG-Jamendo/test.jsonl
         - name: AIR_bench_Foundation_FMA
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
     # Music Captioning
     - group: music_captioning
       metrics: flow_judge
@@ -314,7 +314,7 @@ global:
       language: en
       datasets:
         - name: MusicCaps
-          path: <DATA_DIR>/music/music-captioning/en/context/MusicCaps/test.jsonl
+          path: <DATA_DIR>/nemo/music/music-captioning/en/context/MusicCaps/test.jsonl
 
     # Spoken Language Identification
     - group: language_identification
@@ -323,7 +323,7 @@ global:
       language: en
       datasets:
         - name: AIR_bench_Foundation_covost2
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
 
     # Speaker Verification
     - group: speaker_verification
@@ -332,7 +332,7 @@ global:
       language: en
       datasets:
         - name: AIR_bench_Foundation_voxceleb
-          path: <DATA_DIR>/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
 
     # Stress Test
     - group: stress_test
@@ -343,17 +343,17 @@ global:
           language: fr
           datasets:
             - name: Stress_SSD
-              path: <DATA_DIR>/misc/fr/context/Stress/ssd/test.jsonl
+              path: <DATA_DIR>/nemo/misc/fr/context/Stress/ssd/test.jsonl
               sub_task: SSD
 
         - group: stress_test_en
           language: en
           datasets:
             - name: Stress_SSD
-              path: <DATA_DIR>/misc/en/context/Stress/ssd/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/Stress/ssd/test.jsonl
               sub_task: SSD
             - name: Stress_SSR
-              path: <DATA_DIR>/misc/en/context/Stress/ssr/test.jsonl
+              path: <DATA_DIR>/nemo/misc/en/context/Stress/ssr/test.jsonl
               sub_task: SSR
 
 models:
