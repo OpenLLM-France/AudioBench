@@ -70,6 +70,7 @@ class BaseModel:
             logger.info(f'Audio duration is less than 0.5s. Padding to 0.5s. Path: {audio_path}')
             pad_samples = int(0.5 * sampling_rate) - len(audio_array)
             audio_array = np.pad(audio_array, (0, pad_samples), 'constant')
+            return [audio_array], sampling_rate, 'padded'
 
         return [audio_array], sampling_rate, 'normal'
 

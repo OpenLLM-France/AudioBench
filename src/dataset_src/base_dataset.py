@@ -51,6 +51,12 @@ class BaseDatasetProcessor:
         if self.instructions is not None:
             self.prompt = self.instructions
 
+    def _load_size(self):
+        """Load only the dataset size without processing samples."""
+        raw_data = self._data_loader()
+        self._dataset_size = len(raw_data)
+        return self._dataset_size
+
     def load(self):
         """Actually load the raw data. Call before prepare_model_input()."""
         raw_data = self._data_loader()

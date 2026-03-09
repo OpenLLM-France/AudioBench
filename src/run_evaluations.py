@@ -93,6 +93,8 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
                         logger.error(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}")
                     else:
                         raise Exception(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}") from e
+                gc.collect()
+                torch.cuda.empty_cache()
         finally:
             del model
             gc.collect()

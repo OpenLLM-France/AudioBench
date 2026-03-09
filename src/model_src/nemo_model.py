@@ -56,7 +56,8 @@ class NeMoModel(BaseModel):
                     "Audio chunking is not supported with batch_size > 1. "
                     "Use batch_size=1 for long ASR audio."
                 )
-
+            elif mode=='padded':
+                logger.info(f"Audio was padded: {inp}")
             audio_path = self._write_temp_audio(segments[0], sampling_rate)
             all_prompts.append(self._build_nemo_conversation(audio_path, prompt))
 

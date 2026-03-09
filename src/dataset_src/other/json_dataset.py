@@ -8,6 +8,14 @@ from dataset_src.base_dataset import BaseDatasetProcessor
 class jsonl_dataset_processor(BaseDatasetProcessor):
     
     
+    def _load_size(self):
+        """Load only the dataset size without processing samples."""
+        raw_data = self._data_loader()
+        if self._min_audio_duration is not None or self._max_audio_duration is not None:
+            raw_data = [s for s in raw_data if self._check_duration(s)]
+        self._dataset_size = len(raw_data)
+        return self._dataset_size
+
     def load(self):
         """Actually load the raw data. Call before prepare_model_input()."""
         raw_data = self._data_loader()

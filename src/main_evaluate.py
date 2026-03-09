@@ -140,13 +140,15 @@ def run_evaluation(
         with open(prediction_path, 'w') as f:
             json.dump(data_with_model_predictions, f, indent=4, ensure_ascii=False)
 
+        del input_data, model_predictions, data_with_model_predictions
+
     data_with_model_predictions = json.loads(prediction_path.read_text())
     results = dict()
     results['model_name'] = model_name
     results['dataset_name'] = dataset_name
     results['metrics'] = dataset_config["metrics"]
     results['number_of_samples'] = len(data_with_model_predictions)
-    results['dataset_size'] = processor._dataset_size
+    results['dataset_size'] = processor._dataset_size if hasattr(processor, '_dataset_size') else processor._load_size()
     results['task'] = processor.task_type
     results['sub_task'] = processor.sub_task
     results['language'] = processor.language
