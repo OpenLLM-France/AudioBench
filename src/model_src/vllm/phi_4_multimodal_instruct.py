@@ -84,7 +84,7 @@ class Phi4MultimodalInstruct(BaseModel):
             model=model_path,
             trust_remote_code=True,
             max_model_len=4096,
-            max_num_seqs=2,
+            max_num_seqs=self.batch_size,
             enable_lora=True,
             max_lora_rank=320,
             limit_mm_per_prompt={"audio": 1},

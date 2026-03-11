@@ -4,7 +4,7 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def load_model(model_name, backend="transformers", model_path=None, gpu_memory_utilization=0.4):
+def load_model(model_name, backend="transformers", model_path=None, gpu_memory_utilization=0.4, batch_size=1):
     """Factory: return a BaseModel subclass, loaded and ready to generate."""
     logger.info(f"Loading {model_name} model (path: {model_path}).")
     if model_path:
@@ -97,6 +97,7 @@ def load_model(model_name, backend="transformers", model_path=None, gpu_memory_u
 
     model.model_name = model_name
     model.backend = backend
+    model.batch_size = batch_size
 
     if backend == "vllm":
         if not model.supports_vllm:

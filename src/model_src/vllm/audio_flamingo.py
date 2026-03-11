@@ -60,7 +60,7 @@ class AudioFlamingo(BaseModel):
         self.llm = LLM(
             model=self.model_path,
             max_model_len=4096,
-            max_num_seqs=5,
+            max_num_seqs=self.batch_size,
             limit_mm_per_prompt={"audio": 1},
             gpu_memory_utilization=self.gpu_memory_utilization,
             allowed_local_media_path=tempfile.gettempdir(),

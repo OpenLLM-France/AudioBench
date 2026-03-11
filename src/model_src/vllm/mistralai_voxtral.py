@@ -94,7 +94,7 @@ class Voxtral(BaseModel):
             config_format="mistral",
             load_format="mistral",
             max_model_len=4096,
-            max_num_seqs=5,
+            max_num_seqs=self.batch_size,
             limit_mm_per_prompt={"audio": 1},
             gpu_memory_utilization=self.gpu_memory_utilization,
         )

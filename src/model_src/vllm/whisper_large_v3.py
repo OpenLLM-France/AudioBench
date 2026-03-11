@@ -58,7 +58,7 @@ class WhisperLargeV3(BaseModel):
         self.llm = LLM(
             model=self.model_path,
             max_model_len=448,
-            max_num_seqs=5,
+            max_num_seqs=self.batch_size,
             limit_mm_per_prompt={"audio": 1},
         )
         self.sampling_params = SamplingParams(temperature=0, max_tokens=448)

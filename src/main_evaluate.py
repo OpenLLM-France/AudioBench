@@ -21,7 +21,7 @@ logging.basicConfig(
 def do_model_prediction(input_data, model, batch_size):
     if model.backend=="vllm":
         # Process in batches to avoid massive RAM spike from building chat messages
-        vllm_batch_size = 32 
+        vllm_batch_size = 100 
         model_predictions = []
         for i in tqdm(range(0, len(input_data), vllm_batch_size), desc="vLLM Inference Batches", leave=False):
             batch = input_data[i:i + vllm_batch_size]
@@ -136,7 +136,7 @@ def run_evaluation(
 
         # Load model
         if model is None:
-            model = load_model(model_name, backend=model_config["backend"], model_path=model_config.get("path"))
+            model = load_model(model_name, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"])
 
         # Specific current dataset name for evaluation
         model.dataset_name = dataset_name

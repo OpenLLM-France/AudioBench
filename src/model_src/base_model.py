@@ -22,6 +22,7 @@ class BaseModel:
         self.dataset_name = None
         self.model_name = None
         self.backend = None
+        self.batch_size = 1
         self._temp_files = []
         self.llm = None
 
@@ -122,7 +123,7 @@ class BaseModel:
         self.llm = LLM(
             model=self.model_path,
             max_model_len=4096,
-            max_num_seqs=5,
+            max_num_seqs=self.batch_size,
             limit_mm_per_prompt={"audio": 1},
             gpu_memory_utilization=self.gpu_memory_utilization,
         )
