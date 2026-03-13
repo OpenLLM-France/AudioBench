@@ -16,3 +16,6 @@ librosa
 soundfile
 flow-judge
 qwen_omni_utils
+git+https://github.com/MoonshotAI/Kimi-Audio.git
+plotly
+kaleido

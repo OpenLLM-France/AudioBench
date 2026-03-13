@@ -127,22 +127,22 @@ Two simple steps:
 ## Supported Models
 - [x] [cascade_whisper_large_v3_llama_3_8b_instruct](./examples/adding_new_model.md)
 - [x] [cascade_whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct](./examples/adding_new_model.md)
-- [x] [MERaLiON-AudioLLM-Whisper-SEA-LION](./examples/adding_new_model.md)
-- [x] [Qwen-Audio-Chat](./examples/adding_new_model.md)
-- [x] [Qwen2-Audio-7B-Instruct](./examples/adding_new_model.md)
-- [x] [SALMONN_7B](./examples/adding_new_model.md): need extra git clone.
-- [x] [WavLLM_fairseq](./examples/adding_new_model.md): no longer supported as the inference takes too much effort.
+- [x] [meralion_audiollm_whisper_sea_lion](./examples/adding_new_model.md)
+- [x] [qwen_audio_chat](./examples/adding_new_model.md)
+- [x] [qwen2_audio_7b_instruct](./examples/adding_new_model.md)
+- [x] [salmonn_7b](./examples/adding_new_model.md): need extra git clone.
+- [x] [wavllm_fairseq](./examples/adding_new_model.md): no longer supported as the inference takes too much effort.
 - [x] [whisper_large_v3](./examples/adding_new_model.md)
 - [x] [whisper_large_v2](./examples/adding_new_model.md)
-- [x] [gemini-1.5-flash](./examples/adding_new_model.md): key needed
-- [x] [gemini-2-flash](./examples/adding_new_model.md): key needed
-- [x] [gpt-4o-audio](./examples/adding_new_model.md): key needed
+- [x] [gemini_1_5_flash](./examples/adding_new_model.md): key needed
+- [x] [gemini_2_flash](./examples/adding_new_model.md): key needed
+- [x] [gpt_4o_audio](./examples/adding_new_model.md): key needed
 - [x] [phi_4_multimodal_instruct](./examples/adding_new_model.md)
 - [x] [seallms_audio_7b](https://huggingface.co/SeaLLMs/SeaLLMs-Audio-7B)
 - [x] [audio_flamingo](./examples/adding_new_model.md)
 - [x] [canary_qwen](./examples/adding_new_model.md): NeMo-based
 - [x] [luciole_audio*](./examples/adding_new_model.md): NeMo-based, prefix match
-- [x] [qwen2_omni*](./examples/adding_new_model.md): prefix match, e.g. `qwen2_omni-7b`
+- [x] [qwen2_omni*](./examples/adding_new_model.md): prefix match, e.g. `qwen2_omni_7b`
 - [x] [voxtral*](./examples/adding_new_model.md): prefix match
 - [ ] [ultravox](./examples/adding_new_model.md) https://huggingface.co/fixie-ai/ultravox-v0_5-llama-3_1-8b / https://www.ultravox.ai/
 - [ ] [llama3_s](./examples/adding_new_model.md) 
@@ -188,7 +188,7 @@ BATCH_SIZE=1
 OVERWRITE=True
 NUMBER_OF_SAMPLES=-1 # indicate all test samples if number_of_samples=-1
 
-MODEL_NAME=qwen2-audio-7b-instruct
+MODEL_NAME=qwen2_audio_7b_instruct
 
 DATASET=cn_college_listen_mcq_test
 METRICS=flow_judge
