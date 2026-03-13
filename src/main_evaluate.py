@@ -18,10 +18,12 @@ logging.basicConfig(
 # =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
 
-def do_model_prediction(input_data, model, batch_size):
+def do_model_prediction(input_data, model):
+    batch_size = model.batch_size
+
     if model.backend=="vllm":
         # Process in batches to avoid massive RAM spike from building chat messages
-        vllm_batch_size = 100 
+        vllm_batch_size = max(100, batch_size*4)
         model_predictions = []
         for i in tqdm(range(0, len(input_data), vllm_batch_size), desc="vLLM Inference Batches", leave=False):
             batch = input_data[i:i + vllm_batch_size]
@@ -102,6 +104,8 @@ def run_evaluation(
 
     if model_name == 'wavllm_fairseq':
         model_config["batch_size"] = -1
+        if model is not None:
+            model.batch_size = -1
         logger.info("Batch size is set to -1 for wavllm_fairseq model.")
 
     if not overwrite and prediction_path.exists():
@@ -141,8 +145,11 @@ def run_evaluation(
         # Specific current dataset name for evaluation
         model.dataset_name = dataset_name
 
+        # Sync batch_size for per-dataset overrides (safe: vLLM models aren't reused across datasets)
+        model.batch_size = model_config["batch_size"]
+
         # Infer with model
-        model_predictions = do_model_prediction(input_data, model, batch_size=model_config["batch_size"])
+        model_predictions = do_model_prediction(input_data, model)
         data_with_model_predictions = processor.format_model_predictions(input_data, model_predictions)
         
         # Free memory associated with raw audio data
@@ -155,14 +162,12 @@ def run_evaluation(
         del data_with_model_predictions
 
     if not compute_metrics:
-        if 'processor' in locals() and processor is not None:
-            del processor
+        del processor
         return model
 
     if not prediction_path.exists():
         logger.error(f"Prediction file {prediction_path} not found. Cannot compute metrics.")
-        if 'processor' in locals() and processor is not None:
-            del processor
+        del processor
         return model
 
     data_with_model_predictions = json.loads(prediction_path.read_text())
@@ -190,6 +195,15 @@ def run_evaluation(
     with open(score_path, 'w') as f:
         json.dump(results, f, indent=4, ensure_ascii=False)
     del processor
+    if model.backend == "vllm":
+        from src.model_src.base_model import should_free_model
+        if should_free_model():
+            logger.info("Memory threshold exceeded — freeing vLLM model.")
+            if hasattr(model, 'destroy'):
+                model.destroy()
+            del model
+            return None
+        logger.info("Memory below threshold — keeping vLLM model.")
     return model
 
 def main(

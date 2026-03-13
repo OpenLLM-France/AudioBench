@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import Path
 
@@ -5,8 +6,31 @@ import numpy as np
 import soundfile as sf
 import torch
 import logging
+import psutil
+
 
 logger = logging.getLogger(__name__)
+
+
+def get_memory_usage_ratio():
+    """Return GPU memory usage as a fraction (0.0–1.0).
+    Uses torch.cuda.mem_get_info() which reports VRAM at the CUDA driver level,
+    capturing all allocators (PyTorch, vLLM, raw CUDA).
+    """
+    vm = psutil.virtual_memory()
+    ratio_mem_used = vm.used / vm.total
+    return ratio_mem_used
+
+
+def should_free_model(threshold=None):
+    """Return True if GPU memory usage exceeds the threshold (default 80%).
+    Threshold is configurable via AUDIOBENCH_MEMORY_THRESHOLD env var.
+    """
+    if threshold is None:
+        threshold = float(os.environ.get("AUDIOBENCH_MEMORY_THRESHOLD", "0.8"))
+    usage = get_memory_usage_ratio()
+    logger.info(f"GPU memory usage: {usage:.1%} (threshold: {threshold:.0%})")
+    return usage > threshold
 
 
 class BaseModel:
