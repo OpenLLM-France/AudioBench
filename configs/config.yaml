@@ -23,9 +23,9 @@ global:
               path: <DATA_DIR>/nemo/asr/fr/context/FLEURS/test.jsonl
             - name: CommonVoice
               path: <DATA_DIR>/nemo/asr/fr/context/CommonVoice/test.jsonl
-            - name: Multilingual_LibriSpeech
-              path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_LibriSpeech/test.jsonl
-              ignore_offsets: true
+            # - name: Multilingual_LibriSpeech
+            #   path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_LibriSpeech/test.jsonl
+            #   ignore_offsets: true
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_TEDx/test.jsonl
             - name: VoxPopuli
@@ -43,9 +43,9 @@ global:
               path: <DATA_DIR>/nemo/asr/en/context/FLEURS/test.jsonl
             - name: CommonVoice
               path: <DATA_DIR>/nemo/asr/en/context/CommonVoice/test.jsonl
-            - name: Multilingual_LibriSpeech
-              path: <DATA_DIR>/nemo/asr/en/context/Multilingual_LibriSpeech/test.jsonl
-              ignore_offsets: true
+            # - name: Multilingual_LibriSpeech
+            #   path: <DATA_DIR>/nemo/asr/en/context/Multilingual_LibriSpeech/test.jsonl
+            #   ignore_offsets: true
             - name: VoxPopuli
               path: <DATA_DIR>/nemo/asr/en/context/VoxPopuli/test.jsonl
 
@@ -54,8 +54,8 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/it/context/FLEURS/test.jsonl
-            - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/it/context/CommonVoice/test.jsonl
+            # - name: CommonVoice
+            #   path: <DATA_DIR>/nemo/asr/it/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/it/context/Multilingual_TEDx/test.jsonl
 
@@ -64,8 +64,8 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/de/context/FLEURS/test.jsonl
-            - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/de/context/CommonVoice/test.jsonl
+            # - name: CommonVoice
+            #   path: <DATA_DIR>/nemo/asr/de/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/de/context/Multilingual_TEDx/test.jsonl
 
@@ -74,16 +74,16 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/nl/context/FLEURS/test.jsonl
-            - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/nl/context/CommonVoice/test.jsonl
+            # - name: CommonVoice
+            #   path: <DATA_DIR>/nemo/asr/nl/context/CommonVoice/test.jsonl
 
         - group: asr_es
           language: es
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/es/context/FLEURS/test.jsonl
-            - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/es/context/CommonVoice/test.jsonl
+            # - name: CommonVoice
+            #   path: <DATA_DIR>/nemo/asr/es/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/es/context/Multilingual_TEDx/test.jsonl
 
@@ -92,8 +92,8 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/pt/context/FLEURS/test.jsonl
-            - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/pt/context/CommonVoice/test.jsonl
+            # - name: CommonVoice
+            #   path: <DATA_DIR>/nemo/asr/pt/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
 
@@ -102,8 +102,8 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/ar/context/FLEURS/test.jsonl
-            - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/ar/context/CommonVoice/test.jsonl
+            # - name: CommonVoice
+            #   path: <DATA_DIR>/nemo/asr/ar/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
 
@@ -161,6 +161,10 @@ global:
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
             - name: AIR_bench_Chat_spokenwoz
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
+            - name: alpaca_audio_test
+            - name: openhermes_audio_test
+            # - name: Fixie-ai--oo-gpt4-200k-audio
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/fixie-ai--oo-gpt4-200k-audio/test.jsonl
             # - name: ContextDialog
             #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/ContextDialog/test.jsonl
             # - name: HeySQuAD_human
@@ -175,8 +179,8 @@ global:
       datasets:
         - name: spoken-mqa_short_digit
         - name: spoken-mqa_long_digit
-        - name: spoken-mqa_single_step_reasoning
-        - name: spoken-mqa_multi_step_reasoning
+        # - name: spoken-mqa_single_step_reasoning
+        # - name: spoken-mqa_multi_step_reasoning
 
     # Dialogue Summarization
     - group: dialogue_summarization
@@ -186,35 +190,7 @@ global:
       datasets:
         - name: multitask_SDS
           path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SDS/test.jsonl
-
-    # Instruction Following
-    - group: instruction_following
-      metrics: flow_judge
-      task: Instruction Following
-      sub_task: Spoken Instruction
-      datasets:
-        - group: instruction_following_fr
-          language: fr
-          datasets:
-            - name: CohereLabs-Aya_collection
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
-            - name: ComparIA
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
-            - name: Vigogne--Alpaca
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
-
-        - group: instruction_following_en
-          language: en
-          datasets:
-            - name: alpaca_audio_test
-            - name: openhermes_audio_test
-            - name: Fixie-ai--oo-gpt4-200k-audio
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/fixie-ai--oo-gpt4-200k-audio/test.jsonl
-            # - name: JST-SUPERB--NMSQA-test-gpt4
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/JST-SUPERB--NMSQA-test-gpt4/test.jsonl
-            # - name: UltraChat-300K-SLAM-Omni
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/worstchan--UltraChat-300K-SLAM-Omni/test_updated.jsonl
-
+    
     # Audio Question Answering
     - group: audio_qa
       metrics: flow_judge
@@ -224,10 +200,10 @@ global:
         - name: clotho_aqa_test
         - name: wavcaps_qa_test
         - name: audiocaps_qa_test
-        - name: AIR_bench_Chat-audiocaps_cv
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/audiocaps_cv/test.jsonl
-        - name: AIR_bench_Chat-musiccaps_cv
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/musiccaps_cv/test.jsonl
+        # - name: AIR_bench_Chat-audiocaps_cv
+        #   path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/audiocaps_cv/test.jsonl
+        # - name: AIR_bench_Chat-musiccaps_cv
+        #   path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/musiccaps_cv/test.jsonl
         - name: AIR_bench_Foundation_TUT2017
           path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/sound/TUT2017/test.jsonl
 
@@ -251,8 +227,8 @@ global:
           datasets:
             - name: MELD_EmotionDS
               path: <DATA_DIR>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
-            - name: Ssi-speech-emotion-recognition
-              path: <DATA_DIR>/nemo/misc/fr/context/ssi-speech-emotion-recognition/test.jsonl
+            # - name: Ssi-speech-emotion-recognition
+            #   path: <DATA_DIR>/nemo/misc/fr/context/ssi-speech-emotion-recognition/test.jsonl
 
         - group: emotion_recognition_en
           language: en
@@ -260,7 +236,7 @@ global:
             - name: iemocap_emotion_test
             # - name: meld_sentiment_test
             # - name: meld_emotion_test
-            - name: Ssi-speech-emotion-recognition
+            - name: Ssi-speech-emotion-recognition  # look what it is like???
               path: <DATA_DIR>/nemo/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
             - name: MELD_EmotionDS
               path: <DATA_DIR>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
@@ -285,6 +261,7 @@ global:
           datasets:
             - name: CommonVoice_Age-Gender_reco
               path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
+              sub_task: gender_age
 
         - group: gender_recognition_en
           language: en
@@ -293,29 +270,34 @@ global:
             # - name: voxceleb_gender_test
             - name: CommonVoice_Age-Gender_reco
               path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
+              sub_task: gender_age
 
     # Music Question Answering
     - group: music_qa
       metrics: flow_judge
       task: Music Question Answering
-      language: en
       datasets:
-        - name: muchomusic_test
-        - name: AIR_bench_Foundation_MUSIC-AVQA
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/music_avqa/test.jsonl
+        - group: music_qa_en
+          language: en
+          datasets:
+            - name: muchomusic_test
+            - name: AIR_bench_Foundation_MUSIC-AVQA
+              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/music_avqa/test.jsonl
+            - name: AIR_bench_Foundation_MTJ-Jamendo
+              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
+            - name: AIR_bench_Foundation_FMA
+              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
+            - name: MusicCaps
+              path: <DATA_DIR>/nemo/music/music-question-answering/en/MusicCaps/test.jsonl
+            # - name: AIR_bench_Foundation_NSynth
+            #   path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/nsynth/test.jsonl
+        - group: music_qa_en
+          language: en
+          datasets:
+            - name: MusicCaps
+              path: <DATA_DIR>/nemo/music/music-question-answering/fr/MusicCaps/test.jsonl
+              language: fr
 
-    # Music Understanding
-    - group: music_understanding
-      metrics: flow_judge
-      task: Music Understanding
-      language: en
-      datasets:
-        - name: AIR_bench_Foundation_NSynth
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/nsynth/test.jsonl
-        - name: AIR_bench_Foundation_MTJ-Jamendo
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
-        - name: AIR_bench_Foundation_FMA
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
     # Music Captioning
     - group: music_captioning
       metrics: flow_judge
@@ -324,6 +306,7 @@ global:
       datasets:
         - name: MusicCaps
           path: <DATA_DIR>/nemo/music/music-captioning/en/context/MusicCaps/test.jsonl
+        # possible FR version
 
     # Spoken Language Identification
     - group: language_identification
@@ -376,9 +359,9 @@ models:
     batch_size: 25
   - name: phi_4_multimodal_instruct
   - name: voxtral_mini_3b_2507
-  # - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
-  #   batch_size: 25
-  # - name: salmonn_7b              # transformers only - very slow
-  #   batch_size: 1
+  - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
+    batch_size: 25
+  - name: salmonn_7b              # transformers only - very slow
+    batch_size: 1
   - name: kimi_audio_7b_instruct  # transformers only - very slow
     batch_size: 1
