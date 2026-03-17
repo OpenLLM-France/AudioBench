@@ -39,7 +39,7 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
     global_datasets = _flatten_datasets(global_params.get("datasets", []))
 
     models = config.get("models", [])
-    pbar = tqdm(models, desc="Processing models")
+    pbar = tqdm(models, desc="Processing models", leave=False)
 
     logger.info(" ="*30)
     logger.info(f"Running benchmark using : {config_path}")
@@ -64,9 +64,10 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
 
         # PASS 1: Inference
         try:
-            
-            for dataset_config in model_datasets:
+            dataset_pbar = tqdm(model_datasets, desc=model_name, leave=False)
+            for dataset_config in dataset_pbar:
                 dataset_name = dataset_config["name"]
+                dataset_pbar.set_description(f"{model_name} | {dataset_name}")
 
                 dataset_config['number_of_samples'] = dataset_config.get("number_of_samples", global_params.get("number_of_samples", -1))
                 dataset_config['min_audio_duration'] = dataset_config.get("min_audio_duration", global_params.get("min_audio_duration"))
@@ -100,6 +101,7 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
                 gc.collect()
                 torch.cuda.empty_cache()
         finally:
+            dataset_pbar.close()
             if model is not None:
                 if hasattr(model, 'destroy'):
                     model.destroy()
