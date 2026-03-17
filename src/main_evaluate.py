@@ -1,12 +1,24 @@
 
 import fire
 import json
+import gc
 import logging
 from pathlib import Path
 from tqdm import tqdm
 
 from src.dataset_factory import load_dataset_processor
 from model_factory import load_model
+
+# =  =  =  =  =  =  =  =  =  =  =  Helpers  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
+
+def _load_predictions(path):
+    """Load a prediction file, handling both old (list) and new (dict with metadata) formats.
+    Returns (predictions_list, metadata_dict).
+    """
+    raw = json.loads(path.read_text())
+    if isinstance(raw, list):
+        return raw, {}
+    return raw.get("predictions", raw), raw.get("metadata", {})
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
@@ -109,11 +121,11 @@ def run_evaluation(
         logger.info("Batch size is set to -1 for wavllm_fairseq model.")
 
     if not overwrite and prediction_path.exists():
-        predictions = json.loads(prediction_path.read_text())
+        predictions, pred_metadata = _load_predictions(prediction_path)
         requested = dataset_config.get("number_of_samples", -1)
         if requested > 0 and len(predictions) < requested:
-            prev_dataset_size = None
-            if score_path.exists():
+            prev_dataset_size = pred_metadata.get("dataset_size")
+            if prev_dataset_size is None and score_path.exists():
                 prev_dataset_size = json.loads(score_path.read_text()).get("dataset_size")
             if prev_dataset_size is None or len(predictions) < prev_dataset_size:
                 overwrite = True
@@ -156,54 +168,67 @@ def run_evaluation(
         del model_predictions
         input_data.clear() # If it's a list, clear it.
         del input_data
-        # Save the result with predictions
+        # Save the result with predictions (wrapped with metadata)
+        prediction_data = {
+            "metadata": {
+                "dataset_size": processor._dataset_size,
+                "number_of_samples": len(data_with_model_predictions),
+            },
+            "predictions": data_with_model_predictions,
+        }
         with open(prediction_path, 'w') as f:
-            json.dump(data_with_model_predictions, f, indent=4, ensure_ascii=False)
+            json.dump(prediction_data, f, indent=4, ensure_ascii=False)
         del data_with_model_predictions
 
-    if not compute_metrics:
-        del processor
-        return model
+
 
     if not prediction_path.exists():
         logger.error(f"Prediction file {prediction_path} not found. Cannot compute metrics.")
         del processor
         return model
-
-    data_with_model_predictions = json.loads(prediction_path.read_text())
-    results = dict()
-    results['model_name'] = model_name
-    results['dataset_name'] = dataset_name
-    results['metrics'] = dataset_config["metrics"]
-    results['number_of_samples'] = len(data_with_model_predictions)
-    results['dataset_size'] = processor._dataset_size if processor._dataset_size is not None else len(data_with_model_predictions)
-    results['task'] = processor.task_type
-    results['sub_task'] = processor.sub_task
-    results['language'] = processor.language
-    logger.info(' ='*30)
-    logger.info(f'Model name: {model_name.upper()}')
-    logger.info(f'Dataset name: {dataset_name.upper()}')
-    for metric in dataset_config["metrics"]:
-        metric_score = processor.compute_score(data_with_model_predictions, metrics=metric)
-        results.update(metric_score)
-        score_val = results[metric]
-        logger.info(f"{metric}: {score_val['score'] if isinstance(score_val, dict) else score_val}")
-    logger.info(' ='*30)
-    logger.info("\n"*3)
-    if 'details' in results:
-        results['details'] = results['details'][:20]
-    with open(score_path, 'w') as f:
-        json.dump(results, f, indent=4, ensure_ascii=False)
+    
+    if compute_metrics:
+        data_with_model_predictions, pred_metadata = _load_predictions(prediction_path)
+        results = dict()
+        results['model_name'] = model_name
+        results['dataset_name'] = dataset_name
+        results['metrics'] = dataset_config["metrics"]
+        results['number_of_samples'] = len(data_with_model_predictions)
+        results['dataset_size'] = (
+            processor._dataset_size
+            if processor._dataset_size is not None
+            else pred_metadata.get("dataset_size", len(data_with_model_predictions))
+        )
+        results['task'] = processor.task_type
+        results['sub_task'] = processor.sub_task
+        results['language'] = processor.language
+        logger.info(' ='*30)
+        logger.info(f'Model name: {model_name.upper()}')
+        logger.info(f'Dataset name: {dataset_name.upper()}')
+        for metric in dataset_config["metrics"]:
+            metric_score = processor.compute_score(data_with_model_predictions, metrics=metric)
+            results.update(metric_score)
+            score_val = results[metric]
+            logger.info(f"{metric}: {score_val['score'] if isinstance(score_val, dict) else score_val}")
+        logger.info(' ='*30)
+        logger.info("\n"*3)
+        if 'details' in results:
+            results['details'] = results['details'][:20]
+        with open(score_path, 'w') as f:
+            json.dump(results, f, indent=4, ensure_ascii=False)
+    
     del processor
-    if model.backend == "vllm":
-        from src.model_src.base_model import should_free_model
-        if should_free_model():
-            logger.info("Memory threshold exceeded — freeing vLLM model.")
-            if hasattr(model, 'destroy'):
-                model.destroy()
-            del model
-            return None
-        logger.info("Memory below threshold — keeping vLLM model.")
+    from src.model_src.base_model import should_free_model
+    if should_free_model():
+        logger.info("Memory threshold exceeded — freeing model.")
+        if hasattr(model, 'destroy'):
+            model.destroy()
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
+        return None
+    else:
+        logger.info("Memory below threshold — keeping model.")
     return model
 
 def main(

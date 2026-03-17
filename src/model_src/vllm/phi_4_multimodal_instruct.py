@@ -37,7 +37,6 @@ def _do_sample_inference(self, audio_array, prompt):
 class Phi4MultimodalInstruct(BaseModel):
 
     supports_vllm = True
-    max_audio_duration = 40
 
     def __init__(self, gpu_memory_utilization=0.4):
         super().__init__(model_path="microsoft/Phi-4-multimodal-instruct", gpu_memory_utilization=gpu_memory_utilization)

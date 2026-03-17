@@ -107,34 +107,5 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
             gc.collect()
             torch.cuda.empty_cache()
 
-        # PASS 2: Metrics computation
-        for dataset_config in model_datasets:
-            dataset_name = dataset_config["name"]
-
-            evaluation_model_config = dict(
-                batch_size=dataset_config.get("batch_size", model_batch_size), 
-                backend=model_backend,
-                path=model_config.get("path"),
-                gpu_memory_utilization=model_config.get("gpu_memory_utilization", global_params.get("gpu_memory_utilization", 0.4))
-            )
-            
-            try:
-                run_evaluation(
-                    dataset_name=dataset_name,
-                    dataset_config=dataset_config,
-                    model_name=model_name,
-                    model_config=evaluation_model_config,
-                    model=None,
-                    overwrite=global_params.get("overwrite", False),
-                    log_folder=global_params.get("output_folder", "results"),
-                    compute_metrics=global_params.get("compute_metrics", True),
-                    skip_inference=global_params.get("skip_inference", False),
-                )
-            except Exception as e:
-                if global_params.get("skip_errors", False):
-                    logger.error(f"Error computing metrics for model {model_name} on dataset {dataset_name}: {e}")
-                else:
-                    raise Exception(f"Error computing metrics for model {model_name} on dataset {dataset_name}: {e}") from e
-
 if __name__ == "__main__":
     fire.Fire(evaluate_models_from_config)

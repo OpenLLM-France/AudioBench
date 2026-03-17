@@ -37,7 +37,7 @@ class BaseModel:
     """Base class for all AudioBench models."""
 
     supports_vllm = False
-    max_audio_duration = 60
+    max_audio_duration = 120
 
     def __init__(self, model_path=None, gpu_memory_utilization=0.4):
         self.model_path = model_path
