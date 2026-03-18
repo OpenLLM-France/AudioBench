@@ -67,23 +67,47 @@ class BaseDatasetProcessor:
         logging.info(f"Loaded {len(raw_data)} samples")
         self._dataset_size = len(raw_data)
 
-        if self._number_of_samples != -1:
-            if self._number_of_samples > len(raw_data):
-                self._number_of_samples = len(raw_data)
-                logging.info(f"Requested samples exceed available. Using {self._number_of_samples}")
-            raw_data = raw_data.shuffle(seed=42)
-            raw_data = raw_data.select(range(self._number_of_samples))
-
-        logging.info(f'Number of samples: {len(raw_data)}')
+        # Process all samples first
+        logging.info(f'Processing {len(raw_data)} samples...')
         input_data = []
         for sample in tqdm(raw_data, desc="Processing samples"):
             input_data.append(self._process_sample(sample))
 
+        # Duration filter (before subsampling so we get the requested count)
+        if self._min_audio_duration is not None or self._max_audio_duration is not None:
+            before = len(input_data)
+            input_data = [s for s in input_data if self._check_audio_duration(s)]
+            logging.info(f"Duration filter: {before} -> {len(input_data)} samples "
+                         f"(min={self._min_audio_duration}, max={self._max_audio_duration})")
+
+        # Shuffle + subsample
+        if self._number_of_samples != -1:
+            if self._number_of_samples > len(input_data):
+                logging.warning(f"Requested {self._number_of_samples} samples but only "
+                                f"{len(input_data)} available. Using {len(input_data)}.")
+                self._number_of_samples = len(input_data)
+            rng = random.Random(42)
+            rng.shuffle(input_data)
+            input_data = input_data[:self._number_of_samples]
+
+        logging.info(f'Number of samples: {len(input_data)}')
         logging.info('\n=  =  =  Dataset Sample  =  =  =')
         logging.info(random.sample(input_data, 1)[0])
         logging.info('=  =  =  =  =  =  =  =  =  =  =  =\n')
 
         return input_data
+
+    def _check_audio_duration(self, processed_sample):
+        """Check if a processed sample's audio is within duration bounds."""
+        audio = processed_sample.get("audio")
+        if not isinstance(audio, dict) or "array" not in audio or "sampling_rate" not in audio:
+            return True  # can't determine duration, keep sample
+        dur = len(audio["array"]) / audio["sampling_rate"]
+        if self._min_audio_duration is not None and dur < self._min_audio_duration:
+            return False
+        if self._max_audio_duration is not None and dur > self._max_audio_duration:
+            return False
+        return True
 
     @staticmethod
     def _resolve_path(sample, path):

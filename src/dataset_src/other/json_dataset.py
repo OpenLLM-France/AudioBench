@@ -33,6 +33,8 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
             if self._number_of_samples > len(raw_data):
                 self._number_of_samples = len(raw_data)
                 logging.info(f"Requested samples exceed available. Using {self._number_of_samples}")
+            rng = random.Random(42)
+            rng.shuffle(raw_data)
             raw_data = raw_data[:self._number_of_samples]
 
         logging.info(f'Number of samples: {len(raw_data)}')

@@ -484,7 +484,10 @@ def load_dataset_processor(dataset_name, number_of_samples=-1, dataset_path=None
         raise NotImplementedError(f"Dataset {dataset_name} not implemented yet")
 
     loader = functools.partial(_load_raw_data, dataset_path if dataset_path else dataset_name)
-    return _create_processor(dataset_name, loader, number_of_samples, True if dataset_path is not None else False,
+    processor = _create_processor(dataset_name, loader, number_of_samples, True if dataset_path is not None else False,
                              min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration,
                              ignore_offsets=ignore_offsets)
+    processor._min_audio_duration = min_audio_duration
+    processor._max_audio_duration = max_audio_duration
+    return processor
  
