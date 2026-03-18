@@ -5,7 +5,7 @@ global:
   skip_errors: False
   backend: vllm
   gpu_memory_utilization: 0.4
-  compute_metrics: True
+  compute_metrics: False
   skip_inference: False
 
   datasets:
@@ -23,9 +23,6 @@ global:
               path: <DATA_DIR>/nemo/asr/fr/context/FLEURS/test.jsonl
             - name: CommonVoice
               path: <DATA_DIR>/nemo/asr/fr/context/CommonVoice/test.jsonl
-            # - name: Multilingual_LibriSpeech
-            #   path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_LibriSpeech/test.jsonl
-            #   ignore_offsets: true
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_TEDx/test.jsonl
             - name: VoxPopuli
@@ -43,9 +40,6 @@ global:
               path: <DATA_DIR>/nemo/asr/en/context/FLEURS/test.jsonl
             - name: CommonVoice
               path: <DATA_DIR>/nemo/asr/en/context/CommonVoice/test.jsonl
-            # - name: Multilingual_LibriSpeech
-            #   path: <DATA_DIR>/nemo/asr/en/context/Multilingual_LibriSpeech/test.jsonl
-            #   ignore_offsets: true
             - name: VoxPopuli
               path: <DATA_DIR>/nemo/asr/en/context/VoxPopuli/test.jsonl
 
@@ -54,8 +48,6 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/it/context/FLEURS/test.jsonl
-            # - name: CommonVoice
-            #   path: <DATA_DIR>/nemo/asr/it/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/it/context/Multilingual_TEDx/test.jsonl
 
@@ -64,8 +56,6 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/de/context/FLEURS/test.jsonl
-            # - name: CommonVoice
-            #   path: <DATA_DIR>/nemo/asr/de/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/de/context/Multilingual_TEDx/test.jsonl
 
@@ -74,16 +64,12 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/nl/context/FLEURS/test.jsonl
-            # - name: CommonVoice
-            #   path: <DATA_DIR>/nemo/asr/nl/context/CommonVoice/test.jsonl
 
         - group: asr_es
           language: es
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/es/context/FLEURS/test.jsonl
-            # - name: CommonVoice
-            #   path: <DATA_DIR>/nemo/asr/es/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/es/context/Multilingual_TEDx/test.jsonl
 
@@ -92,8 +78,6 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/pt/context/FLEURS/test.jsonl
-            # - name: CommonVoice
-            #   path: <DATA_DIR>/nemo/asr/pt/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
 
@@ -102,8 +86,6 @@ global:
           datasets:
             - name: Fleurs
               path: <DATA_DIR>/nemo/asr/ar/context/FLEURS/test.jsonl
-            # - name: CommonVoice
-            #   path: <DATA_DIR>/nemo/asr/ar/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
 
@@ -148,29 +130,20 @@ global:
         - group: sqa_en
           language: en
           datasets:
-            - name: cn_college_listen_mcq_test
             - name: slue_p2_sqa5_test
-            - name: dream_tts_mcq_test
             - name: public_sg_speech_qa_test
-            - name: spoken_squad_test
+            - name: alpaca_audio_test       # synthetic
+            - name: openhermes_audio_test   # synthetic
             - name: VoxPopuli-QA
               path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/en/VoxPopuli-QA/test.jsonl
-            - name: multitask_SQA
+            - name: NationalSpeechCorpus_SQA
               path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SQA/test.jsonl
-            - name: AIR_bench_Chat_fisher
+            - name: fisher_AIR-Bench
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
-            - name: AIR_bench_Chat_spokenwoz
+            - name: SpokenWOZ_AIR-Bench
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
-            - name: alpaca_audio_test
-            - name: openhermes_audio_test
-            # - name: Fixie-ai--oo-gpt4-200k-audio
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/en/fixie-ai--oo-gpt4-200k-audio/test.jsonl
-            # - name: ContextDialog
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/ContextDialog/test.jsonl
-            # - name: HeySQuAD_human
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-text-context/en/yijingwu--HeySQuAD_human/test.jsonl
-            # - name: MELD_AcousticDS
-            #   path: <DATA_DIR>/nemo/misc/en/context/MELD/AcousticDS/test.jsonl
+
+
     # Math Question Answering
     - group: math_qa
       metrics: acc
@@ -178,9 +151,6 @@ global:
       language: en
       datasets:
         - name: spoken-mqa_short_digit
-        - name: spoken-mqa_long_digit
-        # - name: spoken-mqa_single_step_reasoning
-        # - name: spoken-mqa_multi_step_reasoning
 
     # Dialogue Summarization
     - group: dialogue_summarization
@@ -188,7 +158,7 @@ global:
       task: Dialogue Summarization
       language: en
       datasets:
-        - name: multitask_SDS
+        - name: NationalSpeechCorpus_SDS
           path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SDS/test.jsonl
     
     # Audio Question Answering
@@ -200,12 +170,6 @@ global:
         - name: clotho_aqa_test
         - name: wavcaps_qa_test
         - name: audiocaps_qa_test
-        # - name: AIR_bench_Chat-audiocaps_cv
-        #   path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/audiocaps_cv/test.jsonl
-        # - name: AIR_bench_Chat-musiccaps_cv
-        #   path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/mixed/musiccaps_cv/test.jsonl
-        - name: AIR_bench_Foundation_TUT2017
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/sound/TUT2017/test.jsonl
 
     # Audio Captioning
     - group: audio_captioning
@@ -225,20 +189,14 @@ global:
         - group: emotion_recognition_fr
           language: fr
           datasets:
-            - name: MELD_EmotionDS
+            - name: MELD_Emotion    # todo transcript + emotion
               path: <DATA_DIR>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
-            # - name: Ssi-speech-emotion-recognition
-            #   path: <DATA_DIR>/nemo/misc/fr/context/ssi-speech-emotion-recognition/test.jsonl
 
         - group: emotion_recognition_en
           language: en
           datasets:
             - name: iemocap_emotion_test
-            # - name: meld_sentiment_test
-            # - name: meld_emotion_test
-            - name: Ssi-speech-emotion-recognition  # look what it is like???
-              path: <DATA_DIR>/nemo/misc/en/context/ssi-speech-emotion-recognition/test.jsonl
-            - name: MELD_EmotionDS
+            - name: MELD_Emotion    # todo transcript + emotion
               path: <DATA_DIR>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
 
     # Accent Recognition
@@ -248,8 +206,6 @@ global:
       language: en
       datasets:
         - name: voxceleb_accent_test
-        # - name: imda_ar_sentence
-        # - name: imda_ar_dialogue
 
     # Gender Recognition
     - group: gender_recognition
@@ -259,18 +215,32 @@ global:
         - group: gender_recognition_fr
           language: fr
           datasets:
-            - name: CommonVoice_Age-Gender_reco
+            - name: CommonVoice_Gender # todo transcript + age + gender
               path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
-              sub_task: gender_age
 
         - group: gender_recognition_en
           language: en
           datasets:
             - name: iemocap_gender_test
-            # - name: voxceleb_gender_test
-            - name: CommonVoice_Age-Gender_reco
+            - name: CommonVoice_Gender # todo
               path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
-              sub_task: gender_age
+
+    # Age Recognition
+    - group: gender_recognition
+      metrics: flow_judge
+      task: Gender Recognition
+      datasets:
+        - group: gender_recognition_fr
+          language: fr
+          datasets:
+            - name: CommonVoice_Age # todo 
+              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
+
+        - group: gender_recognition_en
+          language: en
+          datasets:
+            - name: CommonVoice_Age # todo
+              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
 
     # Music Question Answering
     - group: music_qa
@@ -280,23 +250,16 @@ global:
         - group: music_qa_en
           language: en
           datasets:
-            - name: muchomusic_test
-            - name: AIR_bench_Foundation_MUSIC-AVQA
-              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/music_avqa/test.jsonl
-            - name: AIR_bench_Foundation_MTJ-Jamendo
+            - name: muchomusic_test   # various type of questions
+            - name: MTJ-Jamendo_AIR-Bench  # various type of questions (mcq)
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
-            - name: AIR_bench_Foundation_FMA
-              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/fma/test.jsonl
             - name: MusicCaps
               path: <DATA_DIR>/nemo/music/music-question-answering/en/MusicCaps/test.jsonl
-            # - name: AIR_bench_Foundation_NSynth
-            #   path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/nsynth/test.jsonl
-        - group: music_qa_en
-          language: en
+        - group: music_qa_fr
+          language: fr
           datasets:
             - name: MusicCaps
               path: <DATA_DIR>/nemo/music/music-question-answering/fr/MusicCaps/test.jsonl
-              language: fr
 
     # Music Captioning
     - group: music_captioning
@@ -314,16 +277,15 @@ global:
       task: Spoken Language Identification
       language: en
       datasets:
-        - name: AIR_bench_Foundation_covost2
+        - name: CoVost2_AIR-Bench
           path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
 
-    # Speaker Verification
-    - group: speaker_verification
+    - group: speaker_count
       metrics: flow_judge
-      task: Speaker Verification
+      task: Speaker Count
       language: en
       datasets:
-        - name: AIR_bench_Foundation_voxceleb
+        - name: VoxCeleb_AIR-Bench
           path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
 
     # Stress Test
@@ -331,20 +293,10 @@ global:
       metrics: flow_judge
       task: Stress Test
       datasets:
-        - group: stress_test_fr
-          language: fr
-          datasets:
-            - name: Stress_SSD
-              path: <DATA_DIR>/nemo/misc/fr/context/Stress/ssd/test.jsonl
-              sub_task: SSD
-
         - group: stress_test_en
           language: en
           datasets:
-            - name: Stress_SSD
-              path: <DATA_DIR>/nemo/misc/en/context/Stress/ssd/test.jsonl
-              sub_task: SSD
-            - name: Stress_SSR
+            - name: StressTest_SSR
               path: <DATA_DIR>/nemo/misc/en/context/Stress/ssr/test.jsonl
               sub_task: SSR
 
@@ -352,12 +304,12 @@ models:
   - name: luciole_audio_canary_qwen3_1b_v2
     path: <MODELS_DIR>/Canary-Qwen3-1.7B-v2
   # - name: canary_qwen           # ASR only
-  # - name: seallms_audio_7b      # south east asia model
   - name: qwen2_omni_3b
   # - name: qwen2_omni_7b         # Do we need the 3 Qwen?
   - name: qwen2_audio_7b_instruct
-    batch_size: 25
+    batch_size: 20
   - name: phi_4_multimodal_instruct
+    batch_size: 20
   - name: voxtral_mini_3b_2507
   - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
     batch_size: 25
