@@ -137,9 +137,9 @@ def run_evaluation(
         if (all([metric in results for metric in dataset_config["metrics"]])):
             logger.info('- '*30)
             logger.info(f"Evaluation for {model_name.upper()} and {dataset_name.upper()} exists. Skip the evaluation.")
-            logger.info(results)
+            logger.info(results['metrics'])
             logger.info('- '*30)
-            logger.info("\n"*3)
+            logger.info("\n"*1)
             return model
 
     if not skip_inference and (overwrite or not prediction_path.exists()):

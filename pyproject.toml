@@ -1,0 +1,34 @@
+[project]
+name = "audiobench"
+version = "0.1.0"
+description = "Benchmark for evaluating Audio Large Language Models"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "plotly",
+    "kaleido",
+    "fire",
+]
+
+[project.optional-dependencies]
+all = [
+    "transformers",
+    "vllm>=0.8.5",
+    "evaluate",
+    "datasets",
+    "jiwer",
+    "more-itertools",
+    "peft",
+    "torchaudio",
+    "distro",
+    "autoawq",
+    "huggingface-hub",
+    "google-generativeai",
+    "openai",
+    "librosa",
+    "soundfile",
+    "latex2sympy2",
+]
+kimi = ["kimi-audio @ git+https://github.com/MoonshotAI/Kimi-Audio.git"]
+flow-judge = ["flow-judge"]
+qwen-omni = ["qwen-omni-utils"]

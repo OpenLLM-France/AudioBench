@@ -7,7 +7,7 @@ from flow_judge.metrics import RESPONSE_CORRECTNESS_5POINT, RESPONSE_CORRECTNESS
 
 def _run_flow_judge(metric, input_data):
     """Shared logic for both 5-point and binary variants."""
-    model = Vllm(gpu_memory_utilization=0.1, max_num_seqs=16)
+    model = Vllm(gpu_memory_utilization=0.1, max_model_len=3072, max_num_seqs=25)
     judge = FlowJudge(metric=metric, model=model, output_dir=None)
 
     questions, references, predictions = input_data
