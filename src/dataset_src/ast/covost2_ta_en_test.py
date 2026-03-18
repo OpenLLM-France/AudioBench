@@ -25,6 +25,7 @@ st_instructions = [
 
 
 class covost2_ta_en_test_dataset(BaseDatasetProcessor):
+    name = "covost2_ta_en_test"
     instructions = st_instructions
     task_type = "AST"
     sub_task = "TA-EN"

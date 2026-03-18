@@ -7,6 +7,7 @@ from dataset_src.text_normalizer.preprocess_text import preprocess_text_asr
 
 
 class gigaspeech2_indo_test_dataset(BaseDatasetProcessor):
+    name = "gigaspeech2_indo"
     task_type = "ASR"
     sub_task = "Reading"
     language = "ID"

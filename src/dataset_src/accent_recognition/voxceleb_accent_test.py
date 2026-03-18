@@ -15,6 +15,7 @@ ar_instructions = [
 
 
 class voxceleb_accent_test_dataset(BaseDatasetProcessor):
+    name = "VoxCeleb-accent"
     instructions = ar_instructions
     task_type = "Accent Recognition"
     language = "EN"

@@ -101,7 +101,7 @@ def run_evaluation(
             dataset_config["metrics"] = processor.metrics
             logger.info(f"Metrics is not specified. Use the default metrics of the dataset: {dataset_config.get('metrics')}")
         else:
-            raise NotImplementedError(f"The dataset {dataset_name} does not have a default metrics.")
+            raise NotImplementedError(f"The dataset {processor.name} does not have a default metrics.")
 
     if isinstance(dataset_config["metrics"], str):
         dataset_config["metrics"] = [dataset_config["metrics"]]
@@ -110,8 +110,8 @@ def run_evaluation(
         xp_dir = Path(log_folder) / model_name / processor.language
     else:
         xp_dir = xp_dir = Path(log_folder) / model_name
-    score_path = xp_dir / f"{dataset_name}_score.json"
-    prediction_path = xp_dir / f"{dataset_name}.json"
+    score_path = xp_dir / f"{processor.name}_score.json"
+    prediction_path = xp_dir / f"{processor.name}.json"
 
     xp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -136,7 +136,7 @@ def run_evaluation(
         results = json.loads(score_path.read_text())
         if (all([metric in results for metric in dataset_config["metrics"]])):
             logger.info('- '*30)
-            logger.info(f"Evaluation for {model_name.upper()} and {dataset_name.upper()} exists. Skip the evaluation.")
+            logger.info(f"Evaluation for {model_name.upper()} and {processor.name.upper()} exists. Skip the evaluation.")
             logger.info(results['metrics'])
             logger.info('- '*30)
             logger.info("\n"*1)
@@ -144,9 +144,9 @@ def run_evaluation(
 
     if not skip_inference and (overwrite or not prediction_path.exists()):
         if overwrite:
-             logger.info(f"Overwrite is enabled. Try to infer {dataset_name} with {model_name}.")
+             logger.info(f"Overwrite is enabled. Try to infer {processor.name} with {model_name}.")
         else:
-            logger.info(f"No results found for {dataset_name} with {model_name}.")
+            logger.info(f"No results found for {processor.name} with {model_name}.")
 
         # Load dataset (deferred until now to skip download when not needed)
         input_data = processor.load()
@@ -156,7 +156,7 @@ def run_evaluation(
             model = load_model(model_name, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"])
 
         # Specific current dataset name for evaluation
-        model.dataset_name = dataset_name
+        model.dataset_name = processor.name
 
         # Sync batch_size for per-dataset overrides (safe: vLLM models aren't reused across datasets)
         model.batch_size = model_config["batch_size"]
@@ -192,7 +192,7 @@ def run_evaluation(
         data_with_model_predictions, pred_metadata = _load_predictions(prediction_path)
         results = dict()
         results['model_name'] = model_name
-        results['dataset_name'] = dataset_name
+        results['dataset_name'] = processor.name
         results['metrics'] = dataset_config["metrics"]
         results['number_of_samples'] = len(data_with_model_predictions)
         results['dataset_size'] = (
@@ -205,7 +205,7 @@ def run_evaluation(
         results['language'] = processor.language
         logger.info(' ='*30)
         logger.info(f'Model name: {model_name.upper()}')
-        logger.info(f'Dataset name: {dataset_name.upper()}')
+        logger.info(f'Dataset name: {processor.name.upper()}')
         for metric in dataset_config["metrics"]:
             metric_score = processor.compute_score(data_with_model_predictions, metrics=metric)
             results.update(metric_score)

@@ -6,6 +6,7 @@ from dataset_src.prompts.prompts import asr_cn_instructions
 
 
 class aishell_asr_zh_test_dataset(BaseDatasetProcessor):
+    name = "aishell_asr_zh_test"
     instructions = asr_cn_instructions
     task_type = "ASR"
     sub_task = "Reading"

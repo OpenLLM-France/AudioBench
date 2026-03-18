@@ -9,6 +9,7 @@ from pythainlp.tokenize import word_tokenize
 
 
 class gigaspeech2_thai_test_dataset(BaseDatasetProcessor):
+    name = "gigaspeech2_thai"
     task_type = "ASR"
     sub_task = "Reading"
     language = "TH"

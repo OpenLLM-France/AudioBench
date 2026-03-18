@@ -25,6 +25,7 @@ st_instructions = [
 
 
 class covost2_en_zh_test_dataset(BaseDatasetProcessor):
+    name = "covost2_en_zh_test"
     instructions = st_instructions
     task_type = "AST"
     sub_task = "EN-ZH"

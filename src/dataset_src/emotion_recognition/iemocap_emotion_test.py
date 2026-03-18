@@ -15,6 +15,7 @@ er_instructions = [
 
 
 class iemocap_emotion_test_dataset(BaseDatasetProcessor):
+    name = "IEMOCAP-Emotion"
     instructions = er_instructions
     task_type = "Emotion Recognition"
     sub_task = "Emotion"

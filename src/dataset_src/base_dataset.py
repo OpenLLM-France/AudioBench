@@ -30,6 +30,7 @@ class BaseDatasetProcessor:
             "answer.text" means sample['answer']['text'].
     """
 
+    name = None
     instructions = None
     task_type = "UNKNOWN"
     sub_task = None
@@ -42,7 +43,9 @@ class BaseDatasetProcessor:
     reference_path = None
     metrics = None
 
-    def __init__(self, data_loader, number_of_samples, min_audio_duration=None, max_audio_duration=None, ignore_offsets=False):
+    def __init__(self, data_loader, number_of_samples, min_audio_duration=None, max_audio_duration=None, ignore_offsets=False, name=None):
+        if name is not None:
+            self.name = name
         self._data_loader = data_loader
         self._number_of_samples = number_of_samples
         self._min_audio_duration = min_audio_duration

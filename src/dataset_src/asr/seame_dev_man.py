@@ -6,6 +6,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class seame_dev_man_dataset(BaseDatasetProcessor):
+    name = "seame_dev_man"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Code Switching"

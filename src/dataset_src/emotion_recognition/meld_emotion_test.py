@@ -15,6 +15,7 @@ er_instructions = [
 
 
 class meld_emotion_test_dataset(BaseDatasetProcessor):
+    name = "MELD-emotion"
     instructions = er_instructions
     task_type = "Emotion Recognition"
     sub_task = "Emotion"

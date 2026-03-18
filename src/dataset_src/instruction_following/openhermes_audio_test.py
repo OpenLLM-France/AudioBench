@@ -15,8 +15,9 @@ si_instructions = [
 
 
 class openhermes_audio_test_dataset(BaseDatasetProcessor):
+    name = "OpenHermes_audio"
     instructions = si_instructions
-    task_type = "Instruction Following"
+    task_type = "Question Answering"
     sub_task = "Spoken Instruction"
     question_key = "audio_text_instruction"
     language = "EN"

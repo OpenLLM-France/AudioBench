@@ -3,6 +3,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class parliament_short_test_dataset(BaseDatasetProcessor):
+    name = "parliament_short_test"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Conversation"

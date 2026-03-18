@@ -9,6 +9,7 @@ ac_instructions = [
 ]
 
 class audiocaps_test_dataset(BaseDatasetProcessor):
+    name = "AudioCaps"
     instructions = ac_instructions
     task_type = "Audio Captioning"
     language = "EN"

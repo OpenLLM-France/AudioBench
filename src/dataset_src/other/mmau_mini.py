@@ -4,6 +4,7 @@ from dataset_src.eval_methods.metrics import build_metric_stats
 
 
 class mmau_mini_test_dataset(BaseDatasetProcessor):
+    name = "mmau_mini"
     task_type = "Audio-Understanding-Reasoning"
     language = "EN"
     judge_binary = True

@@ -3,6 +3,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class cna_test_dataset(BaseDatasetProcessor):
+    name = "cna_test"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Speech"

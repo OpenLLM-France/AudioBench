@@ -6,6 +6,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class imda_part4_30s_asr_test_dataset(BaseDatasetProcessor):
+    name = "imda_part4_30s_asr_test"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Conversation"

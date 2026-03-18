@@ -15,6 +15,7 @@ gr_instructions = [
 
 
 class voxceleb_gender_test_dataset(BaseDatasetProcessor):
+    name = "VoxCeleb-gender"
     instructions = gr_instructions
     task_type = "Gender Recognition"
     language = "EN"

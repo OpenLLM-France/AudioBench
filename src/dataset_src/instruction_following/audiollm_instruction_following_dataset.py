@@ -3,6 +3,7 @@ from dataset_src.eval_methods.metrics import build_metric_stats
 
 
 class audiollm_instruction_following_dataset(BaseDatasetProcessor):
+    name = "audiollm_instructionfollowing"
     task_type = "Instruction Following"
     sub_task = "Format Following"
     question_key = "text"

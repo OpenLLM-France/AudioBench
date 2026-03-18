@@ -3,6 +3,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class ytb_asr_batch2_dataset(BaseDatasetProcessor):
+    name = "ytb_asr_batch2"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Youtube"

@@ -3,6 +3,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class mediacorp_test_dataset(BaseDatasetProcessor):
+    name = "mediacorp_test"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Speech"

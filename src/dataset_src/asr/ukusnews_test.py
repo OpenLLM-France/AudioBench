@@ -3,6 +3,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class ukusnews_test_dataset(BaseDatasetProcessor):
+    name = "ukusnews_test"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Speech"

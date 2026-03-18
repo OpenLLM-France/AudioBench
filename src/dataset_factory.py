@@ -153,7 +153,7 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
 
     if external_jsonl:
         from dataset_src.other.json_dataset import jsonl_dataset_processor
-        return jsonl_dataset_processor(data_loader, number_of_samples, min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration, ignore_offsets=ignore_offsets)
+        return jsonl_dataset_processor(data_loader, number_of_samples, min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration, ignore_offsets=ignore_offsets, name=dataset_name)
 
     elif dataset_name == 'cn_college_listen_mcq_test':
         from dataset_src.question_answering.cn_college_listen_mcq_test import cn_college_listen_mcq_test_dataset
@@ -385,19 +385,19 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
 
     elif dataset_name == 'spoken-mqa_short_digit':
         from dataset_src.question_answering.spoken_mqa import spokenmqa_dataset_arithmatic
-        return spokenmqa_dataset_arithmatic(data_loader, number_of_samples)
+        return spokenmqa_dataset_arithmatic(data_loader, number_of_samples, name=dataset_name)
 
     elif dataset_name == 'spoken-mqa_long_digit':
         from dataset_src.question_answering.spoken_mqa import spokenmqa_dataset_arithmatic
-        return spokenmqa_dataset_arithmatic(data_loader, number_of_samples)
+        return spokenmqa_dataset_arithmatic(data_loader, number_of_samples, name=dataset_name)
 
     elif dataset_name == 'spoken-mqa_single_step_reasoning':
         from dataset_src.question_answering.spoken_mqa import spokenmqa_dataset_reasoning
-        return spokenmqa_dataset_reasoning(data_loader, number_of_samples)
+        return spokenmqa_dataset_reasoning(data_loader, number_of_samples, name=dataset_name)
 
     elif dataset_name == 'spoken-mqa_multi_step_reasoning':
         from dataset_src.question_answering.spoken_mqa import spokenmqa_dataset_reasoning
-        return spokenmqa_dataset_reasoning(data_loader, number_of_samples)
+        return spokenmqa_dataset_reasoning(data_loader, number_of_samples, name=dataset_name)
 
     elif dataset_name == 'ytb_asr_batch1':
         from dataset_src.asr.ytb_asr_batch1 import ytb_asr_batch1_dataset
@@ -469,7 +469,7 @@ def _create_processor(dataset_name, data_loader, number_of_samples, external_jso
 
     elif DATASET_SOURCES[dataset_name][0].endswith(".jsonl"):
         from dataset_src.other.json_dataset import jsonl_dataset_processor
-        return jsonl_dataset_processor(data_loader, number_of_samples, min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration, ignore_offsets=ignore_offsets)
+        return jsonl_dataset_processor(data_loader, number_of_samples, min_audio_duration=min_audio_duration, max_audio_duration=max_audio_duration, ignore_offsets=ignore_offsets, name=dataset_name)
 
     else:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented yet")

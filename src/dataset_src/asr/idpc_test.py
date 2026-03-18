@@ -3,6 +3,7 @@ from dataset_src.prompts.prompts import asr_instructions
 
 
 class idpc_test_dataset(BaseDatasetProcessor):
+    name = "idpc_test"
     instructions = asr_instructions
     task_type = "ASR"
     sub_task = "Conversation"
