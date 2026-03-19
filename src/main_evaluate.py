@@ -6,6 +6,7 @@ import torch
 import logging
 from pathlib import Path
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from src.dataset_factory import load_dataset_processor
 from model_factory import load_model
@@ -34,37 +35,38 @@ logging.basicConfig(
 def do_model_prediction(input_data, model):
     batch_size = model.batch_size
 
-    if model.backend=="vllm":
-        # Process in batches to avoid massive RAM spike from building chat messages
-        vllm_batch_size = max(100, batch_size*4)
-        model_predictions = []
-        for i in tqdm(range(0, len(input_data), vllm_batch_size), desc="vLLM Inference Batches", leave=False):
-            batch = input_data[i:i + vllm_batch_size]
-            results = model.generate(batch)
-            model_predictions.extend(results)
-        return model_predictions
+    with logging_redirect_tqdm():
+        if model.backend=="vllm":
+            # Process in batches to avoid massive RAM spike from building chat messages
+            vllm_batch_size = max(100, batch_size*4)
+            model_predictions = []
+            for i in tqdm(range(0, len(input_data), vllm_batch_size), desc="vLLM Inference Batches", leave=False):
+                batch = input_data[i:i + vllm_batch_size]
+                results = model.generate(batch)
+                model_predictions.extend(results)
+            return model_predictions
 
-    if batch_size <= 1:
+        if batch_size <= 1:
+            model_predictions = []
+            for inputs in tqdm(input_data, leave=False):
+                outputs = model.generate(inputs)
+                if isinstance(outputs, list):
+                    model_predictions.extend(outputs)
+                else:
+                    model_predictions.append(outputs)
+            return model_predictions
+
+        # batch_size > 1 : chunk and process per batch
         model_predictions = []
-        for inputs in tqdm(input_data, leave=False):
-            outputs = model.generate(inputs)
+        num_batches = (len(input_data) + batch_size - 1) // batch_size
+        for i in tqdm(range(0, len(input_data), batch_size), total=num_batches, leave=False, desc=f"Batch inference (bs={batch_size})"):
+            batch = input_data[i:i + batch_size]
+            outputs = model.generate(batch)
             if isinstance(outputs, list):
                 model_predictions.extend(outputs)
             else:
                 model_predictions.append(outputs)
         return model_predictions
-
-    # batch_size > 1 : chunk and process per batch
-    model_predictions = []
-    num_batches = (len(input_data) + batch_size - 1) // batch_size
-    for i in tqdm(range(0, len(input_data), batch_size), total=num_batches, leave=False, desc=f"Batch inference (bs={batch_size})"):
-        batch = input_data[i:i + batch_size]
-        outputs = model.generate(batch)
-        if isinstance(outputs, list):
-            model_predictions.extend(outputs)
-        else:
-            model_predictions.append(outputs)
-    return model_predictions
 
 def run_evaluation(
         dataset_name: str = None,

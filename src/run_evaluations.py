@@ -4,6 +4,7 @@ import gc
 import logging
 import torch
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from src.main_evaluate import run_evaluation
 
 logger = logging.getLogger(__name__)
@@ -39,8 +40,6 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
     global_datasets = _flatten_datasets(global_params.get("datasets", []))
 
     models = config.get("models", [])
-    pbar = tqdm(models, desc="Processing models", leave=False)
-
     logger.info(" ="*30)
     logger.info(f"Running benchmark using : {config_path}")
     logger.info(f"Datasets ({len(global_datasets)}): {global_datasets}")
@@ -51,65 +50,68 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
 
     global_backend = global_params.get("backend", "transformers")
 
-    for model_config in pbar:
-        model_name = model_config["name"]
-        pbar.set_description(f"Processing model: {model_name}")
+    with logging_redirect_tqdm():
+        pbar = tqdm(models, desc="Processing models", leave=False)
 
-        model_batch_size = model_config.get("batch_size", global_params.get("batch_size", 1))
-        model_backend = model_config.get("backend", global_backend)
-        model_device = model_config.get("device", global_params.get("device"))
+        for model_config in pbar:
+            model_name = model_config["name"]
+            pbar.set_description(f"Processing model: {model_name}")
 
-        model_datasets = _flatten_datasets(model_config.get("datasets", [])) if "datasets" in model_config else global_datasets
+            model_batch_size = model_config.get("batch_size", global_params.get("batch_size", 1))
+            model_backend = model_config.get("backend", global_backend)
+            model_device = model_config.get("device", global_params.get("device"))
 
-        model = None
+            model_datasets = _flatten_datasets(model_config.get("datasets", [])) if "datasets" in model_config else global_datasets
 
-        # PASS 1: Inference
-        try:
-            dataset_pbar = tqdm(model_datasets, desc=model_name, leave=False)
-            for dataset_config in dataset_pbar:
-                dataset_name = dataset_config["name"]
-                dataset_pbar.set_description(f"{model_name} | {dataset_name}")
+            model = None
 
-                dataset_config['number_of_samples'] = dataset_config.get("number_of_samples", global_params.get("number_of_samples", -1))
-                dataset_config['min_audio_duration'] = dataset_config.get("min_audio_duration", global_params.get("min_audio_duration"))
-                dataset_config['max_audio_duration'] = dataset_config.get("max_audio_duration", global_params.get("max_audio_duration"))
-                dataset_config['ignore_offsets'] = dataset_config.get("ignore_offsets", global_params.get("ignore_offsets", False))
-                
-                evaluation_model_config = dict(
-                    batch_size=dataset_config.get("batch_size", model_batch_size),
-                    backend=model_backend,
-                    path=model_config.get("path"),
-                    gpu_memory_utilization=model_config.get("gpu_memory_utilization", global_params.get("gpu_memory_utilization", 0.4)),
-                    device=model_device,
-                )
-                
-                try:
-                    model = run_evaluation(
-                        dataset_name=dataset_name,
-                        dataset_config=dataset_config,
-                        model_name=model_name,
-                        model_config=evaluation_model_config,
-                        model=model,
-                        overwrite=global_params.get("overwrite", False),
-                        log_folder=global_params.get("output_folder", "results"),
-                        compute_metrics=global_params.get("compute_metrics", True),
-                        skip_inference=global_params.get("skip_inference", False),
+            # PASS 1: Inference
+            try:
+                dataset_pbar = tqdm(model_datasets, desc=model_name, leave=False)
+                for dataset_config in dataset_pbar:
+                    dataset_name = dataset_config["name"]
+                    dataset_pbar.set_description(f"{model_name} | {dataset_name}")
+
+                    dataset_config['number_of_samples'] = dataset_config.get("number_of_samples", global_params.get("number_of_samples", -1))
+                    dataset_config['min_audio_duration'] = dataset_config.get("min_audio_duration", global_params.get("min_audio_duration"))
+                    dataset_config['max_audio_duration'] = dataset_config.get("max_audio_duration", global_params.get("max_audio_duration"))
+                    dataset_config['ignore_offsets'] = dataset_config.get("ignore_offsets", global_params.get("ignore_offsets", False))
+
+                    evaluation_model_config = dict(
+                        batch_size=dataset_config.get("batch_size", model_batch_size),
+                        backend=model_backend,
+                        path=model_config.get("path"),
+                        gpu_memory_utilization=model_config.get("gpu_memory_utilization", global_params.get("gpu_memory_utilization", 0.4)),
+                        device=model_device,
                     )
-                except Exception as e:
-                    if global_params.get("skip_errors", False):
-                        logger.error(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}")
-                    else:
-                        raise Exception(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}") from e
+
+                    try:
+                        model = run_evaluation(
+                            dataset_name=dataset_name,
+                            dataset_config=dataset_config,
+                            model_name=model_name,
+                            model_config=evaluation_model_config,
+                            model=model,
+                            overwrite=global_params.get("overwrite", False),
+                            log_folder=global_params.get("output_folder", "results"),
+                            compute_metrics=global_params.get("compute_metrics", True),
+                            skip_inference=global_params.get("skip_inference", False),
+                        )
+                    except Exception as e:
+                        if global_params.get("skip_errors", False):
+                            logger.error(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}")
+                        else:
+                            raise Exception(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}") from e
+                    gc.collect()
+                    torch.cuda.empty_cache()
+            finally:
+                dataset_pbar.close()
+                if model is not None:
+                    if hasattr(model, 'destroy'):
+                        model.destroy()
+                    del model
                 gc.collect()
                 torch.cuda.empty_cache()
-        finally:
-            dataset_pbar.close()
-            if model is not None:
-                if hasattr(model, 'destroy'):
-                    model.destroy()
-                del model
-            gc.collect()
-            torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     fire.Fire(evaluate_models_from_config)

@@ -1,6 +1,7 @@
 import random
 import logging
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from dataset_src.eval_methods.metrics import build_metric_stats
 
@@ -70,8 +71,9 @@ class BaseDatasetProcessor:
         # Process all samples first
         logging.info(f'Processing {len(raw_data)} samples...')
         input_data = []
-        for sample in tqdm(raw_data, desc="Processing samples"):
-            input_data.append(self._process_sample(sample))
+        with logging_redirect_tqdm():
+            for sample in tqdm(raw_data, desc="Processing samples"):
+                input_data.append(self._process_sample(sample))
 
         # Duration filter (before subsampling so we get the requested count)
         if self._min_audio_duration is not None or self._max_audio_duration is not None:
