@@ -180,8 +180,18 @@ def run_evaluation(
         with open(prediction_path, 'w') as f:
             json.dump(prediction_data, f, indent=4, ensure_ascii=False)
         del data_with_model_predictions
-
-
+        
+        from src.model_src.base_model import should_free_model
+        if should_free_model():
+            logger.info("Memory threshold exceeded — freeing model.")
+            if hasattr(model, 'destroy'):
+                model.destroy()
+            del model
+            gc.collect()
+            torch.cuda.empty_cache()
+            model = None
+        else:
+            logger.info("Memory below threshold — keeping model.")
 
     if not prediction_path.exists():
         logger.error(f"Prediction file {prediction_path} not found. Cannot compute metrics.")
@@ -219,16 +229,6 @@ def run_evaluation(
             json.dump(results, f, indent=4, ensure_ascii=False)
     
     del processor
-    from src.model_src.base_model import should_free_model
-    if should_free_model():
-        logger.info("Memory threshold exceeded — freeing model.")
-        if hasattr(model, 'destroy'):
-            model.destroy()
-        del model
-        gc.collect()
-        torch.cuda.empty_cache()
-        return None
-    logger.info("Memory below threshold — keeping model.")
     return model
 
 def main(
