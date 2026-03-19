@@ -38,8 +38,8 @@ def _do_sample_inference(self, audio_array, instruction):
 
 class MeralionAudioLLMWhisperSeaLion(BaseModel):
 
-    def __init__(self):
-        super().__init__(model_path="MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION")
+    def __init__(self, device=None):
+        super().__init__(model_path="MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION", device=device)
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(
@@ -52,7 +52,7 @@ class MeralionAudioLLMWhisperSeaLion(BaseModel):
             trust_remote_code=True,
             attn_implementation="flash_attention_2",
             torch_dtype=torch.bfloat16,
-            device_map="auto",
+            device_map=self.device,
         ).eval()
 
         logger.info(f"Model loaded: {self.model_path}")

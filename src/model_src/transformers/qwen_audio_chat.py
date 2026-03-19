@@ -35,12 +35,12 @@ def _post_process_qwen_asr(model_output):
 
 class QwenAudioChat(BaseModel):
 
-    def __init__(self):
-        super().__init__(model_path="Qwen/Qwen-Audio-Chat")
+    def __init__(self, device=None):
+        super().__init__(model_path="Qwen/Qwen-Audio-Chat", device=device)
 
     def load(self):
         self.tokenizer               = AutoTokenizer.from_pretrained(self.model_path, trust_remote_code=True)
-        self.model                   = AutoModelForCausalLM.from_pretrained(self.model_path, device_map="auto", trust_remote_code=True, torch_dtype=torch.bfloat16).eval()
+        self.model                   = AutoModelForCausalLM.from_pretrained(self.model_path, device_map=self.device, trust_remote_code=True, torch_dtype=torch.bfloat16).eval()
         self.model.generation_config = GenerationConfig.from_pretrained(self.model_path, trust_remote_code=True)
         logger.info(f"Model loaded: {self.model_path}")
 

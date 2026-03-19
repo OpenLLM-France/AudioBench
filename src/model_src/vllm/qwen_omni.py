@@ -28,13 +28,13 @@ class Qwen2Omni(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self, model_path="Qwen/Qwen2.5-Omni-3B", gpu_memory_utilization=0.4):
-        super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization)
+    def __init__(self, model_path="Qwen/Qwen2.5-Omni-3B", gpu_memory_utilization=0.4, device=None):
+        super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
         self._asr_text_processor = _post_process_qwen2_omni_asr
 
     def load(self):
         self.processor = Qwen2_5OmniProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2_5OmniForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
+        self.model = Qwen2_5OmniForConditionalGeneration.from_pretrained(self.model_path, device_map=self.device, torch_dtype=torch.bfloat16).eval()
         self.model.disable_talker()
         logger.info(f"Model loaded: {self.model_path}")
 

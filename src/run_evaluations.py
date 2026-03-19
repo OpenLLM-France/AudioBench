@@ -57,6 +57,7 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
 
         model_batch_size = model_config.get("batch_size", global_params.get("batch_size", 1))
         model_backend = model_config.get("backend", global_backend)
+        model_device = model_config.get("device", global_params.get("device"))
 
         model_datasets = _flatten_datasets(model_config.get("datasets", [])) if "datasets" in model_config else global_datasets
 
@@ -75,10 +76,11 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
                 dataset_config['ignore_offsets'] = dataset_config.get("ignore_offsets", global_params.get("ignore_offsets", False))
                 
                 evaluation_model_config = dict(
-                    batch_size=dataset_config.get("batch_size", model_batch_size), 
+                    batch_size=dataset_config.get("batch_size", model_batch_size),
                     backend=model_backend,
                     path=model_config.get("path"),
-                    gpu_memory_utilization=model_config.get("gpu_memory_utilization", global_params.get("gpu_memory_utilization", 0.4))
+                    gpu_memory_utilization=model_config.get("gpu_memory_utilization", global_params.get("gpu_memory_utilization", 0.4)),
+                    device=model_device,
                 )
                 
                 try:

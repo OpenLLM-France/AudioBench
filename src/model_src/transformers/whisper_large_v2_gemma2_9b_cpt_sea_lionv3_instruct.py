@@ -9,12 +9,12 @@ logger = logging.getLogger(__name__)
 
 class WhisperLargeV2Gemma29BCptSeaLionV3Instruct(BaseModel):
 
-    def __init__(self):
-        super().__init__(model_path="openai/whisper-large-v2")
+    def __init__(self, device=None):
+        super().__init__(model_path="openai/whisper-large-v2", device=device)
         self.llm_model_path = "aisingapore/gemma2-9b-cpt-sea-lionv3-instruct"
 
     def load(self):
-        self.whisper_model     = AutoModelForSpeechSeq2Seq.from_pretrained(self.model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, use_safetensors=True, device_map="auto")
+        self.whisper_model     = AutoModelForSpeechSeq2Seq.from_pretrained(self.model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True, use_safetensors=True, device_map=self.device)
         self.whisper_processor = AutoProcessor.from_pretrained(self.model_path)
         self.whisper_pipe      = pipeline(
                         "automatic-speech-recognition",
@@ -26,13 +26,13 @@ class WhisperLargeV2Gemma29BCptSeaLionV3Instruct(BaseModel):
                         batch_size=16,
                         return_timestamps=True,
                         torch_dtype=torch.float16,
-                        device_map="auto",
+                        device_map=self.device,
                     )
         self.whisper_model.eval()
 
         self.llm_tokenizer           = AutoTokenizer.from_pretrained(self.llm_model_path, padding_side='left')
         self.llm_tokenizer.pad_token = self.llm_tokenizer.eos_token
-        self.llm_model               = AutoModelForCausalLM.from_pretrained(self.llm_model_path, device_map="auto", torch_dtype=torch.float16)
+        self.llm_model               = AutoModelForCausalLM.from_pretrained(self.llm_model_path, device_map=self.device, torch_dtype=torch.float16)
         self.llm_model.eval()
 
         logger.info(f"Model loaded from {self.model_path} and {self.llm_model_path}.")

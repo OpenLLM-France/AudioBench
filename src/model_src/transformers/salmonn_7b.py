@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 class Salmonn7B(BaseModel):
 
-    def __init__(self):
-        super().__init__(model_path="examples/SALMONN_7B/")
+    def __init__(self, device=None):
+        super().__init__(model_path="examples/SALMONN_7B/", device=device)
 
     def load(self):
         self.model = SALMONN(
@@ -25,7 +25,7 @@ class Salmonn7B(BaseModel):
             low_resource = False
         )
 
-        self.model.to(self.device)
+        self.model.to(self.torch_device)
         self.model.eval()
 
         def count_parameters(model):
@@ -42,8 +42,8 @@ class Salmonn7B(BaseModel):
                 # if chunk is less than 1 second, pad it to 1 second
                 if len(chunk) < sampling_rate:
                     chunk = np.pad(chunk, (0, sampling_rate - len(chunk)), 'constant', constant_values=(0, 0))
-                outputs = self.model.generate(audio_array=chunk, sampling_rate=sampling_rate, prompt=input["instruction"], device=self.device)[0]
+                outputs = self.model.generate(audio_array=chunk, sampling_rate=sampling_rate, prompt=input["instruction"], device=self.torch_device)[0]
                 model_predictions.append(outputs)
             return ' '.join(model_predictions)
 
-        return self.model.generate(audio_array=segments[0], sampling_rate=sampling_rate, prompt=input["instruction"], device=self.device)[0]
+        return self.model.generate(audio_array=segments[0], sampling_rate=sampling_rate, prompt=input["instruction"], device=self.torch_device)[0]

@@ -15,11 +15,11 @@ class AudioFlamingo(BaseModel):
 
     supports_vllm = True    # need a very recent version of vllm
 
-    def __init__(self):
-        super().__init__(model_path="nvidia/audio-flamingo-3-hf")
+    def __init__(self, gpu_memory_utilization=0.4, device=None):
+        super().__init__(model_path="nvidia/audio-flamingo-3-hf", gpu_memory_utilization=gpu_memory_utilization, device=device)
 
     def load(self):
-        self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
+        self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(self.model_path, device_map=self.device, torch_dtype=torch.bfloat16).eval()
         self.processor = AutoProcessor.from_pretrained(self.model_path)
 
     def _generate(self, input):

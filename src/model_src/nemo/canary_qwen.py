@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 class CanaryQwen(NeMoModel):
 
-    def __init__(self):
-        super().__init__(model_path="nvidia/canary-qwen-2.5b")
+    def __init__(self, device=None):
+        super().__init__(model_path="nvidia/canary-qwen-2.5b", device=device)
 
     def load(self):
-        self.model = slm.models.SALM.from_pretrained(self.model_path).to(self.device).eval()
+        self.model = slm.models.SALM.from_pretrained(self.model_path).to(self.torch_device).eval()

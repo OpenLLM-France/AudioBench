@@ -55,12 +55,12 @@ class SeallmsAudio7B(BaseModel):
     max_audio_duration = 40
     supports_vllm = True
 
-    def __init__(self, gpu_memory_utilization=0.4):
-        super().__init__(model_path="SeaLLMs/SeaLLMs-Audio-7B", gpu_memory_utilization=gpu_memory_utilization)
+    def __init__(self, gpu_memory_utilization=0.4, device=None):
+        super().__init__(model_path="SeaLLMs/SeaLLMs-Audio-7B", gpu_memory_utilization=gpu_memory_utilization, device=device)
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
+        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map=self.device, torch_dtype=torch.bfloat16).eval()
         logger.info(f"Model loaded: {self.model_path}")
 
     def _vllm_chat_kwargs(self):

@@ -39,16 +39,48 @@ class BaseModel:
     supports_vllm = False
     max_audio_duration = 120
 
-    def __init__(self, model_path=None, gpu_memory_utilization=0.4):
+    is_api_model = False
+
+    def __init__(self, model_path=None, gpu_memory_utilization=0.4, device=None):
         self.model_path = model_path
         self.gpu_memory_utilization = gpu_memory_utilization
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device or "auto"
+        self._validate_device()
         self.dataset_name = None
         self.model_name = None
         self.backend = None
         self.batch_size = 1
         self._temp_files = []
         self.llm = None
+
+    def _validate_device(self):
+        """Validate device setting and ensure GPU is available (unless API model)."""
+        if self.is_api_model:
+            return
+        # Reject invalid device strings early
+        valid = self.device == "auto" or self.device == "cuda" or self.device.startswith("cuda:")
+        if not valid:
+            raise RuntimeError(
+                f"Invalid device: '{self.device}'. Must be 'auto', 'cuda', or 'cuda:N' (e.g. 'cuda:0')."
+            )
+        if not torch.cuda.is_available():
+            raise RuntimeError("No GPU available.")
+        if self.device.startswith("cuda:"):
+            try:
+                idx = int(self.device.split(":")[1])
+            except ValueError:
+                raise RuntimeError(f"Invalid device specification: {self.device}")
+            if idx >= torch.cuda.device_count():
+                raise RuntimeError(
+                    f"Requested {self.device} but only {torch.cuda.device_count()} GPU(s) available."
+                )
+
+    @property
+    def torch_device(self):
+        """Resolved device for .to() calls. Returns 'cuda' when device is 'auto'."""
+        if self.device == "auto":
+            return "cuda"
+        return self.device
 
     # --- Temp file helpers ---
 

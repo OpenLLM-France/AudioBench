@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 class LucioleAudio(NeMoModel):
 
-    def __init__(self, model_path=None):
-        super().__init__(model_path=model_path)
+    def __init__(self, model_path=None, device=None):
+        super().__init__(model_path=model_path, device=device)
 
     def load(self):
-        self.model = slm.models.SALM.from_pretrained(self.model_path).to(self.device).eval()
+        self.model = slm.models.SALM.from_pretrained(self.model_path).to(self.torch_device).eval()

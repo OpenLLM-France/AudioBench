@@ -17,8 +17,8 @@ SAMPLING_PARAMS = {
 
 class KimiAudio7BInstruct(BaseModel):
 
-    def __init__(self, model_path=None):
-        super().__init__(model_path=model_path or "moonshotai/Kimi-Audio-7B-Instruct")
+    def __init__(self, model_path=None, device=None):
+        super().__init__(model_path=model_path or "moonshotai/Kimi-Audio-7B-Instruct", device=device)
 
     def load(self):
         from kimia_infer.api.kimia import KimiAudio

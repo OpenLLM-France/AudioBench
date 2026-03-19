@@ -38,8 +38,8 @@ class Phi4MultimodalInstruct(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self, gpu_memory_utilization=0.4):
-        super().__init__(model_path="microsoft/Phi-4-multimodal-instruct", gpu_memory_utilization=gpu_memory_utilization)
+    def __init__(self, gpu_memory_utilization=0.4, device=None):
+        super().__init__(model_path="microsoft/Phi-4-multimodal-instruct", gpu_memory_utilization=gpu_memory_utilization, device=device)
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path, trust_remote_code=True)
@@ -48,7 +48,7 @@ class Phi4MultimodalInstruct(BaseModel):
                 trust_remote_code=True,
                 torch_dtype='auto',
                 _attn_implementation='flash_attention_2',
-                device_map="auto",
+                device_map=self.device,
             ).eval()
         print("model.config._attn_implementation:", self.model.config._attn_implementation)
         self.generation_config = GenerationConfig.from_pretrained(self.model_path, 'generation_config.json')

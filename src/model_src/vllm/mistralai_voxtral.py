@@ -43,14 +43,14 @@ class Voxtral(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507", gpu_memory_utilization=0.4):
-        super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization)
+    def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507", gpu_memory_utilization=0.4, device=None):
+        super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
 
     # --- Transformers backend ---
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = VoxtralForConditionalGeneration.from_pretrained(self.model_path, torch_dtype=torch.bfloat16, device_map="auto").eval()
+        self.model = VoxtralForConditionalGeneration.from_pretrained(self.model_path, torch_dtype=torch.bfloat16, device_map=self.device).eval()
         logger.info(f"Model loaded: {self.model_path}")
 
     def _generate(self, input):

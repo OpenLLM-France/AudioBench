@@ -153,7 +153,7 @@ def run_evaluation(
 
         # Load model
         if model is None:
-            model = load_model(model_name, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"])
+            model = load_model(model_name, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"], device=model_config.get("device"))
 
         # Specific current dataset name for evaluation
         model.dataset_name = processor.name
@@ -228,8 +228,7 @@ def run_evaluation(
         gc.collect()
         torch.cuda.empty_cache()
         return None
-    else:
-        logger.info("Memory below threshold — keeping model.")
+    logger.info("Memory below threshold — keeping model.")
     return model
 
 def main(
@@ -245,6 +244,7 @@ def main(
         max_audio_duration: float = None,
         compute_metrics: bool = True,
         skip_inference: bool = False,
+        device: str = None,
     ):
 
     logger.info(" ="*30)
@@ -263,7 +263,7 @@ def main(
         min_audio_duration=min_audio_duration,
         max_audio_duration=max_audio_duration,
     )
-    model_config = dict(batch_size=batch_size, backend=backend)
+    model_config = dict(batch_size=batch_size, backend=backend, device=device)
 
     run_evaluation(dataset_name, dataset_config, model_name, model_config, None, overwrite, log_folder, compute_metrics, skip_inference)
 

@@ -74,6 +74,8 @@ def _do_sample_inference(self, audio_array, instruction, sampling_rate=16000):
 
 class GPT4oAudio(BaseModel):
 
+    is_api_model = True
+
     def load(self):
         endpoint         = os.getenv("ENDPOINT_URL", "https://aoai-i2r-test-001.openai.azure.com/")
         subscription_key = os.getenv("AZURE_OPENAI_API_KEY", "REPLACE_WITH_YOUR_KEY_VALUE_HERE")

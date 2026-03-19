@@ -36,12 +36,12 @@ class Qwen2Audio7BInstruct(BaseModel):
 
     supports_vllm = True
 
-    def __init__(self, gpu_memory_utilization=0.4):
-        super().__init__(model_path="Qwen/Qwen2-Audio-7B-Instruct", gpu_memory_utilization=gpu_memory_utilization)
+    def __init__(self, gpu_memory_utilization=0.4, device=None):
+        super().__init__(model_path="Qwen/Qwen2-Audio-7B-Instruct", gpu_memory_utilization=gpu_memory_utilization, device=device)
 
     def load(self):
         self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map="auto", torch_dtype=torch.bfloat16).eval()
+        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map=self.device, torch_dtype=torch.bfloat16).eval()
         logger.info(f"Model loaded: {self.model_path}")
 
     def _infer_single(self, audio_array, sampling_rate, instruction, is_asr):

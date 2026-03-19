@@ -40,6 +40,8 @@ def _do_sample_inference(self, audio_array, instruction, sampling_rate=16000):
 
 class Gemini2Flash(BaseModel):
 
+    is_api_model = True
+
     def load(self):
         # Initialize a Gemini model appropriate for your use case.
         self.model = genai.GenerativeModel('models/gemini-2.0-flash-exp')
