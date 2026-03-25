@@ -1,3 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["audio_bench"]
+
 [project]
 name = "audiobench"
 version = "0.1.0"
@@ -8,27 +18,23 @@ dependencies = [
     "plotly",
     "kaleido",
     "fire",
+    "transformers",
+    "evaluate",
+    "datasets",
+    "jiwer<4",
+    "more-itertools",
+    "huggingface-hub",
+    "librosa",
+    "soundfile",
 ]
 
 [project.optional-dependencies]
-all = [
-    "transformers",
-    "vllm>=0.8.5",
-    "evaluate",
-    "datasets",
-    "jiwer",
-    "more-itertools",
-    "peft",
-    "torchaudio",
-    "distro",
-    "autoawq",
-    "huggingface-hub",
-    "google-generativeai",
-    "openai",
-    "librosa",
-    "soundfile",
-    "latex2sympy2",
-]
+vllm = ["vllm>=0.8.5"]
+api = ["google-generativeai", "openai"]
+math = ["latex2sympy2"]
 kimi = ["kimi-audio @ git+https://github.com/MoonshotAI/Kimi-Audio.git"]
 flow-judge = ["flow-judge"]
 qwen-omni = ["qwen-omni-utils"]
+all = [
+    "audiobench[vllm,api,math,kimi,flow-judge,qwen-omni]",
+]
