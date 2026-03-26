@@ -119,10 +119,10 @@ def _lang_sort_key(lang: str):
 HIGHLIGHT_COLOR = "#b0c1d7"
 MISSING_COLOR = "#e0e0e0"
 RANK_COLORS = {
-    "first": "#b0c1d7",      # blue
-    "second": "#b0d7b5",     # green
-    "last": "#d7b0b0",       # red
-    "before_last": "#d7d5b0",  # yellow
+    "first": "#5dade2",        # sky blue
+    "second": "#82e0aa",       # green
+    "last": "#e74c3c",         # bold red
+    "before_last": "#fdcb6e",  # amber
 }
 
 # Language grouping for the Languages navigation section
@@ -408,6 +408,20 @@ def _td(val_str, is_best=False, is_missing=False, extra_attrs="", title="", rank
     return f"<td{extra_attrs}{style}{title_attr}>{val_str}</td>"
 
 
+_MODEL_SIZE_OVERRIDES = {
+    "phi_4_multimodal_instruct": "7B",
+    "audio_flamingo_3": "7B",
+}
+
+
+def _extract_model_size(model_name):
+    """Extract size like '7B' from model name by matching patterns like '_7b' or '_3b_'."""
+    if model_name in _MODEL_SIZE_OVERRIDES:
+        return _MODEL_SIZE_OVERRIDES[model_name]
+    match = re.search(r'(\d+)[bB](?:_|$)', model_name)
+    return f"{match.group(1)}B" if match else ""
+
+
 def _best_row(pairs, asc):
     """Return the row index of the best value, or None if *pairs* is empty."""
     if not pairs:
@@ -614,15 +628,148 @@ def plot_violin_charts(entries, title_prefix, collector):
         })
 
 # ---------------------------------------------------------------------------
+# Plotting — Size vs Performance scatter
+# ---------------------------------------------------------------------------
+
+def plot_size_vs_performance(entries, collector, *, category="Overview"):
+    """Scatter plot of average rank vs model size (in B parameters).
+
+    Models without a detectable size are excluded.
+    """
+    agg = aggregate_entries(entries, by_language=False)
+    if not agg:
+        return
+
+    # Compute per-task avg rank (same logic as overview table)
+    task_entries = defaultdict(list)
+    for e in agg:
+        task_entries[e["task"]].append(e)
+
+    task_metric = {}
+    for task, ents in task_entries.items():
+        override = _TASK_METRIC_OVERRIDE.get(task.upper())
+        if override and any(e["metric_name"] == override for e in ents):
+            task_metric[task] = override
+        else:
+            task_metric[task] = _most_common_metric(ents)
+
+    tasks = sorted(task_metric.keys())
+    all_models = sorted({e["model_name"] for e in agg})
+
+    task_model_score = {}
+    for task in tasks:
+        metric = task_metric[task]
+        model_scores = {}
+        for m in all_models:
+            scores = [
+                e["score"] for e in task_entries[task]
+                if e["model_name"] == m and e["metric_name"] == metric
+            ]
+            if scores:
+                model_scores[m] = sum(scores) / len(scores)
+        task_model_score[task] = model_scores
+
+    # Super-category grouping for ranks
+    sc_tasks = defaultdict(list)
+    for task in tasks:
+        sc_tasks[_super_category(task)].append(task)
+
+    super_cats = [sc for sc in _SUPER_CATEGORY_ORDER if sc in sc_tasks]
+    for sc in sorted(sc_tasks.keys()):
+        if sc not in super_cats:
+            super_cats.append(sc)
+
+    sc_ascending = {
+        sc: all(_sort_ascending(task_metric[t]) for t in sc_tasks[sc])
+        for sc in super_cats
+    }
+
+    sc_model_score = {}
+    for sc in super_cats:
+        sc_model_score[sc] = {}
+        for m in all_models:
+            disp_scores = []
+            for task in sc_tasks[sc]:
+                if m in task_model_score[task]:
+                    disp_scores.append(
+                        _display_score(task_model_score[task][m], task_metric[task])
+                    )
+            if disp_scores:
+                sc_model_score[sc][m] = sum(disp_scores) / len(disp_scores)
+
+    sc_model_rank = {}
+    for sc in super_cats:
+        asc = sc_ascending[sc]
+        ranked = sorted(sc_model_score[sc].items(), key=lambda x: x[1], reverse=not asc)
+        sc_model_rank[sc] = {m: rank + 1 for rank, (m, _) in enumerate(ranked)}
+
+    model_avg_rank = {}
+    for m in all_models:
+        ranks = [sc_model_rank[sc][m] for sc in super_cats if m in sc_model_rank[sc]]
+        model_avg_rank[m] = sum(ranks) / len(ranks) if ranks else None
+
+    # Build scatter data: only models with known size
+    xs, ys, labels = [], [], []
+    for m in all_models:
+        size_str = _extract_model_size(m)
+        if not size_str or model_avg_rank.get(m) is None:
+            continue
+        xs.append(int(size_str.rstrip("B")))
+        ys.append(model_avg_rank[m])
+        labels.append(m)
+
+    if not xs:
+        return
+
+    color_map = _model_color_map(all_models)
+    colors = [color_map.get(m, "#888") for m in labels]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=xs, y=ys,
+        mode="markers+text",
+        text=labels,
+        textposition="top center",
+        textfont=dict(size=9),
+        marker=dict(size=12, color=colors, line=dict(width=1, color="#333")),
+        hovertemplate="%{text}<br>Size: %{x}B<br>Avg Rank: %{y:.1f}<extra></extra>",
+    ))
+
+    fig.update_layout(
+        title_text="Performance vs Model Size",
+        title_font_size=16,
+        xaxis_title="Model Size (B parameters)",
+        yaxis_title="Average Rank (lower is better)",
+        yaxis_autorange="reversed",
+        height=500,
+        width=800,
+        template="plotly_white",
+    )
+
+    collector.append({
+        "category": category,
+        "chart_type": "table",
+        "metric": "size_vs_perf",
+        "raw_html": fig.to_html(full_html=False, include_plotlyjs=False),
+    })
+
+
+# ---------------------------------------------------------------------------
 # Plotting — Overview Table (all tasks × models)
 # ---------------------------------------------------------------------------
 
-def plot_overview_table(entries, collector):
+def plot_overview_table(entries, collector, *, title="Overview",
+                        table_id="overview-tbl", allowed_super_cats=None):
     """Build an overview HTML table with super-category columns.
 
     Each super-category column shows the average score across its tasks.
     Super-categories with multiple tasks have a [+] toggle to reveal
     individual task sub-columns.
+
+    Parameters
+    ----------
+    allowed_super_cats : set or None
+        When set, only super-categories in this set are included.
     """
     agg = aggregate_entries(entries, by_language=False)
     if not agg:
@@ -685,6 +832,9 @@ def plot_overview_table(entries, collector):
     for sc in sorted(sc_tasks.keys()):
         if sc not in super_cats:
             super_cats.append(sc)
+
+    if allowed_super_cats is not None:
+        super_cats = [sc for sc in super_cats if sc in allowed_super_cats]
 
     expandable_sc = {sc for sc in super_cats if len(sc_tasks[sc]) > 1}
 
@@ -835,11 +985,12 @@ def plot_overview_table(entries, collector):
         '</div>'
     )
 
-    lines.append('<table class="ov-tbl" id="overview-tbl">')
+    lines.append(f'<table class="ov-tbl" id="{table_id}">')
 
     # --- Header ---
     lines.append("<thead><tr>")
     lines.append("<th>Model</th>")
+    lines.append("<th>Size</th>")
     lines.append("<th>Avg Rank</th>")
     for sc in super_cats:
         sc_slug = _slug(sc)
@@ -893,8 +1044,9 @@ def plot_overview_table(entries, collector):
     for ri, m in enumerate(sorted_models):
         lines.append("<tr>")
         lines.append(f"<td>{m}</td>")
+        lines.append(f"<td>{_extract_model_size(m)}</td>")
 
-        # Avg Rank (second column)
+        # Avg Rank
         r = model_avg_rank[m]
         if r != float("inf"):
             lines.append(_td(f"{r:.1f}", rank_key=rank_ranks.get(ri)))
@@ -964,7 +1116,7 @@ def plot_overview_table(entries, collector):
     lines.append("""\
 <script>
 function toggleOvSc(btn, sc) {
-  var tbl = document.getElementById('overview-tbl');
+  var tbl = btn.closest('table');
   var cells = tbl.querySelectorAll('[data-sc="' + sc + '"]');
   if (!cells.length) return;
   var show = cells[0].style.display !== 'table-cell';
@@ -973,7 +1125,7 @@ function toggleOvSc(btn, sc) {
   btn.textContent = show ? '\\u2212' : '+';
 }
 function toggleOvScLang(btn, sc) {
-  var tbl = document.getElementById('overview-tbl');
+  var tbl = btn.closest('table');
   var cells = tbl.querySelectorAll('[data-sc-lang="' + sc + '"]');
   if (!cells.length) return;
   var show = cells[0].style.display !== 'table-cell';
@@ -984,7 +1136,7 @@ function toggleOvScLang(btn, sc) {
 </script>""")
 
     collector.append({
-        "category": "Overview",
+        "category": title,
         "chart_type": "table",
         "metric": "overview",
         "raw_html": "\n".join(lines),
@@ -1148,6 +1300,7 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
     # Header
     lines.append("<thead><tr>")
     lines.append("<th>Model</th>")
+    lines.append("<th>Size</th>")
     lines.append("<th>Avg Rank</th>")
     lines.append("<th>Average</th>")
     for lang in languages:
@@ -1168,6 +1321,7 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
     for ri, m in enumerate(sorted_models):
         lines.append("<tr>")
         lines.append(f"<td>{m}</td>")
+        lines.append(f"<td>{_extract_model_size(m)}</td>")
 
         # Avg Rank
         r = model_avg_rank[m]
@@ -1458,6 +1612,7 @@ def _build_language_summary_table(entries, lang_group, category, collector):
     # Header
     lines.append("<thead><tr>")
     lines.append("<th>Model</th>")
+    lines.append("<th>Size</th>")
     lines.append("<th>Avg Rank</th>")
     for task in tasks:
         metric = task_metric[task]
@@ -1483,6 +1638,7 @@ def _build_language_summary_table(entries, lang_group, category, collector):
             continue
         lines.append("<tr>")
         lines.append(f"<td>{m}</td>")
+        lines.append(f"<td>{_extract_model_size(m)}</td>")
 
         # Avg Rank
         r = model_avg_rank[m]
@@ -1615,7 +1771,7 @@ def build_html_report(collected_figures, output_path):
     lang_cats = []              # (lang_label, category_name)
 
     for cat in categories:
-        if cat == "Overview":
+        if cat == "Overview" or cat.startswith("Overview"):
             overview_cats.append(cat)
         elif cat.startswith(_TASKS_PREFIX):
             task = cat[len(_TASKS_PREFIX):]
@@ -1631,7 +1787,8 @@ def build_html_report(collected_figures, output_path):
         nav_lines.append('    <li class="nav-group">Overview</li>')
         for cat in overview_cats:
             slug = _slug(cat)
-            nav_lines.append(f'    <li><a href="#cat-{slug}">All Tasks</a></li>')
+            label = "All Tasks" if cat == "Overview" else cat.replace("Overview ", "")
+            nav_lines.append(f'    <li><a href="#cat-{slug}">{label}</a></li>')
 
     if tasks_cats:
         nav_lines.append('    <li class="nav-group">Tasks</li>')
@@ -1713,6 +1870,34 @@ def main():
 
     # --- Step 0: Overview table (all tasks × models) ---
     plot_overview_table(entries, collector)
+    plot_size_vs_performance(entries, collector)
+
+    # --- Step 0b: Filtered overview (FR/EN, ASR/AST/QA only) ---
+    # For AST, include entries where source or target language is FR or EN
+    # (language field can be e.g. "fr-en", "es-fr", "en")
+    _allowed_sc = {"ASR", "AST", "QA"}
+    _fren = {"FR", "EN"}
+    def _lang_match(entry):
+        lang = (entry.get("language") or "").upper()
+        parts = lang.split("-")
+        return any(p in _fren for p in parts)
+
+    filtered = [
+        e for e in entries
+        if _lang_match(e)
+        and _super_category(e.get("task", "")) in _allowed_sc
+    ]
+    if filtered:
+        plot_overview_table(
+            filtered, collector,
+            title="Overview (FR/EN \u2014 ASR, AST, QA)",
+            table_id="overview-filtered-tbl",
+            allowed_super_cats=_allowed_sc,
+        )
+        plot_size_vs_performance(
+            filtered, collector,
+            category="Overview (FR/EN \u2014 ASR, AST, QA)",
+        )
 
     # --- Steps 1+2: Super-category sections (violin plots + summary tables) ---
     for super_cat, task_map in _group_by_super_category(entries).items():
