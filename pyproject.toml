@@ -20,7 +20,7 @@ dependencies = [
     "fire",
     "transformers",
     "evaluate",
-    "datasets",
+    "datasets<4",
     "jiwer<4",
     "more-itertools",
     "huggingface-hub",

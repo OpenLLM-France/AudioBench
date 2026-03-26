@@ -10,6 +10,18 @@ from audio_bench.model_src.base_model import BaseModel
 
 logger = logging.getLogger(__name__)
 
+def _post_process_flamingo_asr(model_output):
+    # Try \boxed{"..."}
+    m = re.search(r'\\boxed\{"(.*?)"\}', model_output, re.DOTALL)
+    if m and m.group(1).strip():
+        return m.group(1).strip()
+
+    # Try \boxed{...}
+    m = re.search(r"\\boxed\{(.+?)\}", model_output)
+    if m and m.group(1).strip():
+        return m.group(1).strip()
+
+    return model_output
 
 class AudioFlamingo(BaseModel):
 
@@ -26,7 +38,7 @@ class AudioFlamingo(BaseModel):
     def _generate(self, input):
         audio_array    = input["audio"]["array"]
         sampling_rate  = input["audio"]["sampling_rate"]
-        prompt = input["instruction"]
+        prompt = input["instruction"]+"\nPut the result in the following format: \\boxed\{.\}"
 
         audio_path = self._write_temp_audio(audio_array, sampling_rate)
 
