@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 class CanaryQwen(NeMoModel):
 
+    name = "nvidia/canary-qwen-2.5b"
+
     def __init__(self, device=None):
         super().__init__(model_path="nvidia/canary-qwen-2.5b", device=device)
 

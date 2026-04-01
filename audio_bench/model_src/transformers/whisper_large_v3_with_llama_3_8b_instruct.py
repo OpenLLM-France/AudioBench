@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 class WhisperLargeV3WithLlama38BInstruct(BaseModel):
 
+    name = "openai/whisper-large-v3 + meta-llama/Meta-Llama-3-8B-Instruct"
+
     def __init__(self, device=None):
         super().__init__(model_path="openai/whisper-large-v3", device=device)
         self.llm_model_path = "meta-llama/Meta-Llama-3-8B-Instruct"

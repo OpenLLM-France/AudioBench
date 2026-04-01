@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 class Salmonn7B(BaseModel):
 
+    name = "tsinghua-ee/SALMONN-7B"
+
     def __init__(self, device=None):
         super().__init__(model_path="examples/SALMONN_7B/", device=device)
 

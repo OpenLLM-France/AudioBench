@@ -25,6 +25,7 @@ def _do_sample_inference(self, audio_array, instruction, sampling_rate=16000):
 
 class Gemini15Flash(BaseModel):
 
+    name = "Google/gemini-1.5-flash"
     is_api_model = True
 
     def load(self):

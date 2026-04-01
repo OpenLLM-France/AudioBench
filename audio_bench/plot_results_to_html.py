@@ -149,7 +149,7 @@ def load_all_scores(input_folder):
     for model_dir in sorted(input_path.iterdir()):
         if not model_dir.is_dir():
             continue
-        model_name = model_dir.name
+        model_id = model_dir.name
 
         for filepath in sorted(model_dir.rglob("*_score.json")):
             dataset_name = filepath.name.removesuffix("_score.json")
@@ -163,6 +163,7 @@ def load_all_scores(input_folder):
             if not metrics:
                 continue
 
+            model_name = data.get("model_name", model_id)
             task = data.get("task")
             language = data.get("language")
             sub_task = data.get("sub_task")
@@ -409,16 +410,14 @@ def _td(val_str, is_best=False, is_missing=False, extra_attrs="", title="", rank
 
 
 _MODEL_SIZE_OVERRIDES = {
-    "luciole_audio_canary_qwen3_1b_v2": "2.5B",
-    "phi_4_multimodal_instruct": "5.6B",
-    "audio_flamingo_3": "8.2B",
-    "qwen2_audio_7b_instruct": "8.4B",
-}
-
-_MODEL_SIZE_PREFIX_OVERRIDES = {
-    "voxtral": "4.68B",
-    "qwen2_omni_7b": "11B",
-    "qwen2_omni_3b": "5.9B",
+    "LINAGORA/Canary-Qwen3-1.7B-v2": "2.5B",
+    "LINAGORA/Canary-Qwen3-5B-Thinking": "4.8B",
+    "microsoft/Phi-4-multimodal-instruct": "5.6B",
+    "nvidia/audio-flamingo-3-hf": "8.2B",
+    "Qwen/Qwen2-Audio-7B-Instruct": "8.4B",
+    "Qwen/Qwen2.5-Omni-7B": "11B",
+    "Qwen/Qwen2.5-Omni-3B": "5.9B",
+    "mistralai/Voxtral-Mini-3B-2507": "4.68B",
 }
 
 
@@ -426,9 +425,6 @@ def _extract_model_size(model_name):
     """Extract size like '7B' from model name by matching patterns like '_7b' or '_3b_'."""
     if model_name in _MODEL_SIZE_OVERRIDES:
         return _MODEL_SIZE_OVERRIDES[model_name]
-    for prefix, size in _MODEL_SIZE_PREFIX_OVERRIDES.items():
-        if model_name.startswith(prefix):
-            return size
     match = re.search(r'(\d+)[bB](?:_|$)', model_name)
     return f"{match.group(1)}B" if match else ""
 

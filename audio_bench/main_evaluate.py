@@ -71,7 +71,8 @@ def do_model_prediction(input_data, model):
 def run_evaluation(
         dataset_name: str = None,
         dataset_config: dict = None,
-        model_name: str = None,
+        model_id: str = None,
+        model_display_name: str = None,
         model_config: dict = None,
         model = None,
         overwrite: bool = False,
@@ -109,15 +110,15 @@ def run_evaluation(
         dataset_config["metrics"] = [dataset_config["metrics"]]
 
     if processor.language is not None and processor.language!="UNKNOWN":
-        xp_dir = Path(log_folder) / model_name / processor.language
+        xp_dir = Path(log_folder) / model_id / processor.language
     else:
-        xp_dir = xp_dir = Path(log_folder) / model_name
+        xp_dir = xp_dir = Path(log_folder) / model_id
     score_path = xp_dir / f"{processor.name}_score.json"
     prediction_path = xp_dir / f"{processor.name}.json"
 
     xp_dir.mkdir(parents=True, exist_ok=True)
 
-    if model_name == 'wavllm_fairseq':
+    if model_id == 'wavllm_fairseq':
         model_config["batch_size"] = -1
         if model is not None:
             model.batch_size = -1
@@ -146,16 +147,18 @@ def run_evaluation(
 
     if not skip_inference and (overwrite or not prediction_path.exists()):
         if overwrite:
-             logger.info(f"Overwrite is enabled. Try to infer {processor.name} with {model_name}.")
+             logger.info(f"Overwrite is enabled. Try to infer {processor.name} with {model_id}.")
         else:
-            logger.info(f"No results found for {processor.name} with {model_name}.")
+            logger.info(f"No results found for {processor.name} with {model_id}.")
 
         # Load dataset (deferred until now to skip download when not needed)
         input_data = processor.load()
 
         # Load model
         if model is None:
-            model = load_model(model_name, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"], device=model_config.get("device"))
+            model = load_model(model_id, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"], device=model_config.get("device"))
+            if model_display_name:
+                model.name = model_display_name
 
         # Specific current dataset name for evaluation
         model.dataset_name = processor.name
@@ -202,8 +205,10 @@ def run_evaluation(
     
     if compute_metrics:
         data_with_model_predictions, pred_metadata = _load_predictions(prediction_path)
+        model_name = model.name if model is not None else (model_display_name or model_id)
         results = dict()
         results['model_name'] = model_name
+        results['model_id'] = model_id
         results['dataset_name'] = processor.name
         results['metrics'] = dataset_config["metrics"]
         results['number_of_samples'] = len(data_with_model_predictions)
@@ -216,7 +221,7 @@ def run_evaluation(
         results['sub_task'] = processor.sub_task
         results['language'] = processor.language
         logger.info(' ='*30)
-        logger.info(f'Model name: {model_name.upper()}')
+        logger.info(f'Model name: {model_name} [id={model_id}]')
         logger.info(f'Dataset name: {processor.name.upper()}')
         for metric in dataset_config["metrics"]:
             metric_score = processor.compute_score(data_with_model_predictions, metrics=metric)
@@ -269,7 +274,7 @@ def main(
     )
     model_config = dict(batch_size=batch_size, backend=backend, device=device)
 
-    run_evaluation(dataset_name, dataset_config, model_name, model_config, None, overwrite, log_folder, compute_metrics, skip_inference)
+    run_evaluation(dataset_name, dataset_config, model_id=model_name, model_config=model_config, overwrite=overwrite, log_folder=log_folder, compute_metrics=compute_metrics, skip_inference=skip_inference)
 
 
 

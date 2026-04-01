@@ -5,8 +5,11 @@ global:
   skip_errors: False
   backend: vllm
   gpu_memory_utilization: 0.4
+  device: cuda
   compute_metrics: False
   skip_inference: False
+  min_audio_duration: 1
+  max_audio_duration: 120
 
   datasets:
     # ASR
@@ -118,12 +121,12 @@ global:
         - group: sqa_fr
           language: fr
           datasets:
-            - name: VoxPopuli-QA
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
+            # - name: VoxPopuli-QA
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
             - name: CohereLabs-Aya_collection
               path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
-            - name: ComparIA
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
+            # - name: ComparIA
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
             - name: Vigogne--Alpaca
               path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
 
@@ -134,8 +137,8 @@ global:
             - name: public_sg_speech_qa_test
             - name: alpaca_audio_test       # synthetic
             - name: openhermes_audio_test   # synthetic
-            - name: VoxPopuli-QA
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/en/VoxPopuli-QA/test.jsonl
+            # - name: VoxPopuli-QA
+            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/en/VoxPopuli-QA/test.jsonl
             - name: NationalSpeechCorpus_SQA
               path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SQA/test.jsonl
             - name: fisher_AIR-Bench
@@ -189,14 +192,14 @@ global:
         - group: emotion_recognition_fr
           language: fr
           datasets:
-            - name: MELD_Emotion    # todo transcript + emotion
+            - name: MELD_Emotio
               path: <DATA_DIR>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
 
         - group: emotion_recognition_en
           language: en
           datasets:
             - name: iemocap_emotion_test
-            - name: MELD_Emotion    # todo transcript + emotion
+            - name: MELD_Emotion
               path: <DATA_DIR>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
 
     # Accent Recognition
@@ -215,15 +218,15 @@ global:
         - group: gender_recognition_fr
           language: fr
           datasets:
-            - name: CommonVoice_Gender # todo transcript + age + gender
-              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
+            - name: CommonVoice_Gender
+              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
 
         - group: gender_recognition_en
           language: en
           datasets:
             - name: iemocap_gender_test
-            - name: CommonVoice_Gender # todo
-              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
+            - name: CommonVoice_Gender
+              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
 
     # Age Recognition
     - group: gender_recognition
@@ -233,14 +236,14 @@ global:
         - group: gender_recognition_fr
           language: fr
           datasets:
-            - name: CommonVoice_Age # todo 
-              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_Age-Gender_reco/test.jsonl
+            - name: CommonVoice_Age
+              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-age-recognition/test.jsonl
 
         - group: gender_recognition_en
           language: en
           datasets:
-            - name: CommonVoice_Age # todo
-              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_Age-Gender_reco/test.jsonl
+            - name: CommonVoice_Age
+              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-age-recognition/test.jsonl
 
     # Music Question Answering
     - group: music_qa
@@ -301,19 +304,23 @@ global:
               sub_task: SSR
 
 models:
-  - name: luciole_audio_canary_qwen3_1b_v2
-    path: <MODELS_DIR>/Canary-Qwen3-1.7B-v2
-  # - name: canary_qwen           # ASR only
-  - name: qwen2_omni_3b
-  # - name: qwen2_omni_7b         # Do we need the 3 Qwen?
-  - name: qwen2_audio_7b_instruct
-    batch_size: 20
-  - name: phi_4_multimodal_instruct
-    batch_size: 20
-  - name: voxtral_mini_3b_2507
-  - name: audio_flamingo_3        # need very recent vLLM (and so transformers)
-    batch_size: 25
-  - name: salmonn_7b              # transformers only - very slow
+  # - id: linagora_canary_qwen3_1b_v2
+  #   name: LINAGORA/Canary-Qwen3-1.7B-v2
+  #   path: <MODELS_DIR>/Canary-Qwen3-1.7B-v2
+  # - id: linagora_canary_qwen3_5b_thinking
+  #   name: LINAGORA/Canary-Qwen3-5B-Thinking
+  #   path: <MODELS_DIR>/Canary-Qwen3-5B-Thinking
+  # # - id: canary_qwen           # ASR only
+  # - id: qwen2_omni_3b
+  # - id: qwen2_omni_7b
+  # - id: qwen2_audio_7b_instruct
+  #   batch_size: 20
+  # - id: phi_4_multimodal_instruct
+  #   batch_size: 20
+  # - id: voxtral_mini_3b_2507
+  # - id: audio_flamingo_3        # need very recent vLLM (and so transformers)
+  #   batch_size: 25
+  - id: salmonn_7b              # transformers only - very slow
     batch_size: 1
-  - name: kimi_audio_7b_instruct  # transformers only - very slow
-    batch_size: 1
+  # - id: kimi_audio_7b_instruct  # transformers only - very slow
+  #   batch_size: 1

@@ -41,6 +41,7 @@ def _post_process_voxtral_asr(model_output):
 
 class Voxtral(BaseModel):
 
+    name = "mistralai/Voxtral-Mini-3B-2507"
     supports_vllm = True
 
     def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507", gpu_memory_utilization=0.4, device=None):

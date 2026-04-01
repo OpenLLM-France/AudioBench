@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 class WhisperLargeV2(BaseModel):
 
+    name = "openai/whisper-large-v2"
     supports_vllm = True
 
     def __init__(self, gpu_memory_utilization=0.4, device=None):

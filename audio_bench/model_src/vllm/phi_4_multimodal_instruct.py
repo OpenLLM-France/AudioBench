@@ -36,6 +36,7 @@ def _do_sample_inference(self, audio_array, prompt):
 
 class Phi4MultimodalInstruct(BaseModel):
 
+    name = "microsoft/Phi-4-multimodal-instruct"
     supports_vllm = True
 
     def __init__(self, gpu_memory_utilization=0.4, device=None):

@@ -26,6 +26,7 @@ def _post_process_qwen2_omni_asr(model_output):
 
 class Qwen2Omni(BaseModel):
 
+    name = "Qwen/Qwen2.5-Omni-3B"
     supports_vllm = True
 
     def __init__(self, model_path="Qwen/Qwen2.5-Omni-3B", gpu_memory_utilization=0.4, device=None):

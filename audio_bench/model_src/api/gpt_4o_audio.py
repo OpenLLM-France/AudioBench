@@ -74,6 +74,7 @@ def _do_sample_inference(self, audio_array, instruction, sampling_rate=16000):
 
 class GPT4oAudio(BaseModel):
 
+    name = "OpenAI/gpt-4o-audio-preview"
     is_api_model = True
 
     def load(self):

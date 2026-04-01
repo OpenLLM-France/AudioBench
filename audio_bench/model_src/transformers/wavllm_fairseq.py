@@ -27,6 +27,8 @@ ROOT_PATH = "/project"
 
 class WavLLMFairseq(BaseModel):
 
+    name = "microsoft/WavLLM"
+
     def load(self):
         logger.info("For WavLLM, the model is executed in the fairseq framework. Therefore, the model is loaded directly in the inference function.")
 

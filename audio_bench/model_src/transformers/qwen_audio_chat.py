@@ -35,6 +35,8 @@ def _post_process_qwen_asr(model_output):
 
 class QwenAudioChat(BaseModel):
 
+    name = "Qwen/Qwen-Audio-Chat"
+
     def __init__(self, device=None):
         super().__init__(model_path="Qwen/Qwen-Audio-Chat", device=device)
 

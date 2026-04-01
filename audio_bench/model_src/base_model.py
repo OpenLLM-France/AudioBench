@@ -36,6 +36,7 @@ def should_free_model(threshold=None):
 class BaseModel:
     """Base class for all AudioBench models."""
 
+    name = None
     supports_vllm = False
     max_audio_duration = 120
 
@@ -47,7 +48,7 @@ class BaseModel:
         self.device = device or "auto"
         self._validate_device()
         self.dataset_name = None
-        self.model_name = None
+        self.model_id = None
         self.backend = None
         self.batch_size = 1
         self._temp_files = []
@@ -285,4 +286,4 @@ class BaseModel:
 
             gc.collect()
             torch.cuda.empty_cache()
-            logger.info(f"Model {self.model_name} resources released.")
+            logger.info(f"Model {self.name} resources released.")

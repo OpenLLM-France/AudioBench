@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 class WhisperLargeV2Gemma29BCptSeaLionV3Instruct(BaseModel):
 
+    name = "openai/whisper-large-v2 + aisingapore/gemma2-9b-cpt-sea-lionv3-instruct"
+
     def __init__(self, device=None):
         super().__init__(model_path="openai/whisper-large-v2", device=device)
         self.llm_model_path = "aisingapore/gemma2-9b-cpt-sea-lionv3-instruct"

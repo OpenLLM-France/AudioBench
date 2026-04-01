@@ -52,6 +52,7 @@ def _do_sample_inference(self, audio_array, prompt):
 
 class SeallmsAudio7B(BaseModel):
 
+    name = "SeaLLMs/SeaLLMs-Audio-7B"
     max_audio_duration = 40
     supports_vllm = True
 

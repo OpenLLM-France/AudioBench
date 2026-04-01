@@ -57,8 +57,9 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
         pbar = tqdm(models, desc="Processing models", leave=False)
 
         for model_config in pbar:
-            model_name = model_config["name"]
-            pbar.set_description(f"Processing model: {model_name}")
+            model_id = model_config.get("id", model_config.get("name"))
+            model_display_name = model_config.get("name")
+            pbar.set_description(f"Processing model: {model_id}")
 
             model_batch_size = model_config.get("batch_size", global_params.get("batch_size", 1))
             model_backend = model_config.get("backend", global_backend)
@@ -70,10 +71,10 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
 
             # PASS 1: Inference
             try:
-                dataset_pbar = tqdm(model_datasets, desc=model_name, leave=False)
+                dataset_pbar = tqdm(model_datasets, desc=model_id, leave=False)
                 for dataset_config in dataset_pbar:
                     dataset_name = dataset_config["name"]
-                    dataset_pbar.set_description(f"{model_name} | {dataset_name}")
+                    dataset_pbar.set_description(f"{model_id} | {dataset_name}")
 
                     dataset_config['number_of_samples'] = dataset_config.get("number_of_samples", global_params.get("number_of_samples", -1))
                     dataset_config['min_audio_duration'] = dataset_config.get("min_audio_duration", global_params.get("min_audio_duration"))
@@ -92,7 +93,8 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
                         model = run_evaluation(
                             dataset_name=dataset_name,
                             dataset_config=dataset_config,
-                            model_name=model_name,
+                            model_id=model_id,
+                            model_display_name=model_display_name,
                             model_config=evaluation_model_config,
                             model=model,
                             overwrite=global_params.get("overwrite", False),
@@ -102,9 +104,9 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
                         )
                     except Exception as e:
                         if global_params.get("skip_errors", False):
-                            logger.error(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}")
+                            logger.error(f"Error evaluating model {model_id} on dataset {dataset_name}: {e}")
                         else:
-                            raise Exception(f"Error evaluating model {model_name} on dataset {dataset_name}: {e}") from e
+                            raise Exception(f"Error evaluating model {model_id} on dataset {dataset_name}: {e}") from e
                     gc.collect()
                     torch.cuda.empty_cache()
             finally:

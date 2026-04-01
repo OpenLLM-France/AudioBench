@@ -34,6 +34,7 @@ def _post_process_qwen2_asr(model_output):
 
 class Qwen2Audio7BInstruct(BaseModel):
 
+    name = "Qwen/Qwen2-Audio-7B-Instruct"
     supports_vllm = True
 
     def __init__(self, gpu_memory_utilization=0.4, device=None):

@@ -38,6 +38,8 @@ def _do_sample_inference(self, audio_array, instruction):
 
 class MeralionAudioLLMWhisperSeaLion(BaseModel):
 
+    name = "MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION"
+
     def __init__(self, device=None):
         super().__init__(model_path="MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION", device=device)
 
