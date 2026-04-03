@@ -1990,7 +1990,8 @@ def build_html_report(collected_figures, output_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Plot AudioBench evaluation results as a single interactive HTML report."
+        description="Plot AudioBench evaluation results as a single interactive HTML report.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("input_folder", help="Path to results folder (e.g. results/)")
     parser.add_argument("--output_folder", type=str, default="plots/", help="Where to save report")
