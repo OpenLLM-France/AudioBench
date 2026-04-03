@@ -32,6 +32,10 @@ import plotly.express.colors as pxcolors
 LOWER_IS_BETTER = {"wer"}
 ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
 
+_MODEL_NAME_CORRECTIONS = {
+    "LINAGORA/Canary-Qwen3-5B-Thinking": "LINAGORA/Canary-Qwen3-4B-Thinking",
+}
+
 _TASK_METRIC_OVERRIDE = {
     "AST": "meteor",
 }
@@ -164,6 +168,7 @@ def load_all_scores(input_folder):
                 continue
 
             model_name = data.get("model_name", model_id)
+            model_name = _MODEL_NAME_CORRECTIONS.get(model_name, model_name)
             task = data.get("task")
             language = data.get("language")
             sub_task = data.get("sub_task")
@@ -411,7 +416,7 @@ def _td(val_str, is_best=False, is_missing=False, extra_attrs="", title="", rank
 
 _MODEL_SIZE_OVERRIDES = {
     "LINAGORA/Canary-Qwen3-1.7B-v2": "2.5B",
-    "LINAGORA/Canary-Qwen3-5B-Thinking": "4.8B",
+    "LINAGORA/Canary-Qwen3-4B-Thinking": "4.8B",
     "microsoft/Phi-4-multimodal-instruct": "5.6B",
     "nvidia/audio-flamingo-3-hf": "8.2B",
     "Qwen/Qwen2-Audio-7B-Instruct": "8.4B",
@@ -461,6 +466,95 @@ def _most_common_metric(entries):
     for e in entries:
         counts[e["metric_name"]] += 1
     return max(counts, key=counts.get)
+
+
+def _compute_normalized_scores(all_models, item_model_score, item_ascending):
+    """Compute min-max and z-score normalized aggregate scores.
+
+    Parameters
+    ----------
+    all_models : list of str
+    item_model_score : dict
+        item -> model -> score (float).  Items can be super-categories, tasks,
+        languages, etc.
+    item_ascending : dict
+        item -> bool.  True means lower is better (e.g. WER).
+
+    Returns (model_minmax, model_zscore) dicts.
+    """
+    # Convert to higher-is-better per item and pre-compute per-item stats
+    item_model_hib = {}
+    item_stats = {}  # item -> (lo, hi, mean, std)
+    for item, scores in item_model_score.items():
+        asc = item_ascending[item]
+        hib = {m: (100.0 - s) if asc else s for m, s in scores.items()}
+        item_model_hib[item] = hib
+        vals = np.array(list(hib.values()))
+        item_stats[item] = (float(vals.min()), float(vals.max()),
+                            float(vals.mean()), float(vals.std()))
+
+    model_minmax = {}
+    model_zscore = {}
+    for m in all_models:
+        norm_scores = []
+        z_scores = []
+        for item, hib in item_model_hib.items():
+            if m not in hib:
+                continue
+            lo, hi, mean, std = item_stats[item]
+            v = hib[m]
+            norm_scores.append((v - lo) / (hi - lo) if hi > lo else 1.0)
+            z_scores.append((v - mean) / std if std > 0 else 0.0)
+        model_minmax[m] = sum(norm_scores) / len(norm_scores) if norm_scores else float("-inf")
+        model_zscore[m] = sum(z_scores) / len(z_scores) if z_scores else float("-inf")
+
+    return model_minmax, model_zscore
+
+
+def _agg_columns_html(table_aggregates, sorted_models, aggregate_values):
+    """Build ranked-row dicts and per-row rendering info for aggregate columns.
+
+    Parameters
+    ----------
+    table_aggregates : list of str
+        Which aggregates to include (keys into ``_AGG_META``).
+    sorted_models : list of str
+    aggregate_values : dict
+        Mapping aggregate name -> model -> value.
+
+    Returns *agg_render* dict keyed by aggregate name.
+    """
+    agg_render = {}
+    for name in table_aggregates:
+        meta = _AGG_META[name]
+        values = aggregate_values[name]
+        agg_render[name] = {
+            "ranks": _ranked_rows(
+                [(values[m], ri) for ri, m in enumerate(sorted_models)
+                 if values[m] != meta["sentinel"]],
+                asc=not meta["higher_is_better"],
+            ),
+            "values": values,
+            "sentinel": meta["sentinel"],
+            "fmt": meta["fmt"],
+        }
+    return agg_render
+
+
+def _sort_models_by_aggregate(models, aggregate_values, agg_name):
+    """Sort *models* by the aggregate named *agg_name* (best first).
+
+    Uses ``_AGG_META`` to determine sort direction and sentinel value.
+    """
+    meta = _AGG_META[agg_name]
+    values = aggregate_values[agg_name]
+    sentinel = meta["sentinel"]
+    higher = meta["higher_is_better"]
+    return sorted(
+        models,
+        key=lambda m: (values[m] == sentinel, values[m]),
+        reverse=higher,
+    )
 
 
 def _sort_models_by_avg(models, score_fn, ascending):
@@ -638,7 +732,7 @@ def plot_violin_charts(entries, title_prefix, collector):
 # Plotting — Size vs Performance scatter
 # ---------------------------------------------------------------------------
 
-def _compute_overview_ranks(entries, allowed_super_cats=None):
+def _compute_overview_ranks(entries, allowed_super_cats=None, sort_by="avg_rank"):
     """Compute per-model average rank across super-categories.
 
     This is the shared rank computation used by both the overview table and the
@@ -669,6 +763,8 @@ def _compute_overview_ranks(entries, allowed_super_cats=None):
     * ``sc_model_rank`` – sc -> model -> rank (1-based)
     * ``task_model_rank`` – task -> model -> rank (1-based)
     * ``model_avg_rank`` – model -> avg rank (float, or ``float('inf')``)
+    * ``model_minmax`` – model -> min-max normalized score (float, or ``float('-inf')``)
+    * ``model_zscore`` – model -> z-score normalized score (float, or ``float('-inf')``)
     * ``sorted_models`` – models sorted by avg rank
     """
     agg = aggregate_entries(entries, by_language=False)
@@ -871,7 +967,13 @@ def _compute_overview_ranks(entries, allowed_super_cats=None):
         ranks = [sc_model_rank[sc][m] for sc in super_cats if m in sc_model_rank[sc]]
         model_avg_rank[m] = sum(ranks) / len(ranks) if ranks else float("inf")
 
-    sorted_models = sorted(all_models, key=lambda m: model_avg_rank[m])
+    # --- Normalized aggregate scores (Min-Max and Z-Score) ---
+    model_minmax, model_zscore = _compute_normalized_scores(
+        all_models, sc_model_score, sc_ascending,
+    )
+
+    agg_values = {"avg_rank": model_avg_rank, "minmax": model_minmax, "zscore": model_zscore}
+    sorted_models = _sort_models_by_aggregate(all_models, agg_values, sort_by)
 
     return {
         "agg": agg,
@@ -895,68 +997,106 @@ def _compute_overview_ranks(entries, allowed_super_cats=None):
         "sc_model_rank": sc_model_rank,
         "task_model_rank": task_model_rank,
         "model_avg_rank": model_avg_rank,
+        "model_minmax": model_minmax,
+        "model_zscore": model_zscore,
         "sorted_models": sorted_models,
     }
 
 
-def plot_size_vs_performance(entries, collector, *, category="Overview",
-                             overview_data=None):
-    """Scatter plot of average rank vs model size (in B parameters).
+AGGREGATE_MEASURES = ["avg_rank", "minmax", "zscore"]
 
-    Models without a detectable size are excluded.
+_AGG_META = {
+    "avg_rank": {
+        "label": "Avg Rank",
+        "y_label": "Average Rank (lower is better)",
+        "key": "model_avg_rank",
+        "higher_is_better": False,
+        "sentinel": float("inf"),
+        "fmt": ".1f",
+    },
+    "minmax": {
+        "label": "Min-Max",
+        "y_label": "Min-Max Normalized Score (higher is better)",
+        "key": "model_minmax",
+        "higher_is_better": True,
+        "sentinel": float("-inf"),
+        "fmt": ".3f",
+    },
+    "zscore": {
+        "label": "Z-Score",
+        "y_label": "Z-Score Normalized Score (higher is better)",
+        "key": "model_zscore",
+        "higher_is_better": True,
+        "sentinel": float("-inf"),
+        "fmt": ".2f",
+    },
+}
+
+
+def plot_size_vs_performance(entries, collector, *, category="Overview",
+                             overview_data=None, figure_aggregates=None):
+    """Scatter plot(s) of aggregate score vs model size.
+
+    Generates one figure per measure in *figure_aggregates*.
     If *overview_data* is provided, reuses it instead of recomputing.
     """
+    if figure_aggregates is None:
+        figure_aggregates = ["avg_rank"]
+
     data = overview_data or _compute_overview_ranks(entries)
     if data is None:
         return
 
     all_models = data["all_models"]
-    model_avg_rank = data["model_avg_rank"]
-
-    # Build scatter data: only models with known size
-    xs, ys, labels = [], [], []
-    for m in all_models:
-        size_str = _extract_model_size(m)
-        if not size_str or model_avg_rank[m] == float("inf"):
-            continue
-        xs.append(float(size_str.rstrip("B")))
-        ys.append(model_avg_rank[m])
-        labels.append(m)
-
-    if not xs:
-        return
-
     color_map = _model_color_map(all_models)
-    colors = [color_map.get(m, "#888") for m in labels]
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=xs, y=ys,
-        mode="markers+text",
-        text=labels,
-        textposition="top center",
-        textfont=dict(size=9),
-        marker=dict(size=12, color=colors, line=dict(width=1, color="#333")),
-        hovertemplate="%{text}<br>Size: %{x}B<br>Avg Rank: %{y:.1f}<extra></extra>",
-    ))
+    for agg_name in figure_aggregates:
+        meta = _AGG_META[agg_name]
+        model_values = data[meta["key"]]
+        sentinel = meta["sentinel"]
 
-    fig.update_layout(
-        title_text="Performance vs Model Size",
-        title_font_size=16,
-        xaxis_title="Model Size (B parameters)",
-        yaxis_title="Average Rank (lower is better)",
-        yaxis_autorange="reversed",
-        height=500,
-        width=800,
-        template="plotly_white",
-    )
+        xs, ys, labels = [], [], []
+        for m in all_models:
+            size_str = _extract_model_size(m)
+            if not size_str or model_values[m] == sentinel:
+                continue
+            xs.append(float(size_str.rstrip("B")))
+            ys.append(model_values[m])
+            labels.append(m)
 
-    collector.append({
-        "category": category,
-        "chart_type": "table",
-        "metric": "size_vs_perf",
-        "raw_html": fig.to_html(full_html=False, include_plotlyjs=False),
-    })
+        if not xs:
+            continue
+
+        colors = [color_map.get(m, "#888") for m in labels]
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=xs, y=ys,
+            mode="markers+text",
+            text=labels,
+            textposition="top center",
+            textfont=dict(size=9),
+            marker=dict(size=12, color=colors, line=dict(width=1, color="#333")),
+            hovertemplate=f"%{{text}}<br>Size: %{{x}}B<br>{meta['label']}: %{{y:{meta['fmt']}}}<extra></extra>",
+        ))
+
+        fig.update_layout(
+            title_text=f"Performance ({meta['label']}) vs Model Size",
+            title_font_size=16,
+            xaxis_title="Model Size (B parameters)",
+            yaxis_title=meta["y_label"],
+            yaxis_autorange="reversed" if not meta["higher_is_better"] else None,
+            height=500,
+            width=800,
+            template="plotly_white",
+        )
+
+        collector.append({
+            "category": category,
+            "chart_type": "table",
+            "metric": f"size_vs_perf_{agg_name}",
+            "raw_html": fig.to_html(full_html=False, include_plotlyjs=False),
+        })
 
 
 # ---------------------------------------------------------------------------
@@ -964,7 +1104,8 @@ def plot_size_vs_performance(entries, collector, *, category="Overview",
 # ---------------------------------------------------------------------------
 
 def plot_overview_table(entries, collector, *, title="Overview",
-                        table_id="overview-tbl", allowed_super_cats=None):
+                        table_id="overview-tbl", allowed_super_cats=None,
+                        table_aggregates=None):
     """Build an overview HTML table with super-category columns.
 
     Each super-category column shows the average score across its tasks.
@@ -975,11 +1116,18 @@ def plot_overview_table(entries, collector, *, title="Overview",
     ----------
     allowed_super_cats : set or None
         When set, only super-categories in this set are included.
+    table_aggregates : list of str or None
+        Which aggregate columns to show (from AGGREGATE_MEASURES).
+        Defaults to all.
 
     Returns the computed overview data dict so callers can reuse it
     (e.g. to pass to ``plot_size_vs_performance``).
     """
-    data = _compute_overview_ranks(entries, allowed_super_cats=allowed_super_cats)
+    if table_aggregates is None:
+        table_aggregates = list(AGGREGATE_MEASURES)
+
+    data = _compute_overview_ranks(entries, allowed_super_cats=allowed_super_cats,
+                                    sort_by=table_aggregates[0])
     if data is None:
         return None
 
@@ -1004,6 +1152,8 @@ def plot_overview_table(entries, collector, *, title="Overview",
     sc_model_rank = data["sc_model_rank"]
     task_model_rank = data["task_model_rank"]
     model_avg_rank = data["model_avg_rank"]
+    model_minmax = data["model_minmax"]
+    model_zscore = data["model_zscore"]
     sorted_models = data["sorted_models"]
 
     # --- Ranked row indices for highlighting ---
@@ -1051,11 +1201,9 @@ def plot_overview_table(entries, collector, *, title="Overview",
             ]
             sc_dataset_ranks[sc][ds] = _ranked_rows(pairs, ds_asc)
 
-    rank_pairs = [
-        (model_avg_rank[m], ri)
-        for ri, m in enumerate(sorted_models) if model_avg_rank[m] != float("inf")
-    ]
-    rank_ranks = _ranked_rows(rank_pairs, asc=True)
+    agg_render = _agg_columns_html(table_aggregates, sorted_models, {
+        "avg_rank": model_avg_rank, "minmax": model_minmax, "zscore": model_zscore,
+    })
 
     # --- Build HTML ---
     lines = []
@@ -1097,7 +1245,8 @@ def plot_overview_table(entries, collector, *, title="Overview",
     lines.append("<thead><tr>")
     lines.append("<th>Model</th>")
     lines.append("<th>Size</th>")
-    lines.append("<th>Avg Rank</th>")
+    for agg_name in table_aggregates:
+        lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
     for sc in super_cats:
         sc_slug = _slug(sc)
         cat_label = "Tasks \u00b7 " + sc
@@ -1166,12 +1315,14 @@ def plot_overview_table(entries, collector, *, title="Overview",
         lines.append(f"<td>{m}</td>")
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
-        # Avg Rank
-        r = model_avg_rank[m]
-        if r != float("inf"):
-            lines.append(_td(f"{r:.1f}", rank_key=rank_ranks.get(ri)))
-        else:
-            lines.append(_td("-", is_missing=True))
+        # Aggregate columns
+        for agg_name in table_aggregates:
+            ar = agg_render[agg_name]
+            v = ar["values"][m]
+            if v != ar["sentinel"]:
+                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri)))
+            else:
+                lines.append(_td("-", is_missing=True))
 
         for sc in super_cats:
             sc_slug = _slug(sc)
@@ -1289,7 +1440,8 @@ function toggleOvScLang(btn, sc) {
 # Plotting — Summary Tables (per-task, expandable per-dataset)
 # ---------------------------------------------------------------------------
 
-def plot_summary_tables(raw_entries, collector, category_override=None, subtitle=None):
+def plot_summary_tables(raw_entries, collector, category_override=None, subtitle=None,
+                        table_aggregates=None):
     """Build summary HTML tables for all tasks with expandable per-dataset sub-columns.
 
     Each language column has a [+] toggle that reveals the individual dataset
@@ -1321,17 +1473,20 @@ def plot_summary_tables(raw_entries, collector, category_override=None, subtitle
                 _build_dual_summary_tables(task, metric, task_raw,
                                            agg_lang, agg_sub, collector,
                                            category_override=category_override,
-                                           subtitle=subtitle)
+                                           subtitle=subtitle,
+                                           table_aggregates=table_aggregates)
             else:
                 _build_summary_table(task, metric, task_raw, agg_lang,
                                      collector, group_key_fn=None,
                                      category_override=category_override,
-                                     subtitle=subtitle)
+                                     subtitle=subtitle,
+                                     table_aggregates=table_aggregates)
 
 
 def _build_summary_table(task, metric, task_raw, agg_lang, collector,
                          group_key_fn=None, tbl_id_suffix="",
-                         category_override=None, subtitle=None):
+                         category_override=None, subtitle=None,
+                         table_aggregates=None):
     """Build one HTML summary table for a (task, metric) pair.
 
     *group_key_fn*, when provided, maps a raw entry to its group label
@@ -1371,11 +1526,40 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
 
     # Average per model across languages
     ascending = _sort_ascending(metric)
-    sorted_models, model_avg = _sort_models_by_avg(
-        all_models,
-        lambda m: [lang_model_score[l][m][0] for l in languages if m in lang_model_score[l]],
-        ascending,
+    # Compute model_avg (needed for the "Average" column)
+    model_avg = {}
+    for m in all_models:
+        scores = [lang_model_score[l][m][0] for l in languages if m in lang_model_score[l]]
+        model_avg[m] = sum(scores) / len(scores) if scores else None
+
+    # Per-language ranks and avg rank per model
+    lang_model_rank = {}
+    for lang in languages:
+        ranked = sorted(
+            [(lang_model_score[lang][m][0], m) for m in all_models if m in lang_model_score[lang]],
+            key=lambda x: x[0], reverse=not ascending,
+        )
+        lang_model_rank[lang] = {m: rank + 1 for rank, (_, m) in enumerate(ranked)}
+
+    model_avg_rank = {}
+    for m in all_models:
+        ranks = [lang_model_rank[l][m] for l in languages if m in lang_model_rank.get(l, {})]
+        model_avg_rank[m] = sum(ranks) / len(ranks) if ranks else float("inf")
+
+    # Normalized scores: build per-language display-score dicts
+    lang_disp_scores = {}
+    for lang in languages:
+        lang_disp_scores[lang] = {
+            m: _display_score(lang_model_score[lang][m][0], metric)
+            for m in lang_model_score[lang]
+        }
+    model_minmax, model_zscore = _compute_normalized_scores(
+        all_models, lang_disp_scores, {lang: ascending for lang in languages},
     )
+
+    # Sort models by the first requested aggregate
+    agg_values = {"avg_rank": model_avg_rank, "minmax": model_minmax, "zscore": model_zscore}
+    sorted_models = _sort_models_by_aggregate(all_models, agg_values, table_aggregates[0])
 
     # --- Ranked row indices for highlighting ---
     lang_ranks = {}
@@ -1401,25 +1585,7 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
         ascending,
     )
 
-    # Per-language ranks and avg rank per model
-    lang_model_rank = {}
-    for lang in languages:
-        ranked = sorted(
-            [(lang_model_score[lang][m][0], m) for m in sorted_models if m in lang_model_score[lang]],
-            key=lambda x: x[0], reverse=not ascending,
-        )
-        lang_model_rank[lang] = {m: rank + 1 for rank, (_, m) in enumerate(ranked)}
-
-    model_avg_rank = {}
-    for m in sorted_models:
-        ranks = [lang_model_rank[l][m] for l in languages if m in lang_model_rank.get(l, {})]
-        model_avg_rank[m] = sum(ranks) / len(ranks) if ranks else float("inf")
-
-    rank_ranks = _ranked_rows(
-        [(model_avg_rank[m], ri)
-         for ri, m in enumerate(sorted_models) if model_avg_rank[m] != float("inf")],
-        asc=True,
-    )
+    agg_render = _agg_columns_html(table_aggregates, sorted_models, agg_values)
 
     # --- Build HTML ---
     cat_name = category_override or ("Tasks \u00b7 " + task)
@@ -1443,7 +1609,8 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
     lines.append("<thead><tr>")
     lines.append("<th>Model</th>")
     lines.append("<th>Size</th>")
-    lines.append("<th>Avg Rank</th>")
+    for agg_name in table_aggregates:
+        lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
     lines.append("<th>Average</th>")
     for lang in languages:
         grp = _slug(lang)
@@ -1465,14 +1632,16 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
         lines.append(f"<td>{m}</td>")
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
-        # Avg Rank
-        r = model_avg_rank[m]
-        if r != float("inf"):
-            lines.append(_td(f"{r:.1f}", rank_key=rank_ranks.get(ri)))
-        else:
-            lines.append(_td("-", is_missing=True))
+        # Aggregate columns
+        for agg_name in table_aggregates:
+            ar = agg_render[agg_name]
+            v = ar["values"][m]
+            if v != ar["sentinel"]:
+                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri)))
+            else:
+                lines.append(_td("-", is_missing=True))
 
-        # Average (third column)
+        # Average
         if model_avg[m] is not None:
             val = f"{_display_score(model_avg[m], metric):.2f}"
             lines.append(_td(val, rank_key=avg_ranks.get(ri)))
@@ -1518,17 +1687,20 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
 
 
 def _build_dual_summary_tables(task, metric, task_raw, agg_lang, agg_sub,
-                                collector, category_override=None, subtitle=None):
+                                collector, category_override=None, subtitle=None,
+                                table_aggregates=None):
     """Build two summary tables (language & sub-task) with a toggle bar."""
     # Collect HTML from each view into a temporary list
     lang_collector = []
     _build_summary_table(task, metric, task_raw, agg_lang, lang_collector,
                          group_key_fn=None, tbl_id_suffix="-lang",
-                         category_override=category_override, subtitle=subtitle)
+                         category_override=category_override, subtitle=subtitle,
+                         table_aggregates=table_aggregates)
     sub_collector = []
     _build_summary_table(task, metric, task_raw, agg_sub, sub_collector,
                          group_key_fn=_effective_subtask, tbl_id_suffix="-sub",
-                         category_override=category_override, subtitle=subtitle)
+                         category_override=category_override, subtitle=subtitle,
+                         table_aggregates=table_aggregates)
 
     if not lang_collector and not sub_collector:
         return
@@ -1599,7 +1771,8 @@ function toggleSumView(id, view) {
 # Plotting — Language Sections
 # ---------------------------------------------------------------------------
 
-def plot_language_sections(entries, collector, include_violin=False):
+def plot_language_sections(entries, collector, include_violin=False,
+                           table_aggregates=None):
     """Build per-language-group sections (French, English, Others).
 
     Each group gets violin plots per task (when *include_violin* is True)
@@ -1632,10 +1805,12 @@ def plot_language_sections(entries, collector, include_violin=False):
                     plot_violin_charts(task_raw_map[task], category, collector)
 
         # Summary table: Models × Tasks
-        _build_language_summary_table(grp_ents, group_name, category, collector)
+        _build_language_summary_table(grp_ents, group_name, category, collector,
+                                       table_aggregates=table_aggregates)
 
 
-def _build_language_summary_table(entries, lang_group, category, collector):
+def _build_language_summary_table(entries, lang_group, category, collector,
+                                   table_aggregates=None):
     """Build a summary table for a language group: Models × Tasks with expandable datasets."""
     # Group entries by task
     task_entries_map = defaultdict(list)
@@ -1696,7 +1871,7 @@ def _build_language_summary_table(entries, lang_group, category, collector):
     task_datasets = {t: sorted(ds) for t, ds in task_datasets.items()}
     expandable_tasks = {t for t in tasks if len(task_datasets.get(t, [])) >= 1}
 
-    # Sort models by avg rank across tasks (best first)
+    # Compute aggregate scores
     ascending_map = {t: _sort_ascending(task_metric[t]) for t in tasks}
     task_model_rank = {}
     for task in tasks:
@@ -1710,7 +1885,21 @@ def _build_language_summary_table(entries, lang_group, category, collector):
         ranks = [task_model_rank[t][m] for t in tasks if m in task_model_rank[t]]
         model_avg_rank[m] = sum(ranks) / len(ranks) if ranks else float("inf")
 
-    sorted_models = sorted(all_models, key=lambda m: model_avg_rank[m])
+    # Normalized scores: build per-task display-score dicts
+    task_disp_scores = {}
+    for task in tasks:
+        metric = task_metric[task]
+        task_disp_scores[task] = {
+            m: _display_score(task_model_score[task][m][0], metric)
+            for m in task_model_score[task]
+        }
+    model_minmax, model_zscore = _compute_normalized_scores(
+        all_models, task_disp_scores, ascending_map,
+    )
+
+    # Sort models by the first requested aggregate
+    agg_values = {"avg_rank": model_avg_rank, "minmax": model_minmax, "zscore": model_zscore}
+    sorted_models = _sort_models_by_aggregate(all_models, agg_values, table_aggregates[0])
 
     # Ranked rows for highlighting
     task_ranks = {}
@@ -1734,11 +1923,7 @@ def _build_language_summary_table(entries, lang_group, category, collector):
             ]
             task_ds_ranks[task][ds] = _ranked_rows(pairs, asc)
 
-    rank_ranks = _ranked_rows(
-        [(model_avg_rank[m], ri)
-         for ri, m in enumerate(sorted_models) if model_avg_rank[m] != float("inf")],
-        asc=True,
-    )
+    agg_render = _agg_columns_html(table_aggregates, sorted_models, agg_values)
 
     # --- Build HTML ---
     tbl_id = "lang-" + _slug(lang_group)
@@ -1755,7 +1940,8 @@ def _build_language_summary_table(entries, lang_group, category, collector):
     lines.append("<thead><tr>")
     lines.append("<th>Model</th>")
     lines.append("<th>Size</th>")
-    lines.append("<th>Avg Rank</th>")
+    for agg_name in table_aggregates:
+        lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
     for task in tasks:
         metric = task_metric[task]
         unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
@@ -1782,12 +1968,14 @@ def _build_language_summary_table(entries, lang_group, category, collector):
         lines.append(f"<td>{m}</td>")
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
-        # Avg Rank
-        r = model_avg_rank[m]
-        if r != float("inf"):
-            lines.append(_td(f"{r:.1f}", rank_key=rank_ranks.get(ri)))
-        else:
-            lines.append(_td("-", is_missing=True))
+        # Aggregate columns
+        for agg_name in table_aggregates:
+            ar = agg_render[agg_name]
+            v = ar["values"][m]
+            if v != ar["sentinel"]:
+                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri)))
+            else:
+                lines.append(_td("-", is_missing=True))
 
         for task in tasks:
             metric = task_metric[task]
@@ -1996,6 +2184,16 @@ def main():
     parser.add_argument("input_folder", help="Path to results folder (e.g. results/)")
     parser.add_argument("--output_folder", type=str, default="plots/", help="Where to save report")
     parser.add_argument("--violin", action="store_true", help="Include violin plots in the report")
+    parser.add_argument(
+        "--table_aggregates", nargs="+", default=AGGREGATE_MEASURES,
+        choices=AGGREGATE_MEASURES,
+        help="Aggregate columns to show in the overview table",
+    )
+    parser.add_argument(
+        "--figure_aggregates", nargs="+", default=["avg_rank"],
+        choices=AGGREGATE_MEASURES,
+        help="Aggregate measure(s) for the size-vs-performance figure(s)",
+    )
     args = parser.parse_args()
 
     # Load all scores
@@ -2012,8 +2210,10 @@ def main():
     collector = []
 
     # --- Step 0: Overview table (all tasks × models) ---
-    overview_data = plot_overview_table(entries, collector)
-    plot_size_vs_performance(entries, collector, overview_data=overview_data)
+    overview_data = plot_overview_table(entries, collector,
+                                        table_aggregates=args.table_aggregates)
+    plot_size_vs_performance(entries, collector, overview_data=overview_data,
+                             figure_aggregates=args.figure_aggregates)
 
     # --- Step 0b: Filtered overview (FR/EN, ASR/AST/QA only) ---
     # For AST, include entries where source or target language is FR or EN
@@ -2036,11 +2236,13 @@ def main():
             title="Overview (FR/EN \u2014 ASR, AST, QA)",
             table_id="overview-filtered-tbl",
             allowed_super_cats=_allowed_sc,
+            table_aggregates=args.table_aggregates,
         )
         plot_size_vs_performance(
             filtered, collector,
             category="Overview (FR/EN \u2014 ASR, AST, QA)",
             overview_data=filtered_data,
+            figure_aggregates=args.figure_aggregates,
         )
 
     # --- Steps 1+2: Super-category sections (violin plots + summary tables) ---
@@ -2059,10 +2261,12 @@ def main():
             subtitle = task if multi_task else None
             plot_summary_tables(task_raw, collector,
                                 category_override=cat_label,
-                                subtitle=subtitle)
+                                subtitle=subtitle,
+                                table_aggregates=args.table_aggregates)
 
     # --- Step 3: Language sections (French, English, Others) ---
-    plot_language_sections(entries, collector, include_violin=args.violin)
+    plot_language_sections(entries, collector, include_violin=args.violin,
+                           table_aggregates=args.table_aggregates)
 
     if not collector:
         print("No figures generated.")
