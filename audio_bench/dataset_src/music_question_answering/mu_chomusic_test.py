@@ -10,4 +10,4 @@ class mu_chomusic_test_dataset(BaseDatasetProcessor):
     metrics = "flow_judge"
 
     def _get_instruction(self, sample):
-        return 'Question:\n' + sample['instruction'] + '\n Choices:\n' + sample['choices']
+        return 'Answer only using letters A, B, C or D. \nQuestion:\n' + sample['instruction'] + '\n Choices:\n' + sample['choices']

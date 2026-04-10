@@ -39,7 +39,7 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
 
         logging.info(f'Number of samples: {len(raw_data)}')
         input_data = []
-        for sample in tqdm(raw_data, desc="Processing samples"):
+        for sample in tqdm(raw_data, desc="Processing samples", leave=False):
             input_data.append(self._process_sample(sample))
 
         logging.info('\n=  =  =  Dataset Sample  =  =  =')

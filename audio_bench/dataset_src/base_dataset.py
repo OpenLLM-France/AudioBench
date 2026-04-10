@@ -72,7 +72,7 @@ class BaseDatasetProcessor:
         logging.info(f'Processing {len(raw_data)} samples...')
         input_data = []
         with logging_redirect_tqdm():
-            for sample in tqdm(raw_data, desc="Processing samples"):
+            for sample in tqdm(raw_data, desc="Processing samples", leave=False):
                 input_data.append(self._process_sample(sample))
 
         # Duration filter (before subsampling so we get the requested count)
