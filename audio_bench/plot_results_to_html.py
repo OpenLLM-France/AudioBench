@@ -34,7 +34,8 @@ ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
 _IGNORED_DATASETS = {"StressTest_SSR", "VoxCeleb-accent", "MuChoMusic"}
 
 _MODEL_NAME_CORRECTIONS = {
-    "LINAGORA/Canary-Qwen3-5B-Thinking": "LINAGORA/Canary-Qwen3-4B-Thinking",
+    "LINAGORA/Canary-Qwen3-5B-Thinking": "LINAGORA/Canary-Qwen3-4B-v0-quick",
+    "LINAGORA/Canary-Qwen3-1.7B-v2": "LINAGORA/Canary-Qwen3-1.7B-v0-quick",
 }
 
 _TASK_METRIC_OVERRIDE = {
@@ -49,20 +50,20 @@ _TASK_DISPLAY = {
 }
 
 
-_MODEL_SIZE_OVERRIDES = {
-    "LINAGORA/Canary-Qwen3-1.7B-v2": "2.5B",
-    "LINAGORA/Canary-Qwen3-4B-Thinking": "4.8B",
-    "LINAGORA/Canary_Qwen3-1.7B_v1_s050000": "2.5B",
-    "LINAGORA/Canary_Qwen3-1.7B_v1_s132500": "2.5B",
-    "microsoft/Phi-4-multimodal-instruct": "5.6B",
-    "nvidia/audio-flamingo-3-hf": "8.2B",
-    "Qwen/Qwen2-Audio-7B-Instruct": "8.4B",
-    "Qwen/Qwen2.5-Omni-7B": "11B",
-    "Qwen/Qwen2.5-Omni-3B": "5.9B",
-    "mistralai/Voxtral-Mini-3B-2507": "4.68B",
-    "LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803": "2.5B",
-    
-}
+# Patterns are tried in order; first regex match wins. Exact strings work too
+# since they are compiled as regexes.
+_MODEL_SIZE_OVERRIDES = [
+    (r"^LINAGORA/Canary[-_]Qwen3[-_]1\.7B", "2.5B"),
+    (r"^LINAGORA/Canary[-_]Qwen3[-_]4B", "4.8B"),
+    (r"^LINAGORA/Canary_Luciole-1B", "2.1B"),
+    (r"^microsoft/Phi-4-multimodal-instruct$", "5.6B"),
+    (r"^nvidia/audio-flamingo-3-hf$", "8.2B"),
+    (r"^Qwen/Qwen2-Audio-7B-Instruct$", "8.4B"),
+    (r"^Qwen/Qwen2\.5-Omni-7B$", "11B"),
+    (r"^Qwen/Qwen2\.5-Omni-3B$", "5.9B"),
+    (r"^mistralai/Voxtral-Mini-3B-2507$", "4.68B"),
+]
+_MODEL_SIZE_OVERRIDES = [(re.compile(p), s) for p, s in _MODEL_SIZE_OVERRIDES]
 
 
 def _task_display_name(raw_task: str) -> str:
@@ -434,8 +435,9 @@ def _td(val_str, is_best=False, is_missing=False, extra_attrs="", title="", rank
 
 def _extract_model_size(model_name):
     """Extract size like '7B' from model name by matching patterns like '_7b' or '_3b_'."""
-    if model_name in _MODEL_SIZE_OVERRIDES:
-        return _MODEL_SIZE_OVERRIDES[model_name]
+    for pattern, size in _MODEL_SIZE_OVERRIDES:
+        if pattern.search(model_name):
+            return size
     match = re.search(r'(\d+)[bB](?:_|$)', model_name)
     return f"{match.group(1)}B" if match else ""
 
@@ -1024,7 +1026,7 @@ def _compute_overview_ranks(entries, allowed_super_cats=None, sort_by="avg_rank"
     }
 
 
-AGGREGATE_MEASURES = ["avg_rank", "minmax", "zscore"]
+AGGREGATE_MEASURES = ["minmax", "zscore", "avg_rank"]
 
 _AGG_META = {
     "avg_rank": {
@@ -2218,7 +2220,7 @@ def main():
         help="Aggregate columns to show in the overview table",
     )
     parser.add_argument(
-        "--figure_aggregates", nargs="+", default=["avg_rank"],
+        "--figure_aggregates", nargs="+", default=["minmax"],
         choices=AGGREGATE_MEASURES,
         help="Aggregate measure(s) for the size-vs-performance figure(s)",
     )
