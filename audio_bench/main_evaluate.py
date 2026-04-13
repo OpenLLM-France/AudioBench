@@ -9,7 +9,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from audio_bench.dataset_factory import load_dataset_processor
-from audio_bench.model_factory import load_model
+from audio_bench.model_factory import load_model, get_model_name
 
 # =  =  =  =  =  =  =  =  =  =  =  Helpers  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
 
@@ -95,6 +95,9 @@ def run_evaluation(
         
     if dataset_config.get("sub_task") is not None:
         processor.sub_task = dataset_config.get("sub_task")
+
+    if dataset_config.get("judge_binary") is not None:
+        processor.judge_binary = dataset_config.get("judge_binary")
 
     if dataset_config.get("language") is not None:
         processor.language = dataset_config.get("language").upper()
@@ -205,7 +208,7 @@ def run_evaluation(
     
     if compute_metrics:
         data_with_model_predictions, pred_metadata = _load_predictions(prediction_path)
-        model_name = model.name if model is not None else (model_display_name or model_id)
+        model_name = model.name if model is not None else (model_display_name or get_model_name(model_id))
         results = dict()
         results['model_name'] = model_name
         results['model_id'] = model_id

@@ -121,8 +121,8 @@ global:
         - group: sqa_fr
           language: fr
           datasets:
-            # - name: VoxPopuli-QA
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
+            - name: VoxPopuli-QA
+              path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
             - name: CohereLabs-Aya_collection
               path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
             # - name: ComparIA
@@ -157,7 +157,7 @@ global:
 
     # Dialogue Summarization
     - group: dialogue_summarization
-      metrics: flow_judge
+      metrics: flow_judge   # should take into account that the task is to summarize
       task: Dialogue Summarization
       language: en
       datasets:
@@ -186,6 +186,7 @@ global:
     # Emotion Recognition
     - group: emotion_recognition
       metrics: flow_judge
+      judge_binary: true
       task: Emotion Recognition
       sub_task: Emotion
       datasets:
@@ -203,16 +204,18 @@ global:
               path: <DATA_DIR>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
 
     # Accent Recognition
-    - group: accent_recognition
-      metrics: flow_judge
-      task: Accent Recognition
-      language: en
-      datasets:
-        - name: voxceleb_accent_test
+    # Answer is 50% USA
+    # - group: accent_recognition
+    #   metrics: flow_judge
+    #   task: Accent Recognition
+    #   language: en
+    #   datasets:
+    #     - name: voxceleb_accent_test
 
     # Gender Recognition
     - group: gender_recognition
       metrics: flow_judge
+      judge_binary: true
       task: Gender Recognition
       datasets:
         - group: gender_recognition_fr
@@ -229,17 +232,18 @@ global:
               path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
 
     # Age Recognition
-    - group: gender_recognition
+    - group: age_recognition
       metrics: flow_judge
-      task: Gender Recognition
+      judge_binary: true
+      task: Age Recognition
       datasets:
-        - group: gender_recognition_fr
+        - group: age_recognition_fr
           language: fr
           datasets:
             - name: CommonVoice_Age
               path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-age-recognition/test.jsonl
 
-        - group: gender_recognition_en
+        - group: age_recognition_en
           language: en
           datasets:
             - name: CommonVoice_Age
@@ -256,6 +260,7 @@ global:
             - name: muchomusic_test   # various type of questions
             - name: MTJ-Jamendo_AIR-Bench  # various type of questions (mcq)
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
+              judge_binary: true
             - name: MusicCaps
               path: <DATA_DIR>/nemo/music/music-question-answering/en/MusicCaps/test.jsonl
         - group: music_qa_fr
@@ -277,50 +282,46 @@ global:
     # Spoken Language Identification
     - group: language_identification
       metrics: flow_judge
+      judge_binary: true
       task: Spoken Language Identification
       language: en
       datasets:
         - name: CoVost2_AIR-Bench
           path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
 
-    - group: speaker_count
-      metrics: flow_judge
-      task: Speaker Count
-      language: en
-      datasets:
-        - name: VoxCeleb_AIR-Bench
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
+    # - group: speaker_count
+    #   metrics: flow_judge
+    #   judge_binary: true
+    #   task: Speaker Count
+    #   language: en
+    #   datasets: 
+    #     - name: VoxCeleb_AIR-Bench  # Answer is mostly 2
+    #       path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
 
     # Stress Test
-    - group: stress_test
-      metrics: flow_judge
-      task: Stress Test
-      datasets:
-        - group: stress_test_en
-          language: en
-          datasets:
-            - name: StressTest_SSR
-              path: <DATA_DIR>/nemo/misc/en/context/Stress/ssr/test.jsonl
-              sub_task: SSR
+    # All models roughly have same scores except voxtral, judge not doing very well here
+    # - group: stress_test
+    #   metrics: flow_judge
+    #   task: Stress Test
+    #   datasets:
+    #     - group: stress_test_en
+    #       language: en
+    #       datasets:
+    #         - name: StressTest_SSR
+    #           path: <DATA_DIR>/nemo/misc/en/context/Stress/ssr/test.jsonl
+    #           sub_task: SSR
 
 models:
-  # - id: linagora_canary_qwen3_1b_v2
-  #   name: LINAGORA/Canary-Qwen3-1.7B-v2
-  #   path: <MODELS_DIR>/Canary-Qwen3-1.7B-v2
-  # - id: linagora_canary_qwen3_5b_thinking
-  #   name: LINAGORA/Canary-Qwen3-5B-Thinking
-  #   path: <MODELS_DIR>/Canary-Qwen3-5B-Thinking
-  # # - id: canary_qwen           # ASR only
-  # - id: qwen2_omni_3b
-  # - id: qwen2_omni_7b
-  # - id: qwen2_audio_7b_instruct
-  #   batch_size: 20
-  # - id: phi_4_multimodal_instruct
-  #   batch_size: 20
-  # - id: voxtral_mini_3b_2507
+  - id: qwen2_omni_3b
+  - id: qwen2_omni_7b
+  - id: qwen2_audio_7b_instruct
+    batch_size: 20
+  - id: phi_4_multimodal_instruct
+    batch_size: 20
+  - id: voxtral_mini_3b_2507
   # - id: audio_flamingo_3        # need very recent vLLM (and so transformers)
   #   batch_size: 25
-  - id: salmonn_7b              # transformers only - very slow
-    batch_size: 1
+  # - id: salmonn_7b              # transformers only - very slow
+  #   batch_size: 1
   # - id: kimi_audio_7b_instruct  # transformers only - very slow
   #   batch_size: 1

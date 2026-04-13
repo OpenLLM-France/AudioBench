@@ -20,7 +20,7 @@ export CUDA_VISIBLE_DEVICES=$GPU
 
 
 
-python src/main_evaluate.py \
+python -m audio_bench.main_evaluate \
     --dataset_name $DATASET \
     --model_name $MODEL \
     --batch_size $BATCH_SIZE \

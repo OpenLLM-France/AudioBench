@@ -118,3 +118,42 @@ def load_model(model_id, backend="transformers", model_path=None, gpu_memory_uti
     logger.info(f"Loaded model: {model.name} [id={model_id}] (backend: {model.backend})")
     logger.info("= = "*20)
     return model
+
+
+_MODEL_ID_TO_NAME = {
+    "cascade_whisper_large_v3_llama_3_8b_instruct": "openai/whisper-large-v3 + meta-llama/Meta-Llama-3-8B-Instruct",
+    "cascade_whisper_large_v2_gemma2_9b_cpt_sea_lionv3_instruct": "openai/whisper-large-v2 + aisingapore/gemma2-9b-cpt-sea-lionv3-instruct",
+    "qwen2_audio_7b_instruct": "Qwen/Qwen2-Audio-7B-Instruct",
+    "salmonn_7b": "tsinghua-ee/SALMONN-7B",
+    "wavllm_fairseq": "microsoft/WavLLM",
+    "qwen_audio_chat": "Qwen/Qwen-Audio-Chat",
+    "meralion_audiollm_whisper_sea_lion": "MERaLiON/MERaLiON-AudioLLM-Whisper-SEA-LION",
+    "gemini_1_5_flash": "Google/gemini-1.5-flash",
+    "gemini_2_flash": "Google/gemini-2.0-flash-exp",
+    "whisper_large_v3": "openai/whisper-large-v3",
+    "whisper_large_v2": "openai/whisper-large-v2",
+    "gpt_4o_audio": "OpenAI/gpt-4o-audio-preview",
+    "phi_4_multimodal_instruct": "microsoft/Phi-4-multimodal-instruct",
+    "seallms_audio_7b": "SeaLLMs/SeaLLMs-Audio-7B",
+    "canary_qwen": "nvidia/canary-qwen-2.5b",
+    "kimi_audio_7b_instruct": "moonshotai/Kimi-Audio-7B-Instruct",
+    "qwen2_omni_7b": "Qwen/Qwen2.5-Omni-7B",
+    "qwen2_omni_3b": "Qwen/Qwen2.5-Omni-3B",
+}
+
+# Prefix-based entries (checked when exact match fails)
+_MODEL_ID_PREFIX_TO_NAME = {
+    "audio_flamingo": "nvidia/audio-flamingo-3-hf",
+    "voxtral": "mistralai/Voxtral-Mini-3B-2507",
+}
+
+
+def get_model_name(model_id):
+    """Return the display name for a model_id without loading the model."""
+    name = _MODEL_ID_TO_NAME.get(model_id)
+    if name is not None:
+        return name
+    for prefix, name in _MODEL_ID_PREFIX_TO_NAME.items():
+        if model_id.startswith(prefix):
+            return name
+    return model_id
