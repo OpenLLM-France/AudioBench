@@ -2,6 +2,8 @@
 import fire
 import json
 import gc
+import time
+from datetime import timedelta
 import torch
 import logging
 from pathlib import Path
@@ -170,9 +172,11 @@ def run_evaluation(
         model.batch_size = model_config["batch_size"]
 
         # Infer with model
+        t0 = time.time()
         model_predictions = do_model_prediction(input_data, model)
+        inference_time = time.time() - t0
         data_with_model_predictions = processor.format_model_predictions(input_data, model_predictions)
-        
+
         # Free memory associated with raw audio data
         del model_predictions
         input_data.clear() # If it's a list, clear it.
@@ -182,6 +186,8 @@ def run_evaluation(
             "metadata": {
                 "dataset_size": processor._dataset_size,
                 "number_of_samples": len(data_with_model_predictions),
+                "inference_time_s": round(inference_time, 2),
+                "inference_time": str(timedelta(seconds=int(inference_time)))
             },
             "predictions": data_with_model_predictions,
         }
