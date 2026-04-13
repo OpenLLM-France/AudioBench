@@ -98,9 +98,11 @@ BINARY_RUBRIC = (
 )
 
 
-def _build_prompt(question, reference, prediction, criteria, rubric):
+def _build_prompt(question, reference, prediction, criteria, rubric, task_context=""):
     """Build the evaluation prompt matching the flow-judge package format."""
     inputs_str = f"<query>\n{question}\n</query>\n<reference_answer>\n{reference}\n</reference_answer>"
+    if task_context:
+        inputs_str += f"\n<task_context>\n{task_context}\n</task_context>"
     output_str = f"<response>\n{prediction}\n</response>"
     return USER_PROMPT_TEMPLATE.format(
         INPUTS=inputs_str,
@@ -131,9 +133,9 @@ def _parse_response(output):
 
 def _evaluate_one_sample(args):
     """Evaluate a single sample via the external vLLM API."""
-    question, reference, prediction, criteria, rubric = args
+    question, reference, prediction, criteria, rubric, task_context = args
 
-    prompt = _build_prompt(question, reference, prediction, criteria, rubric)
+    prompt = _build_prompt(question, reference, prediction, criteria, rubric, task_context)
 
     messages = [{"role": "user", "content": prompt}]
 
@@ -171,9 +173,11 @@ def _evaluate_one_sample(args):
     }
 
 
-def flow_judge_api_as_judge(model_path, input_data):
+def flow_judge_api_as_judge(model_path, input_data, task_type=None):
     """5-point scoring (1-5). Returns (results_dict, all_details)."""
+    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
     questions, references, predictions = input_data
+    task_context = get_task_evaluation_context(task_type)
 
     num_processes = min(8, len(questions))
 
@@ -188,6 +192,7 @@ def flow_judge_api_as_judge(model_path, input_data):
                         predictions,
                         [FIVE_POINT_CRITERIA] * len(questions),
                         [FIVE_POINT_RUBRIC] * len(questions),
+                        [task_context] * len(questions),
                     ),
                 ),
                 total=len(questions),
@@ -202,9 +207,11 @@ def flow_judge_api_as_judge(model_path, input_data):
     return {'judge_score': avg_score, 'success_rate': success_rate}, all_details
 
 
-def flow_judge_api_as_judge_binary(model_path, input_data):
+def flow_judge_api_as_judge_binary(model_path, input_data, task_type=None):
     """Binary scoring (0-1). Returns (results_dict, all_details)."""
+    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
     questions, references, predictions = input_data
+    task_context = get_task_evaluation_context(task_type)
 
     num_processes = min(8, len(questions))
 
@@ -219,6 +226,7 @@ def flow_judge_api_as_judge_binary(model_path, input_data):
                         predictions,
                         [BINARY_CRITERIA] * len(questions),
                         [BINARY_RUBRIC] * len(questions),
+                        [task_context] * len(questions),
                     ),
                 ),
                 total=len(questions),

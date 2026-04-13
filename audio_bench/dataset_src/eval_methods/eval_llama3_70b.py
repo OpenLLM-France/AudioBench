@@ -26,7 +26,7 @@ from multiprocessing import Pool
 
 def llama3_70b_as_judge_one_sample(args):
 
-    tokenizer, question, reference, prediction = args
+    tokenizer, question, reference, prediction, task_context = args
 
     PROMPT_TEMPLATE = """\
         [Reference Answer]
@@ -37,7 +37,7 @@ def llama3_70b_as_judge_one_sample(args):
 
         [Question]
         {question}
-
+        {task_context}
         [Task]
         Rate the model's answer based on its alignment with the reference answer, focusing on accuracy and relevance to the reference provided. Please be critical on the details. If the model response is something like 'cannot decide', please rate as 0.
         Criteria: Assess if the model's response mirrors the reference in terms of content, accuracy, and relevance.
@@ -55,7 +55,7 @@ def llama3_70b_as_judge_one_sample(args):
 
 
 
-    evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference)
+    evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference, task_context=task_context)
 
     messages = [
         {"role": "user", "content": evaluation_prompt},
@@ -86,7 +86,7 @@ def llama3_70b_as_judge_one_sample(args):
     max_tokens = 512,
     n          = 1,
         )
-    
+
     output = completion.choices[0].text.strip()
 
     try:
@@ -108,8 +108,9 @@ def llama3_70b_as_judge_one_sample(args):
     return sample_rating_detail
 
 
-def llama3_70b_as_judge(model_path, input_data):
+def llama3_70b_as_judge(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
+    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
 
     # avoid asking for token access
     model_path = 'casperhansen/llama-3-70b-instruct-awq'
@@ -120,6 +121,7 @@ def llama3_70b_as_judge(model_path, input_data):
 
     # Generation
     questions, references, predictions = input_data
+    task_context = get_task_evaluation_context(task_type)
 
     # Use a maximum of 8 threads
     num_processes = min(8, len(input_data[0]))
@@ -127,7 +129,7 @@ def llama3_70b_as_judge(model_path, input_data):
     with Pool(processes=num_processes) as pool:
         all_details = list(
             tqdm(
-                pool.imap(llama3_70b_as_judge_one_sample, zip([tokenizer]*len(questions), questions, references, predictions)),
+                pool.imap(llama3_70b_as_judge_one_sample, zip([tokenizer]*len(questions), questions, references, predictions, [task_context]*len(questions))),
                 total=len(input_data),
                 desc="Processing"
             )
@@ -144,7 +146,7 @@ def llama3_70b_as_judge(model_path, input_data):
 
 def llama3_70b_as_judge_binary_one_sample(args):
 
-    tokenizer, question, reference, prediction = args
+    tokenizer, question, reference, prediction, task_context = args
 
     PROMPT_TEMPLATE = """\
         [Reference Answer]
@@ -155,7 +157,7 @@ def llama3_70b_as_judge_binary_one_sample(args):
 
         [Question]
         {question}
-
+        {task_context}
         [Task]
         Rate the model's answer based on its alignment with the reference answer, focusing on accuracy and relevance to the reference provided. Please be critical on the details.
         Criteria: Assess if the model's response mirrors the reference in terms of content, accuracy, and relevance. Please give a score of 0 or 1. 
@@ -169,7 +171,7 @@ def llama3_70b_as_judge_binary_one_sample(args):
 
 
 
-    evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference)
+    evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference, task_context=task_context)
 
     messages = [
         {"role": "user", "content": evaluation_prompt},
@@ -200,7 +202,7 @@ def llama3_70b_as_judge_binary_one_sample(args):
     max_tokens = 512,
     n          = 1,
     )
-    
+
     output = completion.choices[0].text.strip()
 
     try:
@@ -223,8 +225,9 @@ def llama3_70b_as_judge_binary_one_sample(args):
 
 
 
-def llama3_70b_as_judge_binary(model_path, input_data):
+def llama3_70b_as_judge_binary(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
+    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
 
     # avoid asking for token access
     model_path = 'casperhansen/llama-3-70b-instruct-awq'
@@ -235,13 +238,14 @@ def llama3_70b_as_judge_binary(model_path, input_data):
 
     # Generation
     questions, references, predictions = input_data
+    task_context = get_task_evaluation_context(task_type)
 
     num_processes = min(8, len(input_data[0]))
 
     with Pool(processes=num_processes) as pool:
         all_details = list(
             tqdm(
-                pool.imap(llama3_70b_as_judge_binary_one_sample, zip([tokenizer]*len(questions), questions, references, predictions)),
+                pool.imap(llama3_70b_as_judge_binary_one_sample, zip([tokenizer]*len(questions), questions, references, predictions, [task_context]*len(questions))),
                 total=len(input_data),
                 desc="Processing"
             )

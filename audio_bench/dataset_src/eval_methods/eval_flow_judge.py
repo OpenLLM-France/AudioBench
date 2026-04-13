@@ -4,17 +4,20 @@ import torch
 from flow_judge import Vllm, FlowJudge, EvalInput
 from flow_judge.metrics import RESPONSE_CORRECTNESS_5POINT, RESPONSE_CORRECTNESS_BINARY
 
+from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
 
-def _run_flow_judge(metric, input_data):
+
+def _run_flow_judge(metric, input_data, task_type=None):
     """Shared logic for both 5-point and binary variants."""
-    model = Vllm(quantized=True, gpu_memory_utilization=0.3, max_model_len=4096, max_num_seqs=50)
+    model = Vllm(quantized=True, gpu_memory_utilization=0.3, max_model_len=6000, max_num_seqs=50) #4096
     judge = FlowJudge(metric=metric, model=model, output_dir=None)
 
     questions, references, predictions = input_data
+    task_context = get_task_evaluation_context(task_type)
 
     eval_inputs = [
         EvalInput(
-            inputs=[{"query": q}, {"reference_answer": r}],
+            inputs=[{"query": f"{task_context}\n{q}" if task_context else q}, {"reference_answer": r}],
             output={"response": p},
         )
         for q, r, p in zip(questions, references, predictions)
@@ -39,9 +42,9 @@ def _run_flow_judge(metric, input_data):
     return all_details
 
 
-def flow_judge_as_judge(model_path, input_data):
+def flow_judge_as_judge(model_path, input_data, task_type=None):
     """5-point scoring (1-5). Returns (results_dict, all_details)."""
-    all_details = _run_flow_judge(RESPONSE_CORRECTNESS_5POINT, input_data)
+    all_details = _run_flow_judge(RESPONSE_CORRECTNESS_5POINT, input_data, task_type=task_type)
 
     all_scores = [d["rate_score"] for d in all_details]
     avg_score = sum(all_scores) / len(all_scores) * 20  # scale 1-5 -> 0-100
@@ -50,9 +53,9 @@ def flow_judge_as_judge(model_path, input_data):
     return {"judge_score": avg_score, "success_rate": success_rate}, all_details
 
 
-def flow_judge_as_judge_binary(model_path, input_data):
+def flow_judge_as_judge_binary(model_path, input_data, task_type=None):
     """Binary scoring (0-1). Returns (results_dict, all_details)."""
-    all_details = _run_flow_judge(RESPONSE_CORRECTNESS_BINARY, input_data)
+    all_details = _run_flow_judge(RESPONSE_CORRECTNESS_BINARY, input_data, task_type=task_type)
 
     all_scores = [d["rate_score"] for d in all_details]
     avg_score = sum(all_scores) / len(all_scores) * 100  # scale 0-1 -> 0-100

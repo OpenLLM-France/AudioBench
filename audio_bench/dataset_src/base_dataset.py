@@ -180,56 +180,59 @@ class BaseDatasetProcessor:
 
     def _compute_judge(self, data_with_model_predictions, metrics):
         questions, references, predictions = self._extract_judge_inputs(data_with_model_predictions)
+        task_type = self.task_type
 
         if metrics == 'llama3_70b_judge':
             if self.judge_binary:
                 from audio_bench.dataset_src.eval_methods.eval_llama3_70b import llama3_70b_as_judge_binary
                 results, all_details = llama3_70b_as_judge_binary(
                     "meta-llama/Meta-Llama-3-70B-Instruct",
-                    [questions, references, predictions]
+                    [questions, references, predictions],
+                    task_type=task_type,
                 )
             else:
                 from audio_bench.dataset_src.eval_methods.eval_llama3_70b import llama3_70b_as_judge
                 results, all_details = llama3_70b_as_judge(
                     "meta-llama/Meta-Llama-3-70B-Instruct",
-                    [questions, references, predictions]
+                    [questions, references, predictions],
+                    task_type=task_type,
                 )
             return self._enrich_judge('llama3_70b_judge', results, all_details)
 
         elif metrics == 'gpt4o_judge':
             if self.judge_binary:
                 from audio_bench.dataset_src.eval_methods.eval_gpt4o import gpt4o_as_judge_binary
-                results, all_details = gpt4o_as_judge_binary("", [questions, references, predictions])
+                results, all_details = gpt4o_as_judge_binary("", [questions, references, predictions], task_type=task_type)
             else:
                 from audio_bench.dataset_src.eval_methods.eval_gpt4o import gpt4o_as_judge
-                results, all_details = gpt4o_as_judge("", [questions, references, predictions])
+                results, all_details = gpt4o_as_judge("", [questions, references, predictions], task_type=task_type)
             return self._enrich_judge('gpt4o_judge', results, all_details)
 
         elif metrics == 'flow_judge':
             if self.judge_binary:
                 from audio_bench.dataset_src.eval_methods.eval_flow_judge import flow_judge_as_judge_binary
-                results, all_details = flow_judge_as_judge_binary("", [questions, references, predictions])
+                results, all_details = flow_judge_as_judge_binary("", [questions, references, predictions], task_type=task_type)
             else:
                 from audio_bench.dataset_src.eval_methods.eval_flow_judge import flow_judge_as_judge
-                results, all_details = flow_judge_as_judge("", [questions, references, predictions])
+                results, all_details = flow_judge_as_judge("", [questions, references, predictions], task_type=task_type)
             return self._enrich_judge('flow_judge', results, all_details)
 
         elif metrics == 'flow_judge_api':
             if self.judge_binary:
                 from audio_bench.dataset_src.eval_methods.eval_flow_judge_api import flow_judge_api_as_judge_binary
-                results, all_details = flow_judge_api_as_judge_binary("", [questions, references, predictions])
+                results, all_details = flow_judge_api_as_judge_binary("", [questions, references, predictions], task_type=task_type)
             else:
                 from audio_bench.dataset_src.eval_methods.eval_flow_judge_api import flow_judge_api_as_judge
-                results, all_details = flow_judge_api_as_judge("", [questions, references, predictions])
+                results, all_details = flow_judge_api_as_judge("", [questions, references, predictions], task_type=task_type)
             return self._enrich_judge('flow_judge_api', results, all_details)
 
         elif metrics == 'linagora_api_oss120':
             if self.judge_binary:
                 from audio_bench.dataset_src.eval_methods.eval_linagora_api_oss120 import gpt4o_as_judge_binary
-                results, all_details = gpt4o_as_judge_binary("", [questions, references, predictions])
+                results, all_details = gpt4o_as_judge_binary("", [questions, references, predictions], task_type=task_type)
             else:
                 from audio_bench.dataset_src.eval_methods.eval_linagora_api_oss120 import gpt4o_as_judge
-                results, all_details = gpt4o_as_judge("", [questions, references, predictions])
+                results, all_details = gpt4o_as_judge("", [questions, references, predictions], task_type=task_type)
             return self._enrich_judge('linagora_api_oss120', results, all_details)
 
         elif metrics == 'meteor':

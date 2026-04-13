@@ -10,8 +10,9 @@ from time import sleep
 import openai
 from openai import OpenAI
 
-def gpt4o_as_judge(model_path, input_data):
+def gpt4o_as_judge(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
+    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
 
     client = OpenAI(
       api_key=os.getenv("LINAGORA_API_KEY"),
@@ -21,6 +22,7 @@ def gpt4o_as_judge(model_path, input_data):
     # generation
     all_details = []
     questions, references, predictions = input_data
+    task_context = get_task_evaluation_context(task_type)
 
     for question, reference, prediction in tqdm(zip(questions, references, predictions), total=len(questions)):
 
@@ -33,7 +35,7 @@ def gpt4o_as_judge(model_path, input_data):
 
             [Question]
             {question}
-
+            {task_context}
             [Task]
             Rate the model's answer based on its alignment with the reference answer, focusing on accuracy and relevance to the reference provided. Please be critical on the details. If the model response is something like 'cannot decide', please rate as 0.
             Criteria: Assess if the model's response mirrors the reference in terms of content, accuracy, and relevance.
@@ -50,7 +52,7 @@ def gpt4o_as_judge(model_path, input_data):
             Rating: (int)"""
 
 
-        evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference)
+        evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference, task_context=task_context)
 
         messages = [
             {"role": "user", "content": evaluation_prompt},
@@ -67,7 +69,7 @@ def gpt4o_as_judge(model_path, input_data):
                 presence_penalty=0,
                 stop=None,
                 )
-            
+
             output = completion.choices[0].message.content
 
         except:
@@ -75,7 +77,7 @@ def gpt4o_as_judge(model_path, input_data):
             sleep(1)
             output = "empty"
 
-        
+
         # Map to scores
         try:
             rate_score = float(output.split()[-1])
@@ -104,8 +106,9 @@ def gpt4o_as_judge(model_path, input_data):
 
     return judge_results, all_details
 
-def gpt4o_as_judge_binary(model_path, input_data):
+def gpt4o_as_judge_binary(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
+    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
 
     client = OpenAI(
       api_key=os.getenv("LINAGORA_API_KEY"),
@@ -115,6 +118,7 @@ def gpt4o_as_judge_binary(model_path, input_data):
     # generation
     all_details = []
     questions, references, predictions = input_data
+    task_context = get_task_evaluation_context(task_type)
 
     for question, reference, prediction in tqdm(zip(questions, references, predictions), total=len(questions)):
 
@@ -127,7 +131,7 @@ def gpt4o_as_judge_binary(model_path, input_data):
 
             [Question]
             {question}
-
+            {task_context}
             [Task]
             Rate the model's answer based on its alignment with the reference answer, focusing on accuracy and relevance to the reference provided. Please be critical on the details.
             Criteria: Assess if the model's response mirrors the reference in terms of content, accuracy, and relevance. Please give a score of 0 or 1. 
@@ -140,7 +144,7 @@ def gpt4o_as_judge_binary(model_path, input_data):
             Rating: (int)"""
 
 
-        evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference)
+        evaluation_prompt = PROMPT_TEMPLATE.format(question=question, prediction=prediction, reference=reference, task_context=task_context)
 
         messages = [
             {"role": "user", "content": evaluation_prompt},
