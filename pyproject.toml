@@ -35,6 +35,7 @@ math = ["latex2sympy2"]
 kimi = ["kimi-audio @ git+https://github.com/MoonshotAI/Kimi-Audio.git"]
 flow-judge = ["flow-judge"]
 qwen-omni = ["qwen-omni-utils"]
+plot = ["playwright"]
 all = [
-    "audiobench[vllm,api,math,kimi,flow-judge,qwen-omni]",
+    "audiobench[vllm,api,math,kimi,flow-judge,qwen-omni,plot]",
 ]
