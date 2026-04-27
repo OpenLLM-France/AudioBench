@@ -113,6 +113,28 @@ _TASK_GUIDANCE = {
         "The model was asked to count the number of speakers. Focus on whether the response "
         "gives the same count as the reference."
     ),
+    "INFORMATION EXTRACTION": (
+        "The model was asked to extract specific information from spoken audio "
+        "(e.g., timestamps, words, or sentences corresponding to a query). A good "
+        "response returns the requested information accurately. Focus on whether "
+        "the extracted content matches the reference, allowing for minor formatting "
+        "differences as long as the substantive information is correct."
+    ),
+    "TIMESTAMPED TRANSCRIPTION": (
+        "The model was asked to transcribe spoken audio while emitting timestamps "
+        "alongside the transcribed text (e.g., per word or per segment). A good "
+        "response both transcribes accurately and aligns timestamps with the spoken "
+        "content. Focus on whether the transcription matches the reference and "
+        "whether timestamps are present and roughly consistent with the reference; "
+        "minor formatting differences are acceptable."
+    ),
+    "FORMAT FOLLOWING": (
+        "The model was asked to produce its answer in a specific output format "
+        "(e.g., JSON, timestamped transcription). A good response respects the "
+        "requested structure. Priority is on the format, not on the corectness "
+        "of the answer. Focus on whether the response follows the required " 
+        "format."
+    ),
 }
 
 def get_task_evaluation_context(task_type):

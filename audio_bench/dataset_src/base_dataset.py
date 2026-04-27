@@ -235,6 +235,11 @@ class BaseDatasetProcessor:
                 results, all_details = gpt4o_as_judge("", [questions, references, predictions], task_type=task_type)
             return self._enrich_judge('linagora_api_oss120', results, all_details)
 
+        elif metrics == 'format_check':
+            from audio_bench.dataset_src.eval_methods.format_check import format_check_json
+            results, all_details = format_check_json("", [questions, references, predictions], task_type=task_type)
+            return self._enrich_judge('format_check', results, all_details)
+
         elif metrics == 'meteor':
             import evaluate
             meteor = evaluate.load('meteor')

@@ -9,7 +9,7 @@ from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_con
 
 def _run_flow_judge(metric, input_data, task_type=None):
     """Shared logic for both 5-point and binary variants."""
-    model = Vllm(quantized=True, gpu_memory_utilization=0.3, max_model_len=6000, max_num_seqs=50) #4096
+    model = Vllm(quantized=True, gpu_memory_utilization=0.3, max_model_len=6200, max_num_seqs=50)
     judge = FlowJudge(metric=metric, model=model, output_dir=None)
 
     questions, references, predictions = input_data
