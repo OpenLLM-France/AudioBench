@@ -1,10 +1,10 @@
 import logging
 import os
+import re
 import tempfile
 from pathlib import Path
 
 import torch
-# from transformers import AudioFlamingo3ForConditionalGeneration, AutoProcessor
 
 from audio_bench.model_src.base_model import BaseModel
 
@@ -28,13 +28,17 @@ class AudioFlamingo(BaseModel):
     name = "nvidia/audio-flamingo-3-hf"
     supports_vllm = True    # need a very recent version of vllm
 
-    def __init__(self, gpu_memory_utilization=0.4, device=None):
-        super().__init__(model_path="nvidia/audio-flamingo-3-hf", gpu_memory_utilization=gpu_memory_utilization, device=device)
+    def __init__(self, model_path="nvidia/audio-flamingo-3-hf", gpu_memory_utilization=0.4, device=None):
+        super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
+        self.name = model_path
 
     def load(self):
-        raise NotImplementedError()
-        # self.model = AudioFlamingo3ForConditionalGeneration.from_pretrained(self.model_path, device_map=self.device, torch_dtype=torch.bfloat16).eval()
-        # self.processor = AutoProcessor.from_pretrained(self.model_path)
+        from transformers import AutoModel, AutoProcessor
+
+        self.model = AutoModel.from_pretrained(
+            self.model_path, device_map=self.device, torch_dtype=torch.bfloat16
+        ).eval()
+        self.processor = AutoProcessor.from_pretrained(self.model_path)
 
     def _generate(self, input):
         audio_array    = input["audio"]["array"]

@@ -84,13 +84,13 @@ global:
             - name: Multilingual_TEDx
               path: <DATA_DIR>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
 
-        - group: asr_ar
-          language: ar
-          datasets:
-            - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/ar/context/FLEURS/test.jsonl
-            - name: Multilingual_TEDx
-              path: <DATA_DIR>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
+        # - group: asr_ar
+        #   language: ar
+        #   datasets:
+        #     - name: Fleurs
+        #       path: <DATA_DIR>/nemo/asr/ar/context/FLEURS/test.jsonl
+        #     - name: Multilingual_TEDx
+        #       path: <DATA_DIR>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
 
     # AST
     - group: ast
@@ -178,7 +178,7 @@ global:
     - group: audio_captioning
       metrics: flow_judge
       task: Audio Captioning
-      language: en
+      language: other
       datasets:
         - name: wavcaps_test
         - name: audiocaps_test
@@ -193,7 +193,7 @@ global:
         - group: emotion_recognition_fr
           language: fr
           datasets:
-            - name: MELD_Emotio
+            - name: MELD_Emotion
               path: <DATA_DIR>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
 
         - group: emotion_recognition_en
@@ -261,19 +261,19 @@ global:
             - name: MTJ-Jamendo_AIR-Bench  # various type of questions (mcq)
               path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
               judge_binary: true
-            - name: MusicCaps
+            - name: MusicCaps-QA
               path: <DATA_DIR>/nemo/music/music-question-answering/en/MusicCaps/test.jsonl
         - group: music_qa_fr
           language: fr
           datasets:
-            - name: MusicCaps
+            - name: MusicCaps-QA
               path: <DATA_DIR>/nemo/music/music-question-answering/fr/MusicCaps/test.jsonl
 
     # Music Captioning
     - group: music_captioning
       metrics: flow_judge
       task: Music Captioning
-      language: en
+      language: other
       datasets:
         - name: MusicCaps
           path: <DATA_DIR>/nemo/music/music-captioning/en/context/MusicCaps/test.jsonl
@@ -284,7 +284,7 @@ global:
       metrics: flow_judge
       judge_binary: true
       task: Spoken Language Identification
-      language: en
+      language: other
       datasets:
         - name: CoVost2_AIR-Bench
           path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl

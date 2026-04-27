@@ -75,7 +75,11 @@ def load_model(model_id, backend="transformers", model_path=None, gpu_memory_uti
 
     elif model_id.startswith('audio_flamingo'):
         from audio_bench.model_src.vllm.audio_flamingo import AudioFlamingo
-        model = AudioFlamingo(gpu_memory_utilization=gpu_memory_utilization, device=device)
+        if model_id == 'audio_flamingo_next':
+            af_path = "nvidia/audio-flamingo-next-hf"
+        else:
+            af_path = "nvidia/audio-flamingo-3-hf"
+        model = AudioFlamingo(model_path=af_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
 
     elif model_id.startswith('qwen2_omni'):
         from audio_bench.model_src.vllm.qwen_omni import Qwen2Omni
@@ -143,6 +147,7 @@ _MODEL_ID_TO_NAME = {
 
 # Prefix-based entries (checked when exact match fails)
 _MODEL_ID_PREFIX_TO_NAME = {
+    "audio_flamingo_next": "nvidia/audio-flamingo-next-hf",
     "audio_flamingo": "nvidia/audio-flamingo-3-hf",
     "voxtral": "mistralai/Voxtral-Mini-3B-2507",
 }

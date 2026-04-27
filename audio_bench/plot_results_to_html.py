@@ -32,10 +32,25 @@ import plotly.express.colors as pxcolors
 LOWER_IS_BETTER = {"wer"}
 ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
 _IGNORED_DATASETS = {"StressTest_SSR", "VoxCeleb-accent", "MuChoMusic"}
+_IGNORED_MODEL_PATTERNS = [re.compile(p) for p in [
+    r"^LINAGORA/Canary_Qwen3-1\.7B_v1.*",
+    # r"^LINAGORA/(?!.*data-v1).*",
+]]
+
+
+def _is_model_ignored(model_name):
+    return any(p.search(model_name) for p in _IGNORED_MODEL_PATTERNS)
 
 _MODEL_NAME_CORRECTIONS = {
-    "LINAGORA/Canary-Qwen3-5B-Thinking": "LINAGORA/Canary-Qwen3-4B-v0-quick",
-    "LINAGORA/Canary-Qwen3-1.7B-v2": "LINAGORA/Canary-Qwen3-1.7B-v0-quick",
+    "LINAGORA/Canary-Qwen3-5B-Thinking": "LINAGORA/Canary-Qwen3-4B_data-v1_8h",
+    "LINAGORA/Canary-Qwen3-1.7B-v2": "LINAGORA/Canary-Qwen3-1.7B_data-v1_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s010000": "LINAGORA/Canary_Luciole-1B_LLM-LoRA_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829": "LINAGORA/Canary_Luciole-1B_LLM-LoRA_40h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v2_s027458": "LINAGORA/Canary_Luciole-1B_LLM-LoRA-no_bucket_8h",
+    "LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803": "LINAGORA/Canary_Qwen3-1.7B_LLM-LoRA_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_adapter_s005000": "LINAGORA/Canary_Luciole-1B_Step-Adapter_2h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s020000": "LINAGORA/Canary_Luciole-1B_Step-Encoder_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s217983": "LINAGORA/Canary_Luciole-1B_Step-Encoder_80h",
 }
 
 _TASK_METRIC_OVERRIDE = {
@@ -97,6 +112,25 @@ _SUPER_CATEGORY_ORDER = ["ASR", "AST", "QA", "Others", "Music", "Sound"]
 
 def _super_category(raw_task: str) -> str:
     return _SUPER_CATEGORY.get(raw_task.upper(), "Others")
+
+
+# Task display order for per-language summary tables.
+# Tasks not listed here are appended alphabetically after the listed ones.
+_LANG_TABLE_TASK_ORDER = [
+    "ASR",
+    "AST",
+    "QUESTION ANSWERING",
+    "MUSIC QUESTION ANSWERING",
+    "EMOTION RECOGNITION",
+    "GENDER RECOGNITION",
+    "AGE RECOGNITION",
+]
+_LANG_TABLE_TASK_INDEX = {t: i for i, t in enumerate(_LANG_TABLE_TASK_ORDER)}
+
+
+def _lang_table_task_sort_key(task: str):
+    idx = _LANG_TABLE_TASK_INDEX.get(task.upper(), len(_LANG_TABLE_TASK_ORDER))
+    return (idx, task)
 
 
 def _group_by_super_category(entries):
@@ -189,6 +223,8 @@ def load_all_scores(input_folder):
 
             model_name = data.get("model_name", model_id)
             model_name = _MODEL_NAME_CORRECTIONS.get(model_name, model_name)
+            if _is_model_ignored(model_name):
+                continue
             task = data.get("task")
             language = data.get("language")
             sub_task = data.get("sub_task")
@@ -823,27 +859,40 @@ def _compute_overview_ranks(entries, allowed_super_cats=None, sort_by="avg_rank"
                     model_scores[m] = (avg, None, None)
         task_model_score[task] = model_scores
 
-    # --- Super-category grouping ---
-    sc_tasks = defaultdict(list)
-    for task in tasks:
-        sc = _super_category(task)
-        sc_tasks[sc].append(task)
-
-    # Ordered super-categories
-    super_cats = []
-    for sc in _SUPER_CATEGORY_ORDER:
-        if sc in sc_tasks:
-            super_cats.append(sc)
-    for sc in sorted(sc_tasks.keys()):
-        if sc not in super_cats:
-            super_cats.append(sc)
+    # --- Task-based column layout (one column per task) ---
+    ordered_tasks = sorted(tasks, key=_lang_table_task_sort_key)
 
     if allowed_super_cats is not None:
-        super_cats = [sc for sc in super_cats if sc in allowed_super_cats]
+        allowed = {s.upper() for s in allowed_super_cats}
+        ordered_tasks = [t for t in ordered_tasks if _super_category(t) in allowed]
 
-    expandable_sc = {sc for sc in super_cats if len(sc_tasks[sc]) > 1}
-    expandable_sc.discard("QA")
-    expandable_dataset = {sc for sc in ("QA",) if sc in sc_tasks}
+    # Group tasks by super-category. Super-cats with 2+ tasks get a merged
+    # pseudo-task column (like the existing "Others" group); single-task
+    # super-cats keep their task column directly.
+    sc_to_tasks = defaultdict(list)
+    for t in ordered_tasks:
+        sc_to_tasks[_super_category(t)].append(t)
+    others_tasks = sc_to_tasks.get("Others", [])
+
+    ordered_scs = [sc for sc in _SUPER_CATEGORY_ORDER if sc in sc_to_tasks]
+    for sc in sc_to_tasks:
+        if sc not in ordered_scs:
+            ordered_scs.append(sc)
+
+    column_tasks = []
+    group_members = {}  # pseudo-task label -> list of member tasks
+    for sc in ordered_scs:
+        members = sc_to_tasks[sc]
+        if not members:
+            continue
+        if sc == "Others":
+            column_tasks.append("Others")
+            group_members["Others"] = members
+        elif len(members) == 1:
+            column_tasks.append(members[0])
+        else:
+            column_tasks.append(sc)
+            group_members[sc] = members
 
     # --- Per-task language breakdown ---
     agg_lang = aggregate_entries(entries, by_language=True)
@@ -862,65 +911,65 @@ def _compute_overview_ranks(entries, allowed_super_cats=None, sort_by="avg_rank"
         task_languages[task].add(lang)
     task_languages = {t: sorted(langs, key=_lang_sort_key) for t, langs in task_languages.items()}
 
-    # Build task -> lang -> [dataset display names] for header labels
-    task_lang_datasets = defaultdict(lambda: defaultdict(set))
-    for e in entries:
-        task = _task_display_name(e.get("task", ""))
-        if task not in task_metric:
-            continue
-        lang = (e.get("language") or "UNKNOWN").upper()
-        task_lang_datasets[task][lang].add(_dataset_display_name(e))
-    task_lang_datasets = {
-        t: {l: sorted(ds) for l, ds in langs.items()}
-        for t, langs in task_lang_datasets.items()
-    }
+    # --- Per-task sub-columns ---
+    # ASR: sub-columns = languages (avg across datasets per language)
+    # Others: sub-columns = lang-prefixed datasets
+    task_subcols = {}       # task -> list of sub-column display names
+    task_subcol_scores = {} # task -> subcol -> model -> (score, std, n)
+    task_subcol_metric = {} # task -> subcol -> metric
 
-    # ASR/AST with >=2 languages get per-language expand
-    expandable_lang = {
-        sc for sc in super_cats
-        if sc not in expandable_sc and sc not in expandable_dataset
-        and sc in ("ASR", "AST")
-        and len(task_languages.get(sc_tasks[sc][0], [])) >= 2
-    }
+    for task in ordered_tasks:
+        metric = task_metric[task]
+        sc = _super_category(task)
 
-    # Other multi-language SCs get per-dataset expand
-    for sc in super_cats:
-        if (sc not in expandable_sc and sc not in expandable_dataset
-                and sc not in expandable_lang):
-            task = sc_tasks[sc][0] if len(sc_tasks[sc]) == 1 else None
-            if task and len(task_languages.get(task, [])) >= 2:
-                expandable_dataset.add(sc)
-
-    # --- Per-dataset breakdown for expandable_dataset SCs ---
-    sc_datasets = {}
-    sc_dataset_scores = {}
-    sc_dataset_metric = {}
-
-    for sc in expandable_dataset:
-        datasets = []
-        dataset_scores = defaultdict(dict)
-        dataset_metric = {}
-        multi_lang = any(
-            len(task_languages.get(t, [])) >= 2 for t in sc_tasks[sc]
-        )
-
-        for task in sc_tasks[sc]:
-            metric = task_metric[task]
+        if sc in {"ASR", "QA"}:
+            subcols = task_languages.get(task, [])
+            subcol_scores = {lang: task_lang_scores[task].get(lang, {}) for lang in subcols}
+            subcol_metrics = {lang: metric for lang in subcols}
+        elif sc in {"Others", "Music", "Sound"}:
             grouped = defaultdict(list)
-            ds_lang = {}
             for e in entries:
                 if (_task_display_name(e.get("task", "")) == task
                         and e["metric_name"] == metric):
-                    grouped[(e["dataset_name"], e["model_name"])].append(e)
-                    if e["dataset_name"] not in ds_lang:
-                        ds_lang[e["dataset_name"]] = (e.get("language") or "UNKNOWN").upper()
-            ds_names = sorted({k[0] for k in grouped})
-            for ds in ds_names:
-                display = f"{ds_lang.get(ds, '')} \u00b7 {ds}" if multi_lang else ds
-                datasets.append(display)
-                dataset_metric[display] = metric
+                    key = e.get("sub_task") or (e.get("language") or "UNKNOWN").upper()
+                    grouped[(key, e["model_name"])].append(e)
+            subcols = sorted({k[0] for k in grouped})
+            subcol_scores = defaultdict(dict)
+            subcol_metrics = {}
+            for st in subcols:
+                subcol_metrics[st] = metric
                 for m in all_models:
-                    ds_entries = grouped.get((ds, m))
+                    ents = grouped.get((st, m))
+                    if ents:
+                        score = sum(e["score"] for e in ents) / len(ents)
+                        pooled = []
+                        for e in ents:
+                            if "all_scores" in e:
+                                pooled.extend(e["all_scores"])
+                        if pooled:
+                            subcol_scores[st][m] = (score, float(np.std(np.array(pooled))), len(pooled))
+                        else:
+                            subcol_scores[st][m] = (score, None, None)
+            subcol_scores = dict(subcol_scores)
+        else:
+            # AST and any future SC: per-dataset (one dataset per language for AST).
+            grouped = defaultdict(list)
+            for e in entries:
+                if (_task_display_name(e.get("task", "")) == task
+                        and e["metric_name"] == metric):
+                    lang = (e.get("language") or "UNKNOWN").upper()
+                    grouped[(e["dataset_name"], lang, e["model_name"])].append(e)
+            ds_lang_pairs = sorted({(k[0], k[1]) for k in grouped})
+            multi_lang = len({p[1] for p in ds_lang_pairs}) >= 2
+            subcols = []
+            subcol_scores = defaultdict(dict)
+            subcol_metrics = {}
+            for ds, lang in ds_lang_pairs:
+                display = f"{lang} \u00b7 {ds}" if multi_lang else ds
+                subcols.append(display)
+                subcol_metrics[display] = metric
+                for m in all_models:
+                    ds_entries = grouped.get((ds, lang, m))
                     if ds_entries:
                         score = sum(e["score"] for e in ds_entries) / len(ds_entries)
                         pooled = []
@@ -928,70 +977,112 @@ def _compute_overview_ranks(entries, allowed_super_cats=None, sort_by="avg_rank"
                             if "all_scores" in e:
                                 pooled.extend(e["all_scores"])
                         if pooled:
-                            dataset_scores[display][m] = (score, float(np.std(np.array(pooled))), len(pooled))
+                            subcol_scores[display][m] = (score, float(np.std(np.array(pooled))), len(pooled))
                         else:
-                            dataset_scores[display][m] = (score, None, None)
+                            subcol_scores[display][m] = (score, None, None)
+            subcol_scores = dict(subcol_scores)
 
-        sc_datasets[sc] = sorted(datasets) if multi_lang else datasets
-        sc_dataset_scores[sc] = dataset_scores
-        sc_dataset_metric[sc] = dataset_metric
+        task_subcols[task] = subcols
+        task_subcol_scores[task] = subcol_scores
+        task_subcol_metric[task] = subcol_metrics
 
-    # Build super-category aggregate scores
-    sc_model_score = {}
-    for sc in super_cats:
-        sc_model_score[sc] = {}
-        if sc in expandable_dataset:
-            for m in all_models:
-                disp_scores = []
-                for ds in sc_datasets[sc]:
-                    if m in sc_dataset_scores[sc][ds]:
-                        metric = sc_dataset_metric[sc][ds]
-                        disp_scores.append(
-                            _display_score(sc_dataset_scores[sc][ds][m][0], metric)
-                        )
-                if disp_scores:
-                    sc_model_score[sc][m] = sum(disp_scores) / len(disp_scores)
+    # Per-task display scores (for ranking and aggregates)
+    task_disp_score = {}  # task -> model -> display_score (float)
+    task_ascending = {}
+    for task in ordered_tasks:
+        metric = task_metric[task]
+        task_ascending[task] = _sort_ascending(metric)
+        task_disp_score[task] = {}
+        for m, (val, *_) in task_model_score.get(task, {}).items():
+            task_disp_score[task][m] = _display_score(val, metric)
+
+    # --- Group pseudo-tasks: each aggregates 2+ member tasks of a super-category ---
+    # The main cell is the mean of member-task display scores (mixed metrics, so
+    # treat as a rough aggregate).
+    # For "Others", sub-columns are the member tasks themselves (mixed task kinds).
+    # For other super-cat groups (QA, Music, Sound), sub-columns are the individual
+    # datasets from each member task (dataset-level drill-down, like a regular task).
+    for group_label, members in group_members.items():
+        disp = {}
+        for m in all_models:
+            vals = [task_disp_score[t][m] for t in members if m in task_disp_score[t]]
+            if vals:
+                disp[m] = sum(vals) / len(vals)
+        task_disp_score[group_label] = disp
+        task_ascending[group_label] = all(task_ascending[t] for t in members)
+
+        if group_label in {"Others", "Music", "Sound"}:
+            subcols = []
+            subcol_scores = {}
+            subcol_metric = {}
+            for t in members:
+                metric = task_metric[t]
+                unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
+                label = f"{t} ({metric.upper()}{unit})"
+                subcols.append(label)
+                scores_map = {}
+                for m, (val, st, n) in task_model_score.get(t, {}).items():
+                    scores_map[m] = (val, st, n)
+                subcol_scores[label] = scores_map
+                subcol_metric[label] = metric
+        elif group_label == "QA":
+            # Per-language sub-columns: average across member tasks.
+            lang_to_model_vals = defaultdict(lambda: defaultdict(list))
+            for t in members:
+                for lang, model_map in task_lang_scores.get(t, {}).items():
+                    for mdl, score_tuple in model_map.items():
+                        if score_tuple and score_tuple[0] is not None:
+                            lang_to_model_vals[lang][mdl].append(score_tuple[0])
+            subcols = sorted(lang_to_model_vals.keys(), key=_lang_sort_key)
+            subcol_scores = {}
+            subcol_metric = {}
+            metric_counts = defaultdict(int)
+            for t in members:
+                metric_counts[task_metric[t]] += 1
+            group_metric = max(metric_counts, key=metric_counts.get) if metric_counts else None
+            for lang in subcols:
+                subcol_scores[lang] = {
+                    mdl: (sum(vals) / len(vals), None, None)
+                    for mdl, vals in lang_to_model_vals[lang].items()
+                }
+                subcol_metric[lang] = group_metric
         else:
-            for m in all_models:
-                task_disp_scores = []
-                for task in sc_tasks[sc]:
-                    if m in task_model_score[task]:
-                        metric = task_metric[task]
-                        task_disp_scores.append(
-                            _display_score(task_model_score[task][m][0], metric)
-                        )
-                if task_disp_scores:
-                    sc_model_score[sc][m] = sum(task_disp_scores) / len(task_disp_scores)
+            # Fallback: concatenate each member task's sub-columns.
+            subcols = []
+            subcol_scores = {}
+            subcol_metric = {}
+            for t in members:
+                for sc_label in task_subcols.get(t, []):
+                    label = sc_label
+                    if label in subcol_scores:
+                        label = f"{sc_label} [{t}]"
+                    subcols.append(label)
+                    subcol_scores[label] = task_subcol_scores[t].get(sc_label, {})
+                    subcol_metric[label] = task_subcol_metric[t].get(sc_label)
 
-    # Per-super-category ranks
-    sc_ascending = {}
-    for sc in super_cats:
-        sc_ascending[sc] = all(_sort_ascending(task_metric[t]) for t in sc_tasks[sc])
+        task_subcols[group_label] = subcols
+        task_subcol_scores[group_label] = subcol_scores
+        task_subcol_metric[group_label] = subcol_metric
 
-    sc_model_rank = {}
-    for sc in super_cats:
-        asc = sc_ascending[sc]
-        scores = sc_model_score[sc]
-        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=not asc)
-        sc_model_rank[sc] = {m: rank + 1 for rank, (m, _) in enumerate(ranked)}
-
-    # Per-task ranks
+    # Per-task ranks (ranked columns = column_tasks, which includes "Others")
     task_model_rank = {}
-    for task in tasks:
-        ascending = _sort_ascending(task_metric[task])
-        scores = task_model_score[task]
-        ranked = sorted(scores.items(), key=lambda x: x[1][0], reverse=not ascending)
+    for task in column_tasks:
+        asc = task_ascending.get(task, False)
+        scores = task_disp_score.get(task, {})
+        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=not asc)
         task_model_rank[task] = {m: rank + 1 for rank, (m, _) in enumerate(ranked)}
 
-    # Average rank per model
+    # Average rank per model (across column_tasks)
     model_avg_rank = {}
     for m in all_models:
-        ranks = [sc_model_rank[sc][m] for sc in super_cats if m in sc_model_rank[sc]]
+        ranks = [task_model_rank[t][m] for t in column_tasks if m in task_model_rank.get(t, {})]
         model_avg_rank[m] = sum(ranks) / len(ranks) if ranks else float("inf")
 
     # --- Normalized aggregate scores (Min-Max and Z-Score) ---
+    disp_for_norm = {t: task_disp_score.get(t, {}) for t in column_tasks}
+    asc_for_norm = {t: task_ascending.get(t, False) for t in column_tasks}
     model_minmax, model_zscore = _compute_normalized_scores(
-        all_models, sc_model_score, sc_ascending,
+        all_models, disp_for_norm, asc_for_norm,
     )
 
     agg_values = {"avg_rank": model_avg_rank, "minmax": model_minmax, "zscore": model_zscore}
@@ -1004,20 +1095,17 @@ def _compute_overview_ranks(entries, allowed_super_cats=None, sort_by="avg_rank"
         "tasks": tasks,
         "all_models": all_models,
         "task_model_score": task_model_score,
-        "sc_tasks": sc_tasks,
-        "super_cats": super_cats,
-        "expandable_sc": expandable_sc,
-        "expandable_dataset": expandable_dataset,
-        "expandable_lang": expandable_lang,
+        "ordered_tasks": ordered_tasks,
+        "column_tasks": column_tasks,
+        "others_tasks": others_tasks,
+        "group_members": group_members,
+        "task_ascending": task_ascending,
+        "task_disp_score": task_disp_score,
+        "task_subcols": task_subcols,
+        "task_subcol_scores": task_subcol_scores,
+        "task_subcol_metric": task_subcol_metric,
         "task_languages": task_languages,
         "task_lang_scores": task_lang_scores,
-        "task_lang_datasets": task_lang_datasets,
-        "sc_datasets": sc_datasets,
-        "sc_dataset_scores": sc_dataset_scores,
-        "sc_dataset_metric": sc_dataset_metric,
-        "sc_model_score": sc_model_score,
-        "sc_ascending": sc_ascending,
-        "sc_model_rank": sc_model_rank,
         "task_model_rank": task_model_rank,
         "model_avg_rank": model_avg_rank,
         "model_minmax": model_minmax,
@@ -1157,23 +1245,17 @@ def plot_overview_table(entries, collector, *, title="Overview",
     agg = data["agg"]
     task_entries = data["task_entries"]
     task_metric = data["task_metric"]
-    tasks = data["tasks"]
     all_models = data["all_models"]
     task_model_score = data["task_model_score"]
-    sc_tasks = data["sc_tasks"]
-    super_cats = data["super_cats"]
-    expandable_sc = data["expandable_sc"]
-    expandable_dataset = data["expandable_dataset"]
-    expandable_lang = data["expandable_lang"]
-    task_languages = data["task_languages"]
-    task_lang_scores = data["task_lang_scores"]
-    task_lang_datasets = data["task_lang_datasets"]
-    sc_datasets = data["sc_datasets"]
-    sc_dataset_scores = data["sc_dataset_scores"]
-    sc_dataset_metric = data["sc_dataset_metric"]
-    sc_model_score = data["sc_model_score"]
-    sc_ascending = data["sc_ascending"]
-    sc_model_rank = data["sc_model_rank"]
+    ordered_tasks = data["ordered_tasks"]
+    column_tasks = data["column_tasks"]
+    others_tasks = data["others_tasks"]
+    group_members = data["group_members"]
+    task_ascending = data["task_ascending"]
+    task_disp_score = data["task_disp_score"]
+    task_subcols = data["task_subcols"]
+    task_subcol_scores = data["task_subcol_scores"]
+    task_subcol_metric = data["task_subcol_metric"]
     task_model_rank = data["task_model_rank"]
     model_avg_rank = data["model_avg_rank"]
     model_minmax = data["model_minmax"]
@@ -1181,49 +1263,27 @@ def plot_overview_table(entries, collector, *, title="Overview",
     sorted_models = data["sorted_models"]
 
     # --- Ranked row indices for highlighting ---
-    sc_ranks = {}
-    for sc in super_cats:
-        asc = sc_ascending[sc]
-        pairs = [
-            (sc_model_score[sc][m], ri)
-            for ri, m in enumerate(sorted_models) if m in sc_model_score[sc]
-        ]
-        sc_ranks[sc] = _ranked_rows(pairs, asc)
-
     task_ranks = {}
-    for task in tasks:
-        metric = task_metric[task]
-        asc = _sort_ascending(metric)
+    for task in column_tasks:
+        asc = task_ascending[task]
         pairs = [
-            (_display_score(task_model_score[task][m][0], metric), ri)
-            for ri, m in enumerate(sorted_models) if m in task_model_score[task]
+            (task_disp_score[task][m], ri)
+            for ri, m in enumerate(sorted_models) if m in task_disp_score[task]
         ]
         task_ranks[task] = _ranked_rows(pairs, asc)
 
-    # Ranked rows for per-language sub-columns (expandable_lang SCs)
-    task_lang_ranks = defaultdict(dict)
-    for sc in expandable_lang:
-        task = sc_tasks[sc][0]
-        metric = task_metric[task]
-        asc = _sort_ascending(metric)
-        for lang in task_languages.get(task, []):
+    # Ranked rows for sub-columns (languages for ASR, datasets for others, tasks for Others group)
+    task_subcol_ranks = defaultdict(dict)
+    for task in column_tasks:
+        for subcol in task_subcols.get(task, []):
+            metric = task_subcol_metric[task][subcol]
+            sub_asc = _sort_ascending(metric)
+            scores_map = task_subcol_scores[task].get(subcol, {})
             pairs = [
-                (_display_score(task_lang_scores[task][lang][m][0], metric), ri)
-                for ri, m in enumerate(sorted_models) if m in task_lang_scores[task][lang]
+                (_display_score(scores_map[m][0], metric), ri)
+                for ri, m in enumerate(sorted_models) if m in scores_map
             ]
-            task_lang_ranks[task][lang] = _ranked_rows(pairs, asc)
-
-    # Ranked rows for per-dataset sub-columns (expandable_dataset SCs)
-    sc_dataset_ranks = defaultdict(dict)
-    for sc in expandable_dataset:
-        for ds in sc_datasets[sc]:
-            metric = sc_dataset_metric[sc][ds]
-            ds_asc = _sort_ascending(metric)
-            pairs = [
-                (_display_score(sc_dataset_scores[sc][ds][m][0], metric), ri)
-                for ri, m in enumerate(sorted_models) if m in sc_dataset_scores[sc][ds]
-            ]
-            sc_dataset_ranks[sc][ds] = _ranked_rows(pairs, ds_asc)
+            task_subcol_ranks[task][subcol] = _ranked_rows(pairs, sub_asc)
 
     agg_render = _agg_columns_html(table_aggregates, sorted_models, {
         "avg_rank": model_avg_rank, "minmax": model_minmax, "zscore": model_zscore,
@@ -1271,65 +1331,28 @@ def plot_overview_table(entries, collector, *, title="Overview",
     lines.append("<th>Size</th>")
     for agg_name in table_aggregates:
         lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
-    for sc in super_cats:
-        sc_slug = _slug(sc)
-        cat_label = "Tasks \u00b7 " + sc
-        section_anchor = f"cat-{_slug(cat_label)}"
-
-        if sc in expandable_sc:
-            # Multi-task SC: show SC name with [+], hidden task sub-columns
-            task_metrics_label = ", ".join(
-                f"{task_metric[t].upper()}" for t in sc_tasks[sc]
-            )
-            label = f'<a href="#{section_anchor}">{sc}</a>'
-            lines.append(
-                f'<th>{label} '
-                f'<button class="toggle-btn" onclick="toggleOvSc(this,\'{sc_slug}\')">+</button></th>'
-            )
-            for task in sc_tasks[sc]:
-                metric = task_metric[task]
-                unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
-                lines.append(
-                    f'<th class="lang-col" data-sc="{sc_slug}">'
-                    f'{task} ({metric.upper()}{unit})</th>'
-                )
-        elif sc in expandable_dataset:
-            # Multi-task SC expanded by individual datasets
-            label = f'<a href="#{section_anchor}">{sc}</a>'
-            lines.append(
-                f'<th>{label} '
-                f'<button class="toggle-btn" onclick="toggleOvScLang(this,\'{sc_slug}\')">+</button></th>'
-            )
-            for ds in sc_datasets[sc]:
-                metric = sc_dataset_metric[sc][ds]
-                unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
-                lines.append(
-                    f'<th class="lang-col" data-sc-lang="{sc_slug}">'
-                    f'{ds} ({metric.upper()}{unit})</th>'
-                )
-        elif sc in expandable_lang:
-            # Single-task SC with multiple languages: [+] for language sub-columns
-            task = sc_tasks[sc][0]
+    for task in column_tasks:
+        task_slug = _slug(task)
+        is_group = task in group_members
+        if is_group:
+            label = task
+        else:
+            cat_label = "Tasks \u00b7 " + task
+            section_anchor = f"cat-{_slug(cat_label)}"
             metric = task_metric[task]
             unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
-            label = f'<a href="#{section_anchor}">{sc}</a> ({metric.upper()}{unit})'
+            label = f'<a href="#{section_anchor}">{task}</a> ({metric.upper()}{unit})'
+        subcols = task_subcols.get(task, [])
+        if len(subcols) >= 2 or is_group:
             lines.append(
                 f'<th>{label} '
-                f'<button class="toggle-btn" onclick="toggleOvScLang(this,\'{sc_slug}\')">+</button></th>'
+                f'<button class="toggle-btn" onclick="toggleOvTask(this,\'{task_slug}\')">+</button></th>'
             )
-            for lang in task_languages[task]:
-                ds_list = task_lang_datasets.get(task, {}).get(lang, [])
-                header = f"{lang} - {ds_list[0]}" if len(ds_list) == 1 else lang
+            for subcol in subcols:
                 lines.append(
-                    f'<th class="lang-col" data-sc-lang="{sc_slug}">'
-                    f'{header}</th>'
+                    f'<th class="lang-col" data-task="{task_slug}">{subcol}</th>'
                 )
         else:
-            # Single-task SC: show task name directly with metric
-            task = sc_tasks[sc][0]
-            metric = task_metric[task]
-            unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
-            label = f'<a href="#{section_anchor}">{sc}</a> ({metric.upper()}{unit})'
             lines.append(f"<th>{label}</th>")
 
     lines.append("</tr></thead>")
@@ -1350,80 +1373,44 @@ def plot_overview_table(entries, collector, *, title="Overview",
             else:
                 lines.append(_td("-", is_missing=True))
 
-        for sc in super_cats:
-            sc_slug = _slug(sc)
+        for task in column_tasks:
+            task_slug = _slug(task)
+            subcols = task_subcols.get(task, [])
+            is_group = task in group_members
 
-            if sc in expandable_sc:
-                # Aggregate SC cell
-                if m in sc_model_score[sc]:
-                    val = sc_model_score[sc][m]
-                    lines.append(_td(f"{val:.2f}", rank_key=sc_ranks.get(sc, {}).get(ri),
-                                     title=f"Avg across {', '.join(sc_tasks[sc])}"))
+            # Main task cell
+            if is_group:
+                members = group_members[task]
+                if m in task_disp_score.get(task, {}):
+                    val = task_disp_score[task][m]
+                    lines.append(_td(f"{val:.2f}",
+                                     rank_key=task_ranks.get(task, {}).get(ri),
+                                     title=f"Mean across {len(members)} tasks"))
                 else:
                     lines.append(_td("-", is_missing=True))
-
-                # Per-task sub-cells (hidden)
-                for task in sc_tasks[sc]:
-                    metric = task_metric[task]
-                    attr = f' class="lang-col" data-sc="{sc_slug}"'
-                    if m in task_model_score[task]:
-                        sc_val, st, n = task_model_score[task][m]
-                        html_v, tip = _format_score_with_ci(sc_val, metric, st, n)
-                        lines.append(_td(html_v, rank_key=task_ranks.get(task, {}).get(ri),
-                                         extra_attrs=attr, title=tip))
-                    else:
-                        lines.append(_td("-", is_missing=True, extra_attrs=attr))
-            elif sc in expandable_dataset:
-                # Multi-task SC with per-dataset expansion
-                if m in sc_model_score[sc]:
-                    val = sc_model_score[sc][m]
-                    lines.append(_td(f"{val:.2f}", rank_key=sc_ranks.get(sc, {}).get(ri),
-                                     title=f"Avg across {len(sc_datasets[sc])} datasets"))
-                else:
-                    lines.append(_td("-", is_missing=True))
-
-                # Per-dataset sub-cells (hidden)
-                for ds in sc_datasets[sc]:
-                    metric = sc_dataset_metric[sc][ds]
-                    attr = f' class="lang-col" data-sc-lang="{sc_slug}"'
-                    if m in sc_dataset_scores[sc][ds]:
-                        ds_val, st, n = sc_dataset_scores[sc][ds][m]
-                        html_v, tip = _format_score_with_ci(ds_val, metric, st, n)
-                        lines.append(_td(html_v, rank_key=sc_dataset_ranks[sc].get(ds, {}).get(ri),
-                                         extra_attrs=attr, title=tip))
-                    else:
-                        lines.append(_td("-", is_missing=True, extra_attrs=attr))
-            elif sc in expandable_lang:
-                # Single-task SC with language expansion
-                task = sc_tasks[sc][0]
-                metric = task_metric[task]
-                if m in task_model_score[task]:
-                    sc_val, st, n = task_model_score[task][m]
-                    html_v, tip = _format_score_with_ci(sc_val, metric, st, n)
-                    lines.append(_td(html_v, rank_key=task_ranks.get(task, {}).get(ri), title=tip))
-                else:
-                    lines.append(_td("-", is_missing=True))
-
-                # Per-language sub-cells (hidden)
-                for lang in task_languages[task]:
-                    attr = f' class="lang-col" data-sc-lang="{sc_slug}"'
-                    if m in task_lang_scores[task][lang]:
-                        lv, st, n = task_lang_scores[task][lang][m]
-                        html_v, tip = _format_score_with_ci(lv, metric, st, n)
-                        lines.append(_td(html_v, rank_key=task_lang_ranks[task].get(lang, {}).get(ri),
-                                         extra_attrs=attr, title=tip))
-                    else:
-                        lines.append(_td("-", is_missing=True, extra_attrs=attr))
             else:
-                # Single-task SC: show task score directly
-                task = sc_tasks[sc][0]
                 metric = task_metric[task]
-                if m in task_model_score[task]:
-                    sc_val, st, n = task_model_score[task][m]
-                    html_v, tip = _format_score_with_ci(sc_val, metric, st, n)
+                if m in task_model_score.get(task, {}):
+                    t_val, st, n = task_model_score[task][m]
+                    html_v, tip = _format_score_with_ci(t_val, metric, st, n)
                     lines.append(_td(html_v, rank_key=task_ranks.get(task, {}).get(ri), title=tip))
                 else:
                     lines.append(_td("-", is_missing=True))
+
+            # Sub-column cells (hidden by default)
+            if len(subcols) >= 2 or is_group:
+                for subcol in subcols:
+                    attr = f' class="lang-col" data-task="{task_slug}"'
+                    sub_metric = task_subcol_metric[task][subcol]
+                    scores_map = task_subcol_scores[task].get(subcol, {})
+                    if m in scores_map:
+                        sv, st, n = scores_map[m]
+                        html_v, tip = _format_score_with_ci(sv, sub_metric, st, n)
+                        lines.append(_td(html_v,
+                                         rank_key=task_subcol_ranks[task].get(subcol, {}).get(ri),
+                                         extra_attrs=attr, title=tip))
+                    else:
+                        lines.append(_td("-", is_missing=True, extra_attrs=attr))
 
         lines.append("</tr>")
 
@@ -1432,18 +1419,9 @@ def plot_overview_table(entries, collector, *, title="Overview",
     # JavaScript toggle
     lines.append("""\
 <script>
-function toggleOvSc(btn, sc) {
+function toggleOvTask(btn, task) {
   var tbl = btn.closest('table');
-  var cells = tbl.querySelectorAll('[data-sc="' + sc + '"]');
-  if (!cells.length) return;
-  var show = cells[0].style.display !== 'table-cell';
-  for (var i = 0; i < cells.length; i++)
-    cells[i].style.display = show ? 'table-cell' : 'none';
-  btn.textContent = show ? '\\u2212' : '+';
-}
-function toggleOvScLang(btn, sc) {
-  var tbl = btn.closest('table');
-  var cells = tbl.querySelectorAll('[data-sc-lang="' + sc + '"]');
+  var cells = tbl.querySelectorAll('[data-task="' + task + '"]');
   if (!cells.length) return;
   var show = cells[0].style.display !== 'table-cell';
   for (var i = 0; i < cells.length; i++)
@@ -1550,6 +1528,17 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
 
     expandable_langs = {l for l in languages if len(lang_datasets.get(l, [])) >= 2}
 
+    # Flat mode: show language-prefixed datasets directly (no [+] expand) when
+    # either there are few languages (<=2) or few datasets per language (<=2).
+    max_ds_per_lang = max((len(lang_datasets.get(l, [])) for l in languages), default=0)
+    use_flat_mode = (len(languages) <= 2 or max_ds_per_lang <= 2) and len(languages) >= 1
+    # Build flat columns as (lang, ds) pairs if using flat mode
+    flat_cols = []
+    if use_flat_mode:
+        for lang in languages:
+            for ds in lang_datasets.get(lang, []):
+                flat_cols.append((lang, ds))
+
     # Average per model across languages
     ascending = _sort_ascending(metric)
     # Compute model_avg (needed for the "Average" column)
@@ -1597,7 +1586,8 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
         lang_ranks[lang] = _ranked_rows(pairs, ascending)
 
     lang_ds_ranks = defaultdict(dict)
-    for lang in expandable_langs:
+    rank_langs = flat_cols and [l for l, _ in flat_cols] or expandable_langs
+    for lang in (set(rank_langs) if use_flat_mode else expandable_langs):
         for ds in lang_datasets.get(lang, []):
             pairs = [
                 (_display_score(lang_ds_model[lang][ds][m][0], metric), ri)
@@ -1638,21 +1628,25 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
     for agg_name in table_aggregates:
         lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
     lines.append("<th>Average</th>")
-    for lang in languages:
-        grp = _slug(lang)
-        if lang in expandable_langs:
-            lines.append(
-                f'<th>{lang} '
-                f'<button class="toggle-btn" onclick="toggleCols(this,\'{tbl_id}\',\'{grp}\')">+</button></th>'
-            )
-            for ds in lang_datasets[lang]:
-                lines.append(f'<th class="lang-col" data-group="{grp}">{ds}</th>')
-        else:
-            ds_list = lang_datasets.get(lang, [])
-            if len(ds_list) == 1:
-                lines.append(f"<th>{lang} - {ds_list[0]}</th>")
+    if use_flat_mode:
+        for lang, ds in flat_cols:
+            lines.append(f"<th>{lang} \u00b7 {ds}</th>")
+    else:
+        for lang in languages:
+            grp = _slug(lang)
+            if lang in expandable_langs:
+                lines.append(
+                    f'<th>{lang} '
+                    f'<button class="toggle-btn" onclick="toggleCols(this,\'{tbl_id}\',\'{grp}\')">+</button></th>'
+                )
+                for ds in lang_datasets[lang]:
+                    lines.append(f'<th class="lang-col" data-group="{grp}">{ds}</th>')
             else:
-                lines.append(f"<th>{lang}</th>")
+                ds_list = lang_datasets.get(lang, [])
+                if len(ds_list) == 1:
+                    lines.append(f"<th>{lang} - {ds_list[0]}</th>")
+                else:
+                    lines.append(f"<th>{lang}</th>")
     lines.append("</tr></thead>")
 
     # Body
@@ -1678,28 +1672,39 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
         else:
             lines.append(_td("-", is_missing=True))
 
-        for lang in languages:
-            grp = _slug(lang)
+        if use_flat_mode:
+            for lang, ds in flat_cols:
+                if m in lang_ds_model[lang][ds]:
+                    sc, st, n = lang_ds_model[lang][ds][m]
+                    html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                    lines.append(_td(html_v,
+                                     rank_key=lang_ds_ranks[lang].get(ds, {}).get(ri),
+                                     title=tip))
+                else:
+                    lines.append(_td("-", is_missing=True))
+        else:
+            for lang in languages:
+                grp = _slug(lang)
 
-            # Aggregate cell
-            if m in lang_model_score[lang]:
-                sc, st, n = lang_model_score[lang][m]
-                html_v, tip = _format_score_with_ci(sc, metric, st, n)
-                lines.append(_td(html_v, rank_key=lang_ranks.get(lang, {}).get(ri), title=tip))
-            else:
-                lines.append(_td("-", is_missing=True))
+                # Aggregate cell
+                if m in lang_model_score[lang]:
+                    sc, st, n = lang_model_score[lang][m]
+                    html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                    lines.append(_td(html_v, rank_key=lang_ranks.get(lang, {}).get(ri), title=tip))
+                else:
+                    lines.append(_td("-", is_missing=True))
 
-            # Per-dataset sub-cells
-            if lang in expandable_langs:
-                for ds in lang_datasets[lang]:
-                    attr = f' class="lang-col" data-group="{grp}"'
-                    if m in lang_ds_model[lang][ds]:
-                        sc, st, n = lang_ds_model[lang][ds][m]
-                        html_v, tip = _format_score_with_ci(sc, metric, st, n)
-                        lines.append(_td(html_v, rank_key=lang_ds_ranks[lang].get(ds, {}).get(ri),
-                                         extra_attrs=attr, title=tip))
-                    else:
-                        lines.append(_td("-", is_missing=True, extra_attrs=attr))
+                # Per-dataset sub-cells
+                if lang in expandable_langs:
+                    for ds in lang_datasets[lang]:
+                        attr = f' class="lang-col" data-group="{grp}"'
+                        if m in lang_ds_model[lang][ds]:
+                            sc, st, n = lang_ds_model[lang][ds][m]
+                            html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                            lines.append(_td(html_v, rank_key=lang_ds_ranks[lang].get(ds, {}).get(ri),
+                                             extra_attrs=attr, title=tip))
+                        else:
+                            lines.append(_td("-", is_missing=True, extra_attrs=attr))
 
         lines.append("</tr>")
 
@@ -1852,7 +1857,7 @@ def _build_language_summary_table(entries, lang_group, category, collector,
     if not task_entries_map:
         return
 
-    tasks = sorted(task_entries_map.keys())
+    tasks = sorted(task_entries_map.keys(), key=_lang_table_task_sort_key)
     all_models = sorted({e["model_name"] for e in entries})
 
     # Pick most common metric per task
@@ -1899,7 +1904,7 @@ def _build_language_summary_table(entries, lang_group, category, collector,
         task_model_score[task] = model_scores
 
     task_datasets = {t: sorted(ds) for t, ds in task_datasets.items()}
-    expandable_tasks = {t for t in tasks if len(task_datasets.get(t, [])) >= 1}
+    expandable_tasks = {t for t in tasks if len(task_datasets.get(t, [])) >= 2}
 
     # Compute aggregate scores
     ascending_map = {t: _sort_ascending(task_metric[t]) for t in tasks}
@@ -2239,10 +2244,19 @@ def main():
 
     collector = []
 
+    # Overview-only: drop Math QA entries. Math QA is EN-only; keeping it as a
+    # sibling task of QUESTION ANSWERING under the QA super-category gave it
+    # ~50% weight in the QA aggregate. It still shows up in the per-task QA
+    # summary section below, which uses the raw `entries`.
+    overview_entries = [
+        e for e in entries
+        if e.get("task", "").upper() != "MATH QUESTION ANSWERING"
+    ]
+
     # --- Step 0: Overview table (all tasks × models) ---
-    overview_data = plot_overview_table(entries, collector,
+    overview_data = plot_overview_table(overview_entries, collector,
                                         table_aggregates=args.table_aggregates)
-    plot_size_vs_performance(entries, collector, overview_data=overview_data,
+    plot_size_vs_performance(overview_entries, collector, overview_data=overview_data,
                              figure_aggregates=args.figure_aggregates)
 
     # --- Step 0b: Filtered overview (FR/EN, ASR/AST/QA only) ---
@@ -2256,7 +2270,7 @@ def main():
         return any(p in _fren for p in parts)
 
     filtered = [
-        e for e in entries
+        e for e in overview_entries
         if _lang_match(e)
         and _super_category(e.get("task", "")) in _allowed_sc
     ]
