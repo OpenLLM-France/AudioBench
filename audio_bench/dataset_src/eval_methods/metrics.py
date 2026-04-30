@@ -6,14 +6,22 @@ from audio_bench.dataset_src.text_normalizer.preprocess_text import preprocess_t
 
 
 def build_metric_stats(all_scores, aggregate_score=None):
-    """Build {score, std, quartiles, all_scores} from per-sample scores."""
+    """Build {score, std, quartiles, n_errors, all_scores} from per-sample scores.
+
+    Negative scores are kept in stats: a judge parse failure usually means the
+    model produced unusable output (loops, gibberish), so it should pull the
+    average down rather than be silently dropped. n_errors is reported separately
+    so a high error count is still visible.
+    """
     arr = np.array(all_scores, dtype=float)
+    n_errors = int((arr < 0).sum())
     score = aggregate_score if aggregate_score is not None else float(np.mean(arr))
     q0, q1, q2, q3, q4 = np.percentile(arr, [0, 25, 50, 75, 100]).tolist()
     return {
         "score": float(score),
         "std": float(np.std(arr)),
         "quartiles": {"min": q0, "q1": q1, "median": q2, "q3": q3, "max": q4},
+        "n_errors": n_errors,
         "all_scores": [float(x) for x in all_scores],
     }
 
@@ -114,11 +122,41 @@ _TASK_GUIDANCE = {
         "gives the same count as the reference."
     ),
     "INFORMATION EXTRACTION": (
-        "The model was asked to extract specific information from spoken audio "
-        "(e.g., timestamps, words, or sentences corresponding to a query). A good "
-        "response returns the requested information accurately. Focus on whether "
-        "the extracted content matches the reference, allowing for minor formatting "
-        "differences as long as the substantive information is correct."
+        "Extract a unit from audio given a cue (word2sentence, time2sentence, "
+        "word2time, time2word). The answer must be exactly the requested unit — no "
+        "surrounding sentences, paragraph, or extra context. Returning more or less "
+        "than the reference is penalized. Repeating the question is 0. Only "
+        "formatting differences (punctuation, casing, '23.6s' vs '00:23.6') have no "
+        "impact on the score."
+    ),
+    "WORD2SENTENCE": (
+        "Given a word cue, return the single sentence from the audio that contains it. "
+        "The answer must be exactly that sentence — not the surrounding paragraph, "
+        "neighboring sentences, or a transcript. Returning more or less than one "
+        "sentence is incorrect even if the target sentence is inside the response. "
+        "Repeating the question is 0. Only punctuation/casing differences are acceptable for that sentence."
+    ),
+    "TIME2SENTENCE": (
+        "Given a timestamp cue, return the single sentence from the audio that spans "
+        "that timestamp. The answer must be exactly that sentence — not a timestamp, "
+        "a word, the surrounding paragraph, or neighboring sentences. Returning more "
+        "or less than one sentence is incorrect even if the target sentence is inside "
+        "the response. Repeating the question is 0. Only punctuation/casing "
+        "differences are acceptable for that sentence."
+    ),
+    "WORD2TIME": (
+        "Given a word cue, return the timestamp(s) at which it is uttered. The word "
+        "may occur multiple times; in that case all occurrences in the reference "
+        "should be covered. We care only about timestamps, not a sentence or "
+        "extra context. Missing or extra occurrences are penalized. Repeating the "
+        "question is 0. Only timestamp-format differences ('23.6s' vs '00:23.6') are "
+        "acceptable."
+    ),
+    "TIME2WORD": (
+        "Given a timestamp cue, return the single word uttered at that timestamp. "
+        "The answer must be exactly that word — not a sentence, paraphrase, "
+        "timestamp, or extra context. Returning more than the word is incorrect even "
+        "if it contains the word. Repeating the question is 0."
     ),
     "TIMESTAMPED TRANSCRIPTION": (
         "The model was asked to transcribe spoken audio while emitting timestamps "

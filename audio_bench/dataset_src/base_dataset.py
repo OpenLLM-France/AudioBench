@@ -37,6 +37,7 @@ class BaseDatasetProcessor:
     sub_task = None
     language = "UNKNOWN"
     judge_binary = False
+    prompt_prefix = None
     question_key = "instruction"
     reference_key = "reference"
     audio_path = None
@@ -179,8 +180,14 @@ class BaseDatasetProcessor:
         return compute_bleu(references, predictions)
 
     def _compute_judge(self, data_with_model_predictions, metrics):
+        from audio_bench.dataset_src.eval_methods.metrics import _TASK_GUIDANCE
         questions, references, predictions = self._extract_judge_inputs(data_with_model_predictions)
+        # Prefer sub_task for judge guidance when it has its own entry (e.g. word2sentence,
+        # time2word). Falls back to task_type otherwise. This keeps plot grouping by
+        # task_type while letting the judge use a more specific rubric.
         task_type = self.task_type
+        if self.sub_task and self.sub_task.upper().strip() in _TASK_GUIDANCE:
+            task_type = self.sub_task
 
         if metrics == 'llama3_70b_judge':
             if self.judge_binary:
@@ -260,12 +267,26 @@ class BaseDatasetProcessor:
         enriched["success_rate"] = results["success_rate"]
         return {metric_name: enriched, 'details': all_details}
 
+    def _compute_information_extraction(self, data_with_model_predictions):
+        from audio_bench.dataset_src.eval_methods.information_extraction import (
+            compute_information_extraction,
+        )
+        references, predictions, sub_tasks = [], [], []
+        for item in data_with_model_predictions:
+            references.append(item.get(self.reference_key, ""))
+            predictions.append(item.get("model_prediction", ""))
+            sub_tasks.append(item.get("sub_task") or self.sub_task)
+        return compute_information_extraction(references, predictions, sub_tasks)
+
     def compute_score(self, data_with_model_predictions, metrics=None):
         if metrics == 'wer':
             return self._compute_wer(data_with_model_predictions)
 
         elif metrics == 'bleu':
             return self._compute_bleu(data_with_model_predictions)
+
+        elif metrics == 'information_extraction':
+            return self._compute_information_extraction(data_with_model_predictions)
 
         else:
             result = self._compute_judge(data_with_model_predictions, metrics)

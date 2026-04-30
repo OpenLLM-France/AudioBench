@@ -103,6 +103,8 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
         array, sr = sf.read(audio, **read_kwargs)
         if len(array)==0:
             raise ValueError(f"Audio file {audio} is empty.")
+        if self.prompt_prefix:
+            instruction = f"{self.prompt_prefix}\n{instruction}"
         return {
             "audio": dict(array=array, sampling_rate=sr),
             "instruction": instruction,

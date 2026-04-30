@@ -98,6 +98,9 @@ def run_evaluation(
     if dataset_config.get("sub_task") is not None:
         processor.sub_task = dataset_config.get("sub_task")
 
+    if dataset_config.get("prompt_prefix") is not None:
+        processor.prompt_prefix = dataset_config.get("prompt_prefix")
+
     if dataset_config.get("judge_binary") is not None:
         processor.judge_binary = dataset_config.get("judge_binary")
 
@@ -181,13 +184,22 @@ def run_evaluation(
         del model_predictions
         input_data.clear() # If it's a list, clear it.
         del input_data
-        # Save the result with predictions (wrapped with metadata)
+        # task_type / sub_task / language are dataset-level constants — store
+        # once in metadata and strip from each per-sample dict to avoid
+        # repeating the same value on every prediction.
+        for item in data_with_model_predictions:
+            item.pop("task_type", None)
+            item.pop("sub_task", None)
+            item.pop("language", None)
         prediction_data = {
             "metadata": {
                 "dataset_size": processor._dataset_size,
                 "number_of_samples": len(data_with_model_predictions),
                 "inference_time_s": round(inference_time, 2),
-                "inference_time": str(timedelta(seconds=int(inference_time)))
+                "inference_time": str(timedelta(seconds=int(inference_time))),
+                "task_type": processor.task_type,
+                "sub_task": processor.sub_task,
+                "language": processor.language,
             },
             "predictions": data_with_model_predictions,
         }

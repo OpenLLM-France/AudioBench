@@ -313,19 +313,33 @@ global:
 
     # Information Extraction
     - group: information_extraction
-      metrics: flow_judge
+      metrics: information_extraction
       task: Information Extraction
       language: en
       number_of_samples: 100
+      prompt_prefix: |
+        Answer with only the requested value. No prose, no quotes, no extra words.
+        Output formats:
+        - timestamp: "12.1s"  (multi: "12.1s,25.6s"  range: "19.3s-23.6s")
+        - word: just the word, e.g. "Mid-Atlantic"
+        - sentence: the literal sentence as heard
+        - combined fields are separated by "|"  e.g.  answer|12.1s  or  answer|12.1s|sentence
+        - if the cue does not occur, reply exactly: not_found
+        - if the timestamp is out of range, reply exactly: invalid_timestamp
+        - JSON answers must be a single JSON object, no markdown.
       datasets:
         - name: SLU-SQA5_time2word
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/time2word/verified_test.jsonl
+          sub_task: time2word
+          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/time2word/verified_test_pure.jsonl
         - name: SLU-SQA5_word2time
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/word2time/verified_test.jsonl
+          sub_task: word2time
+          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/word2time/verified_test_pure.jsonl
         - name: SLU-SQA5_time2sentence
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/time2sentence/verified_test.jsonl
+          sub_task: time2sentence
+          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/time2sentence/verified_test_pure.jsonl
         - name: SLU-SQA5_word2sentence
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/word2sentence/verified_test.jsonl
+          sub_task: word2sentence
+          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/word2sentence/verified_test_pure.jsonl
 
     - group: format_follwing
       metrics: format_check
@@ -341,6 +355,9 @@ global:
       task: Timestamped Transcription
       language: en
       number_of_samples: 100
+      prompt_prefix: |
+        Transcribe the audio word by word with per-word start times.
+        Separate tokens with single spaces, in order. No prose, no header, no JSON, no markdown.
       datasets:
         - name: SLU-SQA5_format_timestamped_transcription
           path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/format_timestamped_transcription/verified_test.jsonl
