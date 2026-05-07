@@ -29,29 +29,48 @@ import plotly.express.colors as pxcolors
 # Constants
 # ---------------------------------------------------------------------------
 
-LOWER_IS_BETTER = {"wer"}
-ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
-_IGNORED_DATASETS = {"StressTest_SSR", "VoxCeleb-accent", "MuChoMusic"}
+_IGNORED_DATASETS = {
+    "StressTest_SSR",
+    "VoxCeleb-accent",
+    "MuChoMusic",
+    "SLU-SQA5_format_json_answer", # Format following
+    "SLU-SQA5_time2sentence", "SLU-SQA5_time2word", "SLU-SQA5_word2sentence", "SLU-SQA5_word2time", # Information Extraction
+    "SLU-SQA5_format_timestamped_transcription", # Timestamped transcription
+}
+
+# CONSORTIUM_NAME = "LINAGORA"
+CONSORTIUM_NAME = "OpenLLM-France"
+
+ONLY_SHOW_CONSORTIUM_MODELS = {
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829": f"{CONSORTIUM_NAME}/Canary_Luciole-1B",
+    "LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803": f"{CONSORTIUM_NAME}/Canary_Qwen3-1.7B",
+}
+
 _IGNORED_MODEL_PATTERNS = [re.compile(p) for p in [
     r"^LINAGORA/Canary_Qwen3-1\.7B_v1.*",
-    # r"^LINAGORA/(?!.*data-v1).*",
+    r".*xp_timestamp.*",
+    # r"^.*/(?!.*data-v1).*",
 ]]
 
-
 def _is_model_ignored(model_name):
+    if ONLY_SHOW_CONSORTIUM_MODELS and CONSORTIUM_NAME in model_name:
+        return model_name not in ONLY_SHOW_CONSORTIUM_MODELS.values()
     return any(p.search(model_name) for p in _IGNORED_MODEL_PATTERNS)
 
 _MODEL_NAME_CORRECTIONS = {
-    "LINAGORA/Canary-Qwen3-5B-Thinking": "LINAGORA/Canary-Qwen3-4B_data-v1_8h",
-    "LINAGORA/Canary-Qwen3-1.7B-v2": "LINAGORA/Canary-Qwen3-1.7B_data-v1_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s010000": "LINAGORA/Canary_Luciole-1B_LLM-LoRA_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829": "LINAGORA/Canary_Luciole-1B_LLM-LoRA_40h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v2_s027458": "LINAGORA/Canary_Luciole-1B_LLM-LoRA-no_bucket_8h",
-    "LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803": "LINAGORA/Canary_Qwen3-1.7B_LLM-LoRA_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_adapter_s005000": "LINAGORA/Canary_Luciole-1B_Step-Adapter_2h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s020000": "LINAGORA/Canary_Luciole-1B_Step-Encoder_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s217983": "LINAGORA/Canary_Luciole-1B_Step-Encoder_80h",
-}
+    "LINAGORA/Canary-Qwen3-5B-Thinking": f"{CONSORTIUM_NAME}/Canary-Qwen3-4B_data-v1_8h",
+    "LINAGORA/Canary-Qwen3-1.7B-v2": f"{CONSORTIUM_NAME}/Canary-Qwen3-1.7B_data-v1_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s010000": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_LLM-LoRA_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_LLM-LoRA_40h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v2_s027458": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_LLM-LoRA-no_bucket_8h",
+    "LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803": f"{CONSORTIUM_NAME}/Canary_Qwen3-1.7B_LLM-LoRA_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_adapter_s005000": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Adapter_2h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s020000": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Encoder_8h",
+    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s217983": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Encoder_80h",
+} | ONLY_SHOW_CONSORTIUM_MODELS
+
+LOWER_IS_BETTER = {"wer"}
+ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
 
 _TASK_METRIC_OVERRIDE = {
     "AST": "meteor",
@@ -68,9 +87,9 @@ _TASK_DISPLAY = {
 # Patterns are tried in order; first regex match wins. Exact strings work too
 # since they are compiled as regexes.
 _MODEL_SIZE_OVERRIDES = [
-    (r"^LINAGORA/Canary[-_]Qwen3[-_]1\.7B", "2.5B"),
-    (r"^LINAGORA/Canary[-_]Qwen3[-_]4B", "4.8B"),
-    (r"^LINAGORA/Canary_Luciole-1B", "2.1B"),
+    (rf"^{CONSORTIUM_NAME}/Canary[-_]Qwen3[-_]1\.7B", "2.5B"),
+    (rf"^{CONSORTIUM_NAME}/Canary[-_]Qwen3[-_]4B", "4.8B"),
+    (rf"^{CONSORTIUM_NAME}/Canary_Luciole-1B", "2.1B"),
     (r"^microsoft/Phi-4-multimodal-instruct$", "5.6B"),
     (r"^nvidia/audio-flamingo-3-hf$", "8.2B"),
     (r"^Qwen/Qwen2-Audio-7B-Instruct$", "8.4B"),
@@ -468,6 +487,14 @@ def _td(val_str, is_best=False, is_missing=False, extra_attrs="", title="", rank
         style = ""
     title_attr = f' title="{title}"' if title else ""
     return f"<td{extra_attrs}{style}{title_attr}>{val_str}</td>"
+
+def _two_line_label(label):
+    """Insert <br> before a trailing ' (...)' suffix for two-line table headers."""
+    if label.endswith(')') and ' (' in label:
+        idx = label.rfind(' (')
+        return label[:idx] + '<br>' + label[idx+1:]
+    return label
+
 
 def _extract_model_size(model_name):
     """Extract size like '7B' from model name by matching patterns like '_7b' or '_3b_'."""
@@ -1326,11 +1353,12 @@ def plot_overview_table(entries, collector, *, title="Overview",
     lines.append(f'<table class="ov-tbl" id="{table_id}">')
 
     # --- Header ---
-    lines.append("<thead><tr>")
-    lines.append("<th>Model</th>")
-    lines.append("<th>Size</th>")
+    top, bottom = [], []
+    top.append('<th rowspan="2">Model</th>')
+    top.append('<th rowspan="2">Size</th>')
+    top.append(f'<th colspan="{len(table_aggregates)}">Aggregation</th>')
     for agg_name in table_aggregates:
-        lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
+        bottom.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
     for task in column_tasks:
         task_slug = _slug(task)
         is_group = task in group_members
@@ -1341,21 +1369,23 @@ def plot_overview_table(entries, collector, *, title="Overview",
             section_anchor = f"cat-{_slug(cat_label)}"
             metric = task_metric[task]
             unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
-            label = f'<a href="#{section_anchor}">{task}</a> ({metric.upper()}{unit})'
+            label = _two_line_label(
+                f'<a href="#{section_anchor}">{task}</a> ({metric.upper()}{unit})'
+            )
         subcols = task_subcols.get(task, [])
         if len(subcols) >= 2 or is_group:
-            lines.append(
-                f'<th>{label} '
+            top.append(
+                f'<th rowspan="2">{label} '
                 f'<button class="toggle-btn" onclick="toggleOvTask(this,\'{task_slug}\')">+</button></th>'
             )
             for subcol in subcols:
-                lines.append(
-                    f'<th class="lang-col" data-task="{task_slug}">{subcol}</th>'
+                top.append(
+                    f'<th rowspan="2" class="lang-col" data-task="{task_slug}">{subcol}</th>'
                 )
         else:
-            lines.append(f"<th>{label}</th>")
+            top.append(f'<th rowspan="2">{label}</th>')
 
-    lines.append("</tr></thead>")
+    lines.append("<thead><tr>" + "".join(top) + "</tr><tr>" + "".join(bottom) + "</tr></thead>")
 
     # --- Body ---
     lines.append("<tbody>")
@@ -1622,32 +1652,33 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
     lines.append(f'<table class="ov-tbl" id="{tbl_id}">')
 
     # Header
-    lines.append("<thead><tr>")
-    lines.append("<th>Model</th>")
-    lines.append("<th>Size</th>")
+    top, bottom = [], []
+    top.append('<th rowspan="2">Model</th>')
+    top.append('<th rowspan="2">Size</th>')
+    top.append(f'<th colspan="{len(table_aggregates)}">Aggregation</th>')
     for agg_name in table_aggregates:
-        lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
-    lines.append("<th>Average</th>")
+        bottom.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
+    top.append('<th rowspan="2">Average</th>')
     if use_flat_mode:
         for lang, ds in flat_cols:
-            lines.append(f"<th>{lang} \u00b7 {ds}</th>")
+            top.append(f'<th rowspan="2">{lang} \u00b7 {ds}</th>')
     else:
         for lang in languages:
             grp = _slug(lang)
             if lang in expandable_langs:
-                lines.append(
-                    f'<th>{lang} '
+                top.append(
+                    f'<th rowspan="2">{lang} '
                     f'<button class="toggle-btn" onclick="toggleCols(this,\'{tbl_id}\',\'{grp}\')">+</button></th>'
                 )
                 for ds in lang_datasets[lang]:
-                    lines.append(f'<th class="lang-col" data-group="{grp}">{ds}</th>')
+                    top.append(f'<th rowspan="2" class="lang-col" data-group="{grp}">{ds}</th>')
             else:
                 ds_list = lang_datasets.get(lang, [])
                 if len(ds_list) == 1:
-                    lines.append(f"<th>{lang} - {ds_list[0]}</th>")
+                    top.append(f'<th rowspan="2">{lang} - {ds_list[0]}</th>')
                 else:
-                    lines.append(f"<th>{lang}</th>")
-    lines.append("</tr></thead>")
+                    top.append(f'<th rowspan="2">{lang}</th>')
+    lines.append("<thead><tr>" + "".join(top) + "</tr><tr>" + "".join(bottom) + "</tr></thead>")
 
     # Body
     lines.append("<tbody>")
@@ -1972,26 +2003,27 @@ def _build_language_summary_table(entries, lang_group, category, collector,
     lines.append(f'<table class="ov-tbl" id="{tbl_id}">')
 
     # Header
-    lines.append("<thead><tr>")
-    lines.append("<th>Model</th>")
-    lines.append("<th>Size</th>")
+    top, bottom = [], []
+    top.append('<th rowspan="2">Model</th>')
+    top.append('<th rowspan="2">Size</th>')
+    top.append(f'<th colspan="{len(table_aggregates)}">Aggregation</th>')
     for agg_name in table_aggregates:
-        lines.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
+        bottom.append(f"<th>{_AGG_META[agg_name]['label']}</th>")
     for task in tasks:
         metric = task_metric[task]
         unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
         slug = _slug(task)
-        label = f'{task} ({metric.upper()}{unit})'
+        label = _two_line_label(f'{task} ({metric.upper()}{unit})')
         if task in expandable_tasks:
-            lines.append(
-                f'<th>{label} '
+            top.append(
+                f'<th rowspan="2">{label} '
                 f'<button class="toggle-btn" onclick="toggleCols(this,\'{tbl_id}\',\'{slug}\')">+</button></th>'
             )
             for ds in task_datasets[task]:
-                lines.append(f'<th class="lang-col" data-group="{slug}">{ds}</th>')
+                top.append(f'<th rowspan="2" class="lang-col" data-group="{slug}">{ds}</th>')
         else:
-            lines.append(f"<th>{label}</th>")
-    lines.append("</tr></thead>")
+            top.append(f'<th rowspan="2">{label}</th>')
+    lines.append("<thead><tr>" + "".join(top) + "</tr><tr>" + "".join(bottom) + "</tr></thead>")
 
     # Body
     lines.append("<tbody>")
@@ -2064,7 +2096,7 @@ _HTML_TEMPLATE = """\
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-         display: flex; min-height: 100vh; background: #f5f6f8; color: #222; }
+         display: flex; min-height: 100vh; background: #ffffff; color: #222; }
 
   /* Sidebar */
   nav.sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
