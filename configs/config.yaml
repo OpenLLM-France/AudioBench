@@ -328,18 +328,18 @@ global:
         - if the timestamp is out of range, reply exactly: invalid_timestamp
         - JSON answers must be a single JSON object, no markdown.
       datasets:
-        - name: SLU-SQA5_time2word
+        - name: SLUE-SQA5_time2word
           sub_task: time2word
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/time2word/verified_test_pure.jsonl
-        - name: SLU-SQA5_word2time
+          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/time2word/verified_test_pure.jsonl
+        - name: SLUE-SQA5_word2time
           sub_task: word2time
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/word2time/verified_test_pure.jsonl
-        - name: SLU-SQA5_time2sentence
+          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/word2time/verified_test_pure.jsonl
+        - name: SLUE-SQA5_time2sentence
           sub_task: time2sentence
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/time2sentence/verified_test_pure.jsonl
-        - name: SLU-SQA5_word2sentence
+          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/time2sentence/verified_test_pure.jsonl
+        - name: SLUE-SQA5_word2sentence
           sub_task: word2sentence
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/word2sentence/verified_test_pure.jsonl
+          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/word2sentence/verified_test_pure.jsonl
 
     - group: format_follwing
       metrics: format_check
@@ -347,8 +347,8 @@ global:
       language: en
       number_of_samples: 100
       datasets:
-        - name: SLU-SQA5_format_json_answer
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/format_json_answer/verified_test.jsonl
+        - name: SLUE-SQA5_format_json_answer
+          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/format_json_answer/verified_test.jsonl
 
     - group: timestamped_transcription
       metrics: flow_judge
@@ -359,8 +359,8 @@ global:
         Transcribe the audio word by word with per-word start times.
         Separate tokens with single spaces, in order. No prose, no header, no JSON, no markdown.
       datasets:
-        - name: SLU-SQA5_format_timestamped_transcription
-          path: <DATA_DIR>/nemo/misc/en/context/slu-phase-2-sqa5/format_timestamped_transcription/verified_test.jsonl
+        - name: SLUE-SQA5_format_timestamped_transcription
+          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/format_timestamped_transcription/verified_test.jsonl
 
 models:
   - id: qwen2_omni_3b

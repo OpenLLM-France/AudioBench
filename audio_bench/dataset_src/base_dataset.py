@@ -44,6 +44,7 @@ class BaseDatasetProcessor:
     instruction_path = None
     reference_path = None
     metrics = None
+    audio_first = False
 
     def __init__(self, data_loader, number_of_samples, min_audio_duration=None, max_audio_duration=None, ignore_offsets=False, name=None):
         if name is not None:
@@ -146,6 +147,7 @@ class BaseDatasetProcessor:
             "task_type": self.task_type,
             "sub_task": self.sub_task,
             "language": self.language,
+            "audio_first": self.audio_first,
         }
 
     def format_model_predictions(self, input_data, model_predictions):

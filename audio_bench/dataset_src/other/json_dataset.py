@@ -67,19 +67,29 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
     def _process_sample(self, sample):
         """Build one input dict from a raw sample. Override to add extra fields."""
         conversations = sample["conversations"]
-        instruction = conversations[0]["value"] if conversations[0]["type"]=="text" else None
-        if instruction:
-            audio_entry = conversations[1]
-            audio = audio_entry["value"]
-            reference = conversations[2]["value"]
+        # Find the audio turn (only one expected among user turns).
+        user_turns = [c for c in conversations if c.get("from") != "Assistant"]
+        assistant_turns = [c for c in conversations if c.get("from") == "Assistant"]
+        audio_turns = [c for c in user_turns if c["type"] == "audio"]
+        text_turns = [c for c in user_turns if c["type"] == "text"]
+
+        if not audio_turns:
+            raise ValueError(f"No audio turn in sample {sample}")
+        audio_entry = audio_turns[0]
+        audio = audio_entry["value"]
+
+        if text_turns:
+            instruction = text_turns[0]["value"]
+        elif self.instructions is not None:
+            instruction = random.choice(self.instructions)
         else:
-            audio_entry = conversations[0]
-            audio = audio_entry["value"]
-            reference = conversations[1]["value"]
-            if self.instructions is not None:
-                instruction = random.choice(self.instructions)
-            else:
-                raise ValueError(f"Missing instructions for sample {sample}")
+            raise ValueError(f"Missing instructions for sample {sample}")
+
+        if assistant_turns:
+            reference = assistant_turns[0]["value"]
+        else:
+            # Legacy fallback: reference is the last user text turn after audio.
+            reference = conversations[-1]["value"]
 
         # Handle offset/duration for audio segment extraction
         read_kwargs = {}
@@ -112,4 +122,5 @@ class jsonl_dataset_processor(BaseDatasetProcessor):
             "task_type": self.task_type,
             "sub_task": self.sub_task,
             "language": self.language,
+            "audio_first": self.audio_first,
         }

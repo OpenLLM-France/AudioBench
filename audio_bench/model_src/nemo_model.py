@@ -8,11 +8,17 @@ logger = logging.getLogger(__name__)
 class NeMoModel(BaseModel):
     """Shared base for models using NeMo's SALM API."""
 
-    def _build_nemo_conversation(self, audio_path, prompt):
-        prompt_content = (
-            f"{prompt}:\n"
-            f"{self.model.audio_locator_tag}\n"
-        )
+    def _build_nemo_conversation(self, audio_path, prompt, audio_first=False):
+        if audio_first:
+            prompt_content = (
+                f"{self.model.audio_locator_tag}\n"
+                f"{prompt}\n"
+            )
+        else:
+            prompt_content = (
+                f"{prompt}:\n"
+                f"{self.model.audio_locator_tag}\n"
+            )
         return [
             {
                 "role": "user",
@@ -32,13 +38,13 @@ class NeMoModel(BaseModel):
             parts = []
             for seg in segments:
                 audio_path = self._write_temp_audio(seg, sampling_rate)
-                conversation = self._build_nemo_conversation(audio_path, prompt)
+                conversation = self._build_nemo_conversation(audio_path, prompt, audio_first=input.get("audio_first", False))
                 answer_ids = self.model.generate(prompts=[conversation], max_new_tokens=512)
                 parts.append(self.model.tokenizer.ids_to_text(answer_ids[0].cpu()))
             return ' '.join(parts)
 
         audio_path = self._write_temp_audio(segments[0], sampling_rate)
-        conversation = self._build_nemo_conversation(audio_path, prompt)
+        conversation = self._build_nemo_conversation(audio_path, prompt, audio_first=input.get("audio_first", False))
         answer_ids = self.model.generate(prompts=[conversation], max_new_tokens=512)
         return self.model.tokenizer.ids_to_text(answer_ids[0].cpu())
 
@@ -59,7 +65,7 @@ class NeMoModel(BaseModel):
             elif mode=='padded':
                 logger.info(f"Audio was padded: {inp}")
             audio_path = self._write_temp_audio(segments[0], sampling_rate)
-            all_prompts.append(self._build_nemo_conversation(audio_path, prompt))
+            all_prompts.append(self._build_nemo_conversation(audio_path, prompt, audio_first=inp.get("audio_first", False)))
 
         answer_ids = self.model.generate(prompts=all_prompts, max_new_tokens=512)
 

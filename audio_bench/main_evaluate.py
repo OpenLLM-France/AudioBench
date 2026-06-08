@@ -106,6 +106,12 @@ def run_evaluation(
 
     if dataset_config.get("language") is not None:
         processor.language = dataset_config.get("language").upper()
+
+    if dataset_config.get("audio_first") is not None:
+        processor.audio_first = bool(dataset_config.get("audio_first"))
+
+    if processor.audio_first and not processor.name.endswith("_Audio-Text"):
+        processor.name = f"{processor.name}_Audio-Text"
     
     if dataset_config.get("metrics") is None:
         if processor.metrics is not None:
@@ -191,6 +197,7 @@ def run_evaluation(
             item.pop("task_type", None)
             item.pop("sub_task", None)
             item.pop("language", None)
+            item.pop("audio_first", None)
         prediction_data = {
             "metadata": {
                 "dataset_size": processor._dataset_size,
