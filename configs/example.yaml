@@ -13,7 +13,7 @@ global:
       number_of_samples: 5
       task: asr
     - name: FLEURS
-      path: <DATA_DIR>/nemo/asr/fr/context/FLEURS/dev.jsonl
+      path: <DATA_FOLDER>/nemo/asr/fr/context/FLEURS/dev.jsonl
       metrics: bleu
       number_of_samples: 5
       task: ast

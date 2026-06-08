@@ -112,7 +112,7 @@ DATASET_SOURCES = {
     'audiollm_instructionfollowing':    ('YichenG170/AudioLLMInstructionFollowing', 'train'),
     
     # jsonl files
-    "fleurs_fr_jsonl_test": (f'{os.getenv("DATA_DIR")}/nemo/asr/fr/context/FLEURS/test.jsonl',)
+    "fleurs_fr_jsonl_test": (f'{os.getenv("DATA_FOLDER")}/nemo/asr/fr/context/FLEURS/test.jsonl',)
 }
 
 def load_jsonl(path):
@@ -125,7 +125,11 @@ def load_jsonl(path):
 # Internal loader
 # ---------------------------------------------------------------------------
 def  _load_raw_data(dataset_name):
-    dataset_name = dataset_name.replace("<DATA_DIR>",os.getenv("DATA_DIR"))
+    if "<DATA_FOLDER>" in dataset_name:
+        data_folder = os.getenv("DATA_FOLDER")
+        if not data_folder:
+            raise EnvironmentError("DATA_FOLDER environment variable is not set, but a dataset path uses the <DATA_FOLDER> placeholder.")
+        dataset_name = dataset_name.replace("<DATA_FOLDER>", data_folder)
     source = DATASET_SOURCES.get(dataset_name)
     if source is None:
         return load_jsonl(dataset_name)

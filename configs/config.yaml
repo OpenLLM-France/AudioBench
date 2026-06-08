@@ -23,74 +23,74 @@ global:
           language: fr
           datasets:
             - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/fr/context/FLEURS/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/fr/context/FLEURS/test.jsonl
             - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/fr/context/CommonVoice/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/fr/context/CommonVoice/test.jsonl
             - name: Multilingual_TEDx
-              path: <DATA_DIR>/nemo/asr/fr/context/Multilingual_TEDx/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/fr/context/Multilingual_TEDx/test.jsonl
             - name: VoxPopuli
-              path: <DATA_DIR>/nemo/asr/fr/context/VoxPopuli/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/fr/context/VoxPopuli/test.jsonl
             - name: SUMM-RE
-              path: <DATA_DIR>/nemo/asr/fr/context/SUMM-RE/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/fr/context/SUMM-RE/test.jsonl
               min_audio_duration: 2
             - name: YouTubeFr
-              path: <DATA_DIR>/nemo/asr/fr/context/YouTubeFr/test_split6.jsonl
+              path: <DATA_FOLDER>/nemo/asr/fr/context/YouTubeFr/test_split6.jsonl
 
         - group: asr_en
           language: en
           datasets:
             - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/en/context/FLEURS/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/en/context/FLEURS/test.jsonl
             - name: CommonVoice
-              path: <DATA_DIR>/nemo/asr/en/context/CommonVoice/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/en/context/CommonVoice/test.jsonl
             - name: VoxPopuli
-              path: <DATA_DIR>/nemo/asr/en/context/VoxPopuli/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/en/context/VoxPopuli/test.jsonl
 
         - group: asr_it
           language: it
           datasets:
             - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/it/context/FLEURS/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/it/context/FLEURS/test.jsonl
             - name: Multilingual_TEDx
-              path: <DATA_DIR>/nemo/asr/it/context/Multilingual_TEDx/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/it/context/Multilingual_TEDx/test.jsonl
 
         - group: asr_de
           language: de
           datasets:
             - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/de/context/FLEURS/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/de/context/FLEURS/test.jsonl
             - name: Multilingual_TEDx
-              path: <DATA_DIR>/nemo/asr/de/context/Multilingual_TEDx/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/de/context/Multilingual_TEDx/test.jsonl
 
         - group: asr_nl
           language: nl
           datasets:
             - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/nl/context/FLEURS/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/nl/context/FLEURS/test.jsonl
 
         - group: asr_es
           language: es
           datasets:
             - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/es/context/FLEURS/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/es/context/FLEURS/test.jsonl
             - name: Multilingual_TEDx
-              path: <DATA_DIR>/nemo/asr/es/context/Multilingual_TEDx/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/es/context/Multilingual_TEDx/test.jsonl
 
         - group: asr_pt
           language: pt
           datasets:
             - name: Fleurs
-              path: <DATA_DIR>/nemo/asr/pt/context/FLEURS/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/pt/context/FLEURS/test.jsonl
             - name: Multilingual_TEDx
-              path: <DATA_DIR>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
+              path: <DATA_FOLDER>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
 
         # - group: asr_ar
         #   language: ar
         #   datasets:
         #     - name: Fleurs
-        #       path: <DATA_DIR>/nemo/asr/ar/context/FLEURS/test.jsonl
+        #       path: <DATA_FOLDER>/nemo/asr/ar/context/FLEURS/test.jsonl
         #     - name: Multilingual_TEDx
-        #       path: <DATA_DIR>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
+        #       path: <DATA_FOLDER>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
 
     # AST
     - group: ast
@@ -100,16 +100,16 @@ global:
       max_audio_duration: 30
       datasets:
         - name: Multilingual_TEDx
-          path: <DATA_DIR>/nemo/ast/fr-en/context/Multilingual_TEDx/test.jsonl
+          path: <DATA_FOLDER>/nemo/ast/fr-en/context/Multilingual_TEDx/test.jsonl
           language: fr-en
         - name: Multilingual_TEDx
-          path: <DATA_DIR>/nemo/ast/fr-es/context/Multilingual_TEDx/test.jsonl
+          path: <DATA_FOLDER>/nemo/ast/fr-es/context/Multilingual_TEDx/test.jsonl
           language: fr-es
         - name: Multilingual_TEDx
-          path: <DATA_DIR>/nemo/ast/es-fr/context/Multilingual_TEDx/test.jsonl
+          path: <DATA_FOLDER>/nemo/ast/es-fr/context/Multilingual_TEDx/test.jsonl
           language: es-fr
         - name: Multilingual_TEDx
-          path: <DATA_DIR>/nemo/ast/es-it/context/Multilingual_TEDx/test.jsonl
+          path: <DATA_FOLDER>/nemo/ast/es-it/context/Multilingual_TEDx/test.jsonl
           language: es-it
 
     # Spoken Question Answering
@@ -122,13 +122,13 @@ global:
           language: fr
           datasets:
             - name: VoxPopuli-QA
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
+              path: <DATA_FOLDER>/nemo/question-answering/qa_audio-context-text-question/fr/VoxPopuli-QA/test.jsonl
             - name: CohereLabs-Aya_collection
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
+              path: <DATA_FOLDER>/nemo/question-answering/qa_audio-question-only/fr/CohereLabs--aya_collection/test.jsonl
             # - name: ComparIA
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
+            #   path: <DATA_FOLDER>/nemo/question-answering/qa_audio-question-only/fr/ComparIA/test.jsonl
             - name: Vigogne--Alpaca
-              path: <DATA_DIR>/nemo/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
+              path: <DATA_FOLDER>/nemo/question-answering/qa_audio-question-only/fr/Vigogne--Alpaca/test.jsonl
 
         - group: sqa_en
           language: en
@@ -138,13 +138,13 @@ global:
             - name: alpaca_audio_test       # synthetic
             - name: openhermes_audio_test   # synthetic
             # - name: VoxPopuli-QA
-            #   path: <DATA_DIR>/nemo/question-answering/qa_audio-context-text-question/en/VoxPopuli-QA/test.jsonl
+            #   path: <DATA_FOLDER>/nemo/question-answering/qa_audio-context-text-question/en/VoxPopuli-QA/test.jsonl
             - name: NationalSpeechCorpus_SQA
-              path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SQA/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SQA/test.jsonl
             - name: fisher_AIR-Bench
-              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Chat/speech/fisher/test.jsonl
             - name: SpokenWOZ_AIR-Bench
-              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
 
 
     # Math Question Answering
@@ -162,7 +162,7 @@ global:
       language: en
       datasets:
         - name: NationalSpeechCorpus_SDS
-          path: <DATA_DIR>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SDS/test.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/AudioLLMs--Multitask-National-Speech-Corpus-v1-extend/SDS/test.jsonl
     
     # Audio Question Answering
     - group: audio_qa
@@ -194,14 +194,14 @@ global:
           language: fr
           datasets:
             - name: MELD_Emotion
-              path: <DATA_DIR>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
 
         - group: emotion_recognition_en
           language: en
           datasets:
             - name: iemocap_emotion_test
             - name: MELD_Emotion
-              path: <DATA_DIR>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
 
     # Accent Recognition
     # Answer is 50% USA
@@ -222,14 +222,14 @@ global:
           language: fr
           datasets:
             - name: CommonVoice_Gender
-              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
 
         - group: gender_recognition_en
           language: en
           datasets:
             - name: iemocap_gender_test
             - name: CommonVoice_Gender
-              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
 
     # Age Recognition
     - group: age_recognition
@@ -241,13 +241,13 @@ global:
           language: fr
           datasets:
             - name: CommonVoice_Age
-              path: <DATA_DIR>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-age-recognition/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-age-recognition/test.jsonl
 
         - group: age_recognition_en
           language: en
           datasets:
             - name: CommonVoice_Age
-              path: <DATA_DIR>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-age-recognition/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-age-recognition/test.jsonl
 
     # Music Question Answering
     - group: music_qa
@@ -259,15 +259,15 @@ global:
           datasets:
             - name: muchomusic_test   # various type of questions
             - name: MTJ-Jamendo_AIR-Bench  # various type of questions (mcq)
-              path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
               judge_binary: true
             - name: MusicCaps-QA
-              path: <DATA_DIR>/nemo/music/music-question-answering/en/MusicCaps/test.jsonl
+              path: <DATA_FOLDER>/nemo/music/music-question-answering/en/MusicCaps/test.jsonl
         - group: music_qa_fr
           language: fr
           datasets:
             - name: MusicCaps-QA
-              path: <DATA_DIR>/nemo/music/music-question-answering/fr/MusicCaps/test.jsonl
+              path: <DATA_FOLDER>/nemo/music/music-question-answering/fr/MusicCaps/test.jsonl
 
     # Music Captioning
     - group: music_captioning
@@ -276,7 +276,7 @@ global:
       language: other
       datasets:
         - name: MusicCaps
-          path: <DATA_DIR>/nemo/music/music-captioning/en/context/MusicCaps/test.jsonl
+          path: <DATA_FOLDER>/nemo/music/music-captioning/en/context/MusicCaps/test.jsonl
         # possible FR version
 
     # Spoken Language Identification
@@ -287,7 +287,7 @@ global:
       language: other
       datasets:
         - name: CoVost2_AIR-Bench
-          path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
 
     # - group: speaker_count
     #   metrics: flow_judge
@@ -296,7 +296,7 @@ global:
     #   language: en
     #   datasets: 
     #     - name: VoxCeleb_AIR-Bench  # Answer is mostly 2
-    #       path: <DATA_DIR>/nemo/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
+    #       path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
 
     # Stress Test
     # All models roughly have same scores except voxtral, judge not doing very well here
@@ -308,7 +308,7 @@ global:
     #       language: en
     #       datasets:
     #         - name: StressTest_SSR
-    #           path: <DATA_DIR>/nemo/misc/en/context/Stress/ssr/test.jsonl
+    #           path: <DATA_FOLDER>/nemo/misc/en/context/Stress/ssr/test.jsonl
     #           sub_task: SSR
 
     # Information Extraction
@@ -330,16 +330,16 @@ global:
       datasets:
         - name: SLUE-SQA5_time2word
           sub_task: time2word
-          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/time2word/verified_test_pure.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/time2word/verified_test_pure.jsonl
         - name: SLUE-SQA5_word2time
           sub_task: word2time
-          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/word2time/verified_test_pure.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/word2time/verified_test_pure.jsonl
         - name: SLUE-SQA5_time2sentence
           sub_task: time2sentence
-          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/time2sentence/verified_test_pure.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/time2sentence/verified_test_pure.jsonl
         - name: SLUE-SQA5_word2sentence
           sub_task: word2sentence
-          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/word2sentence/verified_test_pure.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/word2sentence/verified_test_pure.jsonl
 
     - group: format_follwing
       metrics: format_check
@@ -348,7 +348,7 @@ global:
       number_of_samples: 100
       datasets:
         - name: SLUE-SQA5_format_json_answer
-          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/format_json_answer/verified_test.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/format_json_answer/verified_test.jsonl
 
     - group: timestamped_transcription
       metrics: flow_judge
@@ -360,7 +360,7 @@ global:
         Separate tokens with single spaces, in order. No prose, no header, no JSON, no markdown.
       datasets:
         - name: SLUE-SQA5_format_timestamped_transcription
-          path: <DATA_DIR>/nemo/misc/en/context/slue-phase-2-sqa5/format_timestamped_transcription/verified_test.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/format_timestamped_transcription/verified_test.jsonl
 
 models:
   - id: qwen2_omni_3b

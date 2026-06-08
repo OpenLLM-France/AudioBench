@@ -7,8 +7,11 @@ logger = logging.getLogger(__name__)
 def load_model(model_id, backend="transformers", model_path=None, gpu_memory_utilization=0.4, batch_size=1, device=None):
     """Factory: return a BaseModel subclass, loaded and ready to generate."""
     logger.info(f"Loading {model_id} model (path: {model_path}).")
-    if model_path:
-        model_path  = model_path.replace("<MODELS_DIR>", os.getenv('MODELS_DIR'))
+    if model_path and "<MODELS_FOLDER>" in model_path:
+        models_folder = os.getenv('MODELS_FOLDER')
+        if not models_folder:
+            raise EnvironmentError("MODELS_FOLDER environment variable is not set, but the model path uses the <MODELS_FOLDER> placeholder.")
+        model_path  = model_path.replace("<MODELS_FOLDER>", models_folder)
     if model_id == "cascade_whisper_large_v3_llama_3_8b_instruct":
         from audio_bench.model_src.transformers.whisper_large_v3_with_llama_3_8b_instruct import WhisperLargeV3WithLlama38BInstruct
         model = WhisperLargeV3WithLlama38BInstruct(device=device)
