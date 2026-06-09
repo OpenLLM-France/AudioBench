@@ -211,12 +211,16 @@ LANGUAGE_GROUPS = {
 # Data Loading
 # ---------------------------------------------------------------------------
 
-def load_all_scores(input_folder):
+def load_all_scores(input_folder, show_all=False):
     """Scan input_folder/{model_dir}/**/*_score.json and return list of entry dicts.
 
     Supports the new results/ directory structure where score files may be nested
     in language subdirectories (e.g. results/model/FR/fleurs_score.json) and each
     file contains multiple metrics listed in data["metrics"].
+
+    When ``show_all`` is True, the curated benchmark filters
+    (``_IGNORED_DATASETS`` and the model allowlist/ignore patterns) are bypassed
+    so ablation runs over arbitrary datasets/models are shown as-is.
     """
     entries = []
     input_path = Path(input_folder)
@@ -228,7 +232,7 @@ def load_all_scores(input_folder):
 
         for filepath in sorted(model_dir.rglob("*_score.json")):
             dataset_name = filepath.name.removesuffix("_score.json")
-            if dataset_name in _IGNORED_DATASETS:
+            if not show_all and dataset_name in _IGNORED_DATASETS:
                 continue
 
             try:
@@ -242,7 +246,7 @@ def load_all_scores(input_folder):
 
             model_name = data.get("model_name", model_id)
             model_name = _MODEL_NAME_CORRECTIONS.get(model_name, model_name)
-            if _is_model_ignored(model_name):
+            if not show_all and _is_model_ignored(model_name):
                 continue
             task = data.get("task")
             language = data.get("language")
@@ -2252,6 +2256,11 @@ def main():
     parser.add_argument("--output_folder", type=str, default="plots/", help="Where to save report")
     parser.add_argument("--violin", action="store_true", help="Include violin plots in the report")
     parser.add_argument(
+        "--show-all", "--show_all", dest="show_all", action="store_true",
+        help="Bypass curated-benchmark filtering (ignored datasets + model "
+             "allowlist/ignore patterns) so ablation datasets/models are shown.",
+    )
+    parser.add_argument(
         "--table_aggregates", nargs="+", default=AGGREGATE_MEASURES,
         choices=AGGREGATE_MEASURES,
         help="Aggregate columns to show in the overview table",
@@ -2264,7 +2273,7 @@ def main():
     args = parser.parse_args()
 
     # Load all scores
-    entries = load_all_scores(args.input_folder)
+    entries = load_all_scores(args.input_folder, show_all=args.show_all)
     if not entries:
         print(f"No score files found in {args.input_folder}")
         return
