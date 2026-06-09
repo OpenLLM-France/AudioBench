@@ -312,9 +312,9 @@ global:
     #           sub_task: SSR
 
     # Information Extraction
-    - group: information_extraction
-      metrics: information_extraction
-      task: Information Extraction
+    - group: temporal
+      metrics: temporal_regex
+      task: Temporal
       language: en
       number_of_samples: 100
       prompt_prefix: |

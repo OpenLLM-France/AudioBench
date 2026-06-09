@@ -121,7 +121,7 @@ _TASK_GUIDANCE = {
         "The model was asked to count the number of speakers. Focus on whether the response "
         "gives the same count as the reference."
     ),
-    "INFORMATION EXTRACTION": (
+    "TEMPORAL": (
         "Extract a unit from audio given a cue (word2sentence, time2sentence, "
         "word2time, time2word). The answer must be exactly the requested unit — no "
         "surrounding sentences, paragraph, or extra context. Returning more or less "
