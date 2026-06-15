@@ -173,6 +173,8 @@ def run_evaluation(
             model = load_model(model_id, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"], device=model_config.get("device"))
             if model_display_name:
                 model.name = model_display_name
+            if model_config.get("audio_locator_tag") is not None:
+                model.audio_locator_tag = model_config.get("audio_locator_tag")
 
         # Specific current dataset name for evaluation
         model.dataset_name = processor.name

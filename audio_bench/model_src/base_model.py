@@ -40,6 +40,12 @@ class BaseModel:
     supports_vllm = False
     max_audio_duration = 120
 
+    # Optional override for the audio placeholder inserted into prompts.
+    # When None, NeMo models fall back to the model's built-in
+    # `self.model.audio_locator_tag`. Set from the model-level config field
+    # `audio_locator_tag` to use a custom tag without mutating the model.
+    audio_locator_tag = None
+
     is_api_model = False
 
     def __init__(self, model_path=None, gpu_memory_utilization=0.4, device=None):

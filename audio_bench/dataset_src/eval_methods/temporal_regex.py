@@ -18,6 +18,7 @@ leaderboard / _score.json consumers stay unchanged.
 """
 
 import json
+import math
 import re
 
 import evaluate
@@ -25,7 +26,21 @@ import evaluate
 from audio_bench.dataset_src.eval_methods.metrics import build_metric_stats
 
 
-_TIMESTAMP_TOLERANCE_S = 0.5
+# A predicted timestamp earns a graded score that decays with its gap (seconds)
+# to the reference, following 100 / exp(gap / scale):
+#   gap 0s -> 100, 0.5s -> 61, 1s -> 37, 2s -> 14, 3s -> 5.
+# `scale` controls how fast it falls off; gaps at/beyond `max` earn no credit.
+_TIMESTAMP_SCALE_S = 1.0
+_TIMESTAMP_MATCH_MAX_S = 5.0
+
+
+def _gap_score(d):
+    """Graded credit in [0, 100] for a timestamp gap of ``d`` seconds."""
+    if d >= _TIMESTAMP_MATCH_MAX_S:
+        return 0.0
+    return 100.0 / math.exp(d / _TIMESTAMP_SCALE_S)
+
+
 _TIMESTAMP_RE = re.compile(r"(\d+(?:\.\d+)?)\s*s\b", re.IGNORECASE)
 _TIMESTAMP_RE_LOOSE = re.compile(r"(\d+(?:\.\d+)?)")
 _NEGATIVE_PHRASES = (
@@ -33,6 +48,14 @@ _NEGATIVE_PHRASES = (
     "not present", "no such", "n/a", "none", "nothing",
     "invalid_timestamp", "invalid timestamp", "no sentence",
     "out of range", "beyond the audio",
+    # Natural-language "not found" phrasings models emit instead of the format.
+    # Each pairs a negation with a presence verb, so they don't false-trigger
+    # on ordinary sentence answers that merely contain "not".
+    "not spoken", "not said", "not uttered", "not mentioned",
+    "not pronounced", "not heard", "not spoken in", "not in the audio",
+    "not in the recording", "does not occur", "doesn't occur",
+    "does not appear", "no mention", "not appear", "cannot be found",
+    "can't be found", "could not find", "couldn't find", "not found in",
 )
 
 _METEOR = None
@@ -94,13 +117,15 @@ def _parse_pred_timestamps(prediction):
     return [float(x) for x in _TIMESTAMP_RE_LOOSE.findall(s)]
 
 
-def _f1_with_tolerance(refs, preds, tol=_TIMESTAMP_TOLERANCE_S):
+def _f1_with_tolerance(refs, preds, tol=_TIMESTAMP_MATCH_MAX_S):
+    """F1 over timestamp matches, where each pairing earns graded credit in
+    [0, 1] from ``_gap_score`` (closer = more) instead of a binary hit."""
     if not refs and not preds:
         return 1.0
     if not refs or not preds:
         return 0.0
     used = [False] * len(preds)
-    matched = 0
+    total_weight = 0.0
     for r in refs:
         best_i, best_d = -1, tol
         for i, p in enumerate(preds):
@@ -112,12 +137,31 @@ def _f1_with_tolerance(refs, preds, tol=_TIMESTAMP_TOLERANCE_S):
                 best_i = i
         if best_i >= 0:
             used[best_i] = True
-            matched += 1
-    if matched == 0:
+            total_weight += _gap_score(best_d) / 100.0
+    if total_weight == 0:
         return 0.0
-    precision = matched / len(preds)
-    recall = matched / len(refs)
+    precision = total_weight / len(preds)
+    recall = total_weight / len(refs)
     return 2 * precision * recall / (precision + recall)
+
+
+def _score_range(lo, hi, pred_ts):
+    """Graded score in [0, 100] for an interval reference ``(lo, hi)``.
+
+    The mean is always taken over the two reference endpoints, so each
+    predicted timestamp contributes one term scored against its *closest*
+    endpoint via ``_gap_score``:
+
+      * 0 predicted timestamps -> 0
+      * 1 predicted timestamp  -> (gap_score(closest endpoint) + 0) / 2
+      * 2 predicted timestamps -> mean of each timestamp's closest-endpoint score
+
+    Predictions beyond the first two are ignored.
+    """
+    if not pred_ts:
+        return 0.0
+    scored = [_gap_score(min(abs(t - lo), abs(t - hi))) for t in pred_ts[:2]]
+    return sum(scored) / 2.0
 
 
 def _score_word2time(reference, prediction, first_only=False):
@@ -129,20 +173,7 @@ def _score_word2time(reference, prediction, first_only=False):
         pred_ts = pred_ts[:1]
     if kind == "range":
         lo, hi = payload
-        if not pred_ts:
-            return 0.0
-        inside = [t for t in pred_ts if lo - _TIMESTAMP_TOLERANCE_S <= t <= hi + _TIMESTAMP_TOLERANCE_S]
-        if not inside:
-            return 0.0
-        endpoint_hits = sum(
-            1 for ep in (lo, hi)
-            if any(abs(t - ep) <= _TIMESTAMP_TOLERANCE_S for t in pred_ts)
-        )
-        if endpoint_hits == 2:
-            return 100.0
-        if endpoint_hits == 1:
-            return 75.0
-        return 50.0
+        return _score_range(lo, hi, pred_ts)
     return 100.0 * _f1_with_tolerance(payload, pred_ts)
 
 
@@ -153,11 +184,20 @@ def _score_time2word(reference, prediction):
     pred_n = _normalize(prediction)
     if not ref_n:
         return 0.0
+    # The task asks for a single word, but references are SQuAD spans that are
+    # often multi-word ("computer simulations", "the papacy"). Score against the
+    # first content word (skipping leading articles) so a correct leading word
+    # isn't penalized for the full span.
+    ref_words = ref_n.split()
+    if len(ref_words) > 1:
+        content = [w for w in ref_words if w not in {"the", "a", "an"}]
+        ref_n = (content or ref_words)[0]
+    # Full credit for an exact match or for the reference word appearing as a
+    # standalone token anywhere in the prediction (e.g. wrapped in a sentence).
     if pred_n == ref_n:
         return 100.0
-    pred_tokens = pred_n.split()
-    if len(pred_tokens) <= 5 and re.search(rf"(?<!\w){re.escape(ref_n)}(?!\w)", pred_n):
-        return 50.0
+    if re.search(rf"(?<!\w){re.escape(ref_n)}(?!\w)", pred_n):
+        return 100.0
     return 0.0
 
 

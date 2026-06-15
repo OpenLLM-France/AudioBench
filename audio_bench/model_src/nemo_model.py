@@ -9,15 +9,19 @@ class NeMoModel(BaseModel):
     """Shared base for models using NeMo's SALM API."""
 
     def _build_nemo_conversation(self, audio_path, prompt, audio_first=False):
+        # Use the config-provided override when set, otherwise the model's
+        # built-in tag. This lets the prompt use a custom locator tag without
+        # changing self.model.audio_locator_tag.
+        locator_tag = self.audio_locator_tag or self.model.audio_locator_tag
         if audio_first:
             prompt_content = (
-                f"{self.model.audio_locator_tag}\n"
+                f"{locator_tag}\n"
                 f"{prompt}\n"
             )
         else:
             prompt_content = (
                 f"{prompt}:\n"
-                f"{self.model.audio_locator_tag}\n"
+                f"{locator_tag}\n"
             )
         return [
             {

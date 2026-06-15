@@ -87,6 +87,7 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
                         path=model_config.get("path"),
                         gpu_memory_utilization=model_config.get("gpu_memory_utilization", global_params.get("gpu_memory_utilization", 0.4)),
                         device=model_device,
+                        audio_locator_tag=model_config.get("audio_locator_tag"),
                     )
 
                     try:
