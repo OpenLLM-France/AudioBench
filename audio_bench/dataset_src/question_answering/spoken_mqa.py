@@ -1,5 +1,5 @@
 from audio_bench.dataset_src.base_dataset import BaseDatasetProcessor
-from audio_bench.dataset_src.eval_methods.metrics import build_metric_stats
+from audio_bench.scoring_src.metrics import build_metric_stats
 from audio_bench.dataset_src.math_utils import utils
 
 

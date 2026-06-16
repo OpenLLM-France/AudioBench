@@ -4,7 +4,7 @@ import torch
 from flow_judge import Vllm, FlowJudge, EvalInput
 from flow_judge.metrics import RESPONSE_CORRECTNESS_5POINT, RESPONSE_CORRECTNESS_BINARY
 
-from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
+from audio_bench.scoring_src.metrics import get_task_evaluation_context
 
 
 def _run_flow_judge(metric, input_data, task_type=None):

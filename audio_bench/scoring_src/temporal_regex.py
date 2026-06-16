@@ -23,7 +23,7 @@ import re
 
 import evaluate
 
-from audio_bench.dataset_src.eval_methods.metrics import build_metric_stats
+from audio_bench.scoring_src.metrics import build_metric_stats
 
 
 # A predicted timestamp earns a graded score that decays with its gap (seconds)

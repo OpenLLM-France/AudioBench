@@ -8,16 +8,18 @@ from tqdm import tqdm
 from time import sleep
 
 import openai
-from openai import OpenAI
+from openai import AzureOpenAI
+
 
 def gpt4o_as_judge(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
-    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
+    from audio_bench.scoring_src.metrics import get_task_evaluation_context
 
-    client = OpenAI(
-      api_key=os.getenv("LINAGORA_API_KEY"),
-      base_url="https://ai.linagora.com/api/v1"
-      )
+    client = AzureOpenAI(
+        azure_endpoint = 'https://ali-llm.openai.azure.com/',
+        api_key=os.getenv("AZURE_OPENAI_KEY"),
+        api_version="2024-08-01-preview"
+        )
 
     # generation
     all_details = []
@@ -60,7 +62,7 @@ def gpt4o_as_judge(model_path, input_data, task_type=None):
 
         try:
             completion = client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="gpt-4o-chat",
                 messages = messages,
                 temperature=0.7,
                 max_tokens=500,
@@ -106,14 +108,18 @@ def gpt4o_as_judge(model_path, input_data, task_type=None):
 
     return judge_results, all_details
 
+
+
+
 def gpt4o_as_judge_binary(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
-    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
+    from audio_bench.scoring_src.metrics import get_task_evaluation_context
 
-    client = OpenAI(
-      api_key=os.getenv("LINAGORA_API_KEY"),
-      base_url="https://ai.linagora.com/api/v1"
-      )
+    client = AzureOpenAI(
+        azure_endpoint = 'https://ali-llm.openai.azure.com/',
+        api_key=os.getenv("AZURE_OPENAI_KEY"),
+        api_version="2024-08-01-preview"
+        )
 
     # generation
     all_details = []
@@ -153,7 +159,7 @@ def gpt4o_as_judge_binary(model_path, input_data, task_type=None):
 
         try:
             completion = client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="gpt-4o-chat",
                 messages = messages,
                 temperature=0.7,
                 max_tokens=500,
@@ -198,3 +204,8 @@ def gpt4o_as_judge_binary(model_path, input_data, task_type=None):
 
 
     return judge_results, all_details
+
+
+
+
+

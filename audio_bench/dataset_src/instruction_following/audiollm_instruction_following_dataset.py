@@ -1,5 +1,5 @@
 from audio_bench.dataset_src.base_dataset import BaseDatasetProcessor
-from audio_bench.dataset_src.eval_methods.metrics import build_metric_stats
+from audio_bench.scoring_src.metrics import build_metric_stats
 
 
 class audiollm_instruction_following_dataset(BaseDatasetProcessor):
@@ -41,7 +41,7 @@ class audiollm_instruction_following_dataset(BaseDatasetProcessor):
                 rules.append(item['rule_type'])
                 rule_targets.append(item['rule_target'])
 
-            from audio_bench.dataset_src.eval_methods.eval_llama3_70b_combined import llama3_70b_as_judge_binary
+            from audio_bench.scoring_src.eval_llama3_70b_combined import llama3_70b_as_judge_binary
             llama3_70b_judge_results, all_details = llama3_70b_as_judge_binary(
                 "meta-llama/Meta-Llama-3-70B-Instruct",
                 [questions, references, predictions, dimensions, rules, rule_targets]

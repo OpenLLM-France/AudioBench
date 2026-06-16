@@ -110,7 +110,7 @@ def llama3_70b_as_judge_one_sample(args):
 
 def llama3_70b_as_judge(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
-    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
+    from audio_bench.scoring_src.metrics import get_task_evaluation_context
 
     # avoid asking for token access
     model_path = 'casperhansen/llama-3-70b-instruct-awq'
@@ -227,7 +227,7 @@ def llama3_70b_as_judge_binary_one_sample(args):
 
 def llama3_70b_as_judge_binary(model_path, input_data, task_type=None):
     """ Compute the score of the model on the given data."""
-    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
+    from audio_bench.scoring_src.metrics import get_task_evaluation_context
 
     # avoid asking for token access
     model_path = 'casperhansen/llama-3-70b-instruct-awq'

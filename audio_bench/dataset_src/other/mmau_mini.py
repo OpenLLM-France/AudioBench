@@ -1,6 +1,6 @@
 import pandas as pd
 from audio_bench.dataset_src.base_dataset import BaseDatasetProcessor
-from audio_bench.dataset_src.eval_methods.metrics import build_metric_stats
+from audio_bench.scoring_src.metrics import build_metric_stats
 
 
 class mmau_mini_test_dataset(BaseDatasetProcessor):
@@ -22,7 +22,7 @@ class mmau_mini_test_dataset(BaseDatasetProcessor):
         questions, references, predictions = self._extract_judge_inputs(data_with_model_predictions)
 
         if metrics == 'llama3_70b_judge':
-            from audio_bench.dataset_src.eval_methods.eval_llama3_70b import llama3_70b_as_judge_binary
+            from audio_bench.scoring_src.eval_llama3_70b import llama3_70b_as_judge_binary
             llama3_70b_judge_results, all_details = llama3_70b_as_judge_binary(
                 "meta-llama/Meta-Llama-3-70B-Instruct", [questions, references, predictions]
             )
@@ -37,7 +37,7 @@ class mmau_mini_test_dataset(BaseDatasetProcessor):
 
         elif metrics == 'string_match':
             choices = [item for item in self.raw_data['choices']]
-            from audio_bench.dataset_src.eval_methods.string_match import mmau_string_match
+            from audio_bench.scoring_src.string_match import mmau_string_match
             string_match_results, all_details = mmau_string_match([questions, references, predictions, choices])
             for result, sample_other_attributes in zip(all_details, self.raw_data['other_attributes']):
                 result['task'] = sample_other_attributes['task']
@@ -49,7 +49,7 @@ class mmau_mini_test_dataset(BaseDatasetProcessor):
             return {'string_match': enriched, 'task_scores': task_scores, 'details': all_details}
 
         elif metrics == 'gpt4o_judge':
-            from audio_bench.dataset_src.eval_methods.eval_gpt4o import gpt4o_as_judge_binary
+            from audio_bench.scoring_src.eval_gpt4o import gpt4o_as_judge_binary
             gpt4o_judge_results, all_details = gpt4o_as_judge_binary("", [questions, references, predictions])
             for result, sample_other_attributes in zip(all_details, self.raw_data['other_attributes']):
                 result['task'] = sample_other_attributes['task']

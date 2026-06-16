@@ -175,7 +175,7 @@ def _evaluate_one_sample(args):
 
 def flow_judge_api_as_judge(model_path, input_data, task_type=None):
     """5-point scoring (1-5). Returns (results_dict, all_details)."""
-    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
+    from audio_bench.scoring_src.metrics import get_task_evaluation_context
     questions, references, predictions = input_data
     task_context = get_task_evaluation_context(task_type)
 
@@ -209,7 +209,7 @@ def flow_judge_api_as_judge(model_path, input_data, task_type=None):
 
 def flow_judge_api_as_judge_binary(model_path, input_data, task_type=None):
     """Binary scoring (0-1). Returns (results_dict, all_details)."""
-    from audio_bench.dataset_src.eval_methods.metrics import get_task_evaluation_context
+    from audio_bench.scoring_src.metrics import get_task_evaluation_context
     questions, references, predictions = input_data
     task_context = get_task_evaluation_context(task_type)
 

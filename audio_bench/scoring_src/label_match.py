@@ -18,7 +18,7 @@ open ("young", "middle-aged", "senior", decade ranges...) so it keeps the judge.
 import re
 import unicodedata
 
-from audio_bench.dataset_src.eval_methods.metrics import build_metric_stats
+from audio_bench.scoring_src.metrics import build_metric_stats
 
 
 def _norm(text):
