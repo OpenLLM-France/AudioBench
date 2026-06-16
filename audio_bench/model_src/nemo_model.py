@@ -15,13 +15,13 @@ class NeMoModel(BaseModel):
         locator_tag = self.audio_locator_tag or self.model.audio_locator_tag
         if audio_first:
             prompt_content = (
-                f"{locator_tag}\n"
-                f"{prompt}\n"
+                f"{locator_tag}"
+                f"{prompt}"
             )
         else:
             prompt_content = (
-                f"{prompt}:\n"
-                f"{locator_tag}\n"
+                f"{prompt}"
+                f"{locator_tag}"
             )
         return [
             {
@@ -70,9 +70,7 @@ class NeMoModel(BaseModel):
                 logger.info(f"Audio was padded: {inp}")
             audio_path = self._write_temp_audio(segments[0], sampling_rate)
             all_prompts.append(self._build_nemo_conversation(audio_path, prompt, audio_first=inp.get("audio_first", False)))
-
         answer_ids = self.model.generate(prompts=all_prompts, max_new_tokens=512)
-
         return [
             self.model.tokenizer.ids_to_text(answer_ids[i].cpu())
             for i in range(len(inputs))

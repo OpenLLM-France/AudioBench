@@ -121,57 +121,12 @@ _TASK_GUIDANCE = {
         "The model was asked to count the number of speakers. Focus on whether the response "
         "gives the same count as the reference."
     ),
-    "TEMPORAL": (
-        "Extract a unit from audio given a cue (word2sentence, time2sentence, "
-        "word2time, time2word). The answer must be exactly the requested unit — no "
-        "surrounding sentences, paragraph, or extra context. Returning more or less "
-        "than the reference is penalized. Repeating the question is 0. Only "
-        "formatting differences (punctuation, casing, '23.6s' vs '00:23.6') have no "
-        "impact on the score."
+    "DIARIZATION": (
+        "The model was asked diarize the audio (identify who spoke and when). Focus on whether the response "
+        "gives the same turns orders and roughly the same timestamps."
     ),
-    "WORD2SENTENCE": (
-        "Given a word cue, return the single sentence from the audio that contains it. "
-        "The answer must be exactly that sentence — not the surrounding paragraph, "
-        "neighboring sentences, or a transcript. Returning more or less than one "
-        "sentence is incorrect even if the target sentence is inside the response. "
-        "Repeating the question is 0. Only punctuation/casing differences are acceptable for that sentence."
-    ),
-    "TIME2SENTENCE": (
-        "Given a timestamp cue, return the single sentence from the audio that spans "
-        "that timestamp. The answer must be exactly that sentence — not a timestamp, "
-        "a word, the surrounding paragraph, or neighboring sentences. Returning more "
-        "or less than one sentence is incorrect even if the target sentence is inside "
-        "the response. Repeating the question is 0. Only punctuation/casing "
-        "differences are acceptable for that sentence."
-    ),
-    "WORD2TIME": (
-        "Given a word cue, return the timestamp(s) at which it is uttered. The word "
-        "may occur multiple times; in that case all occurrences in the reference "
-        "should be covered. We care only about timestamps, not a sentence or "
-        "extra context. Missing or extra occurrences are penalized. Repeating the "
-        "question is 0. Only timestamp-format differences ('23.6s' vs '00:23.6') are "
-        "acceptable."
-    ),
-    "TIME2WORD": (
-        "Given a timestamp cue, return the single word uttered at that timestamp. "
-        "The answer must be exactly that word — not a sentence, paraphrase, "
-        "timestamp, or extra context. Returning more than the word is incorrect even "
-        "if it contains the word. Repeating the question is 0."
-    ),
-    "TIMESTAMPED TRANSCRIPTION": (
-        "The model was asked to transcribe spoken audio while emitting timestamps "
-        "alongside the transcribed text (e.g., per word or per segment). A good "
-        "response both transcribes accurately and aligns timestamps with the spoken "
-        "content. Focus on whether the transcription matches the reference and "
-        "whether timestamps are present and roughly consistent with the reference; "
-        "minor formatting differences are acceptable."
-    ),
-    "FORMAT FOLLOWING": (
-        "The model was asked to produce its answer in a specific output format "
-        "(e.g., JSON, timestamped transcription). A good response respects the "
-        "requested structure. Priority is on the format, not on the corectness "
-        "of the answer. Focus on whether the response follows the required " 
-        "format."
+    "SPEAKER IDENTIFICATION": (
+        "The model was asked to say if 2 audios are from the same or different speakers."
     ),
 }
 
