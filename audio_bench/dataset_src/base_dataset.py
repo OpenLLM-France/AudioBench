@@ -280,6 +280,14 @@ class BaseDatasetProcessor:
             sub_tasks.append(item.get("sub_task") or self.sub_task)
         return compute_temporal_regex(references, predictions, sub_tasks)
 
+    def _compute_label_match(self, data_with_model_predictions):
+        from audio_bench.dataset_src.eval_methods.label_match import compute_label_match
+        references, predictions = [], []
+        for item in data_with_model_predictions:
+            references.append(item.get(self.reference_key, ""))
+            predictions.append(item.get("model_prediction", ""))
+        return compute_label_match(references, predictions, self.task_type)
+
     def compute_score(self, data_with_model_predictions, metrics=None):
         if metrics == 'wer':
             return self._compute_wer(data_with_model_predictions)
@@ -289,6 +297,9 @@ class BaseDatasetProcessor:
 
         elif metrics == 'temporal_regex':
             return self._compute_temporal_regex(data_with_model_predictions)
+
+        elif metrics == 'label_match':
+            return self._compute_label_match(data_with_model_predictions)
 
         else:
             result = self._compute_judge(data_with_model_predictions, metrics)

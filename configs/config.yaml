@@ -185,8 +185,7 @@ global:
 
     # Emotion Recognition
     - group: emotion_recognition
-      metrics: flow_judge
-      judge_binary: true
+      metrics: label_match
       task: Emotion Recognition
       sub_task: Emotion
       datasets:
@@ -214,8 +213,7 @@ global:
 
     # Gender Recognition
     - group: gender_recognition
-      metrics: flow_judge
-      judge_binary: true
+      metrics: label_match
       task: Gender Recognition
       datasets:
         - group: gender_recognition_fr
@@ -281,8 +279,7 @@ global:
 
     # Spoken Language Identification
     - group: language_identification
-      metrics: flow_judge
-      judge_binary: true
+      metrics: label_match
       task: Spoken Language Identification
       language: other
       datasets:
