@@ -18,11 +18,23 @@ from audio_bench.model_factory import load_model, get_model_name
 def _load_predictions(path):
     """Load a prediction file, handling both old (list) and new (dict with metadata) formats.
     Returns (predictions_list, metadata_dict).
+
+    Newer dumps store task_type/sub_task/language once in metadata instead of on
+    every sample (see the write path below). Re-hydrate those onto each sample
+    when absent so downstream consumers that read per-sample fields behave the
+    same for both formats. Existing per-sample values are never overwritten.
     """
     raw = json.loads(path.read_text())
     if isinstance(raw, list):
         return raw, {}
-    return raw.get("predictions", raw), raw.get("metadata", {})
+    predictions = raw.get("predictions", raw)
+    metadata = raw.get("metadata", {})
+    for field in ("task_type", "sub_task", "language"):
+        if metadata.get(field) is not None:
+            for item in predictions:
+                if isinstance(item, dict) and item.get(field) is None:
+                    item[field] = metadata[field]
+    return predictions, metadata
 
 # =  =  =  =  =  =  =  =  =  =  =  Logging Setup  =  =  =  =  =  =  =  =  =  =  =  =  =
 logger = logging.getLogger(__name__)
