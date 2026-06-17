@@ -119,6 +119,11 @@ table.summary th { background:#f4f4f4; }
 .col { flex:1 1 220px; min-width:0; }
 .col h4 { margin:0 0 4px 0; font-size:12px; text-transform:uppercase; color:#888;
          white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.modelname { font-size:12px; text-transform:uppercase; color:#888; font-weight:600;
+         word-break:break-word; margin:0 0 3px 0; }
+.scoreline { display:flex; flex-wrap:wrap; gap:4px; margin:0 0 4px 0; }
+.scoreline .score { font-size:12px; padding:1px 6px; border-radius:4px; background:#fff;
+         border:1px solid #eee; font-weight:bold; }
 .text { white-space:pre-wrap; word-wrap:break-word; background:#fff; border:1px solid #eee;
         border-radius:4px; padding:6px 8px; font-size:13px; max-height:340px; overflow:auto; }
 .ref { background:#eef7ee; border-color:#cfe6cf; }
@@ -167,6 +172,19 @@ def render_html(args, models, preds_list, scores_list):
         for mm in metrics_per_model
     ]
 
+    # Per-sample scores for every metric, per model: per_model_metric_scores[idx] = {metric: [scores]}
+    # metric_max scales the good/mid/bad coloring per metric (metrics have different ranges).
+    per_model_metric_scores = []
+    metric_max = {}
+    for mm in metrics_per_model:
+        d = {}
+        for met, v in mm.items():
+            scores = (v or {}).get("all_scores") or []
+            d[met] = scores
+            mx = max((x for x in scores if isinstance(x, (int, float))), default=0)
+            metric_max[met] = max(metric_max.get(met, 0), mx, 1)
+        per_model_metric_scores.append(d)
+
     n = max((len(p) for p in preds), default=0)
 
     indices = list(range(n))
@@ -212,11 +230,19 @@ def render_html(args, models, preds_list, scores_list):
     parts.append(f"<div class='controls'>Showing {len(indices)} / {n} samples{note}. "
                  f"Primary metric: <b>{html.escape(primary_metric or '—')}</b>.</div>")
 
-    def label_with_score(name, s):
-        if s is None:
-            return html.escape(name)
-        return (f"{html.escape(name)} "
-                f"<span class='score {score_class(s)}'>{fmt_score(s)}</span>")
+    def header_block(name, metric_scores):
+        """Model name on its own line, then a wrapping row of per-metric score chips."""
+        out = f"<div class='modelname' title='{html.escape(name)}'>{html.escape(name)}</div>"
+        chips = []
+        for met, val in metric_scores.items():
+            if val is None:
+                continue
+            cls = score_class(val, metric_max.get(met, 5.0))
+            chips.append(f"<span class='score {cls}'>"
+                         f"{html.escape(met)}: {fmt_score(val)}</span>")
+        if chips:
+            out += f"<div class='scoreline'>{''.join(chips)}</div>"
+        return out
 
     for i in indices:
         # Pull the first non-empty reference / instruction across models for this index.
@@ -244,13 +270,36 @@ def render_html(args, models, preds_list, scores_list):
         if instr:
             parts.append(f"<div class='instr'>{html.escape(instr)}</div>")
         parts.append("<div class='row'>")
-        parts.append(f"<div class='col'><h4>Reference</h4>"
+        # Reference column mirrors the model columns' header (name line + scoreline) so
+        # the text boxes align. Its scoreline shows each metric's spread (max−min) across
+        # models at this sample.
+        ref_chips = []
+        for met in all_metrics:
+            vals = [
+                per_model_metric_scores[idx].get(met, [])[i]
+                for idx in range(len(models))
+                if i < len(per_model_metric_scores[idx].get(met, []))
+                and isinstance(per_model_metric_scores[idx].get(met, [])[i], (int, float))
+            ]
+            if len(vals) >= 2:
+                ref_chips.append(
+                    f"<span class='score'>{html.escape(met)}: "
+                    f"spread={max(vals) - min(vals):+.2f}</span>"
+                )
+        ref_scoreline = (
+            f"<div class='scoreline'>{''.join(ref_chips)}</div>" if ref_chips else ""
+        )
+        parts.append(f"<div class='col'><div class='modelname'>Reference</div>{ref_scoreline}"
                      f"<div class='text ref'>{html.escape(str(ref))}</div></div>")
         for idx, m in enumerate(models):
             p = preds[idx][i] if i < len(preds[idx]) else {}
             cls = f"pred{(idx % len(PRED_PALETTE)) + 1}"
+            metric_scores = {
+                met: (scores[i] if i < len(scores) else None)
+                for met, scores in per_model_metric_scores[idx].items()
+            }
             parts.append(
-                f"<div class='col'><h4>{label_with_score(m, per_sample_scores[idx])}</h4>"
+                f"<div class='col'>{header_block(m, metric_scores)}"
                 f"<div class='text {cls}'>"
                 f"{html.escape(str(p.get('model_prediction','')))}</div></div>"
             )

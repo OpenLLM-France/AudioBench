@@ -15,13 +15,11 @@ class NeMoModel(BaseModel):
         locator_tag = self.audio_locator_tag or self.model.audio_locator_tag
         if audio_first:
             prompt_content = (
-                f"{locator_tag}"
-                f"{prompt}"
+                f"{locator_tag} {prompt}"
             )
         else:
             prompt_content = (
-                f"{prompt}"
-                f"{locator_tag}"
+                f"{prompt} {locator_tag}"
             )
         return [
             {
