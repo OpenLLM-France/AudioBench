@@ -75,5 +75,5 @@ class WhisperLargeV2(BaseModel):
             )
             for s in samples
         ]
-        outputs = self.llm.generate(all_prompts, sampling_params=self.sampling_params)
+        outputs = self.llm.generate(all_prompts, sampling_params=self.sampling_params, use_tqdm=False)
         return [o.outputs[0].text.strip() for o in outputs]

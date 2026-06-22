@@ -173,13 +173,14 @@ def _evaluate_one_sample(args):
     }
 
 
-def flow_judge_api_as_judge(model_path, input_data, task_type=None):
+def flow_judge_api_as_judge(model_path, input_data, task_type=None, desc=None):
     """5-point scoring (1-5). Returns (results_dict, all_details)."""
     from audio_bench.scoring_src.metrics import get_task_evaluation_context
     questions, references, predictions = input_data
     task_context = get_task_evaluation_context(task_type)
 
     num_processes = min(8, len(questions))
+    bar_desc = f"{desc} | Flow-Judge API (5-point)" if desc else "Flow-Judge API (5-point)"
 
     with Pool(processes=num_processes) as pool:
         all_details = list(
@@ -196,7 +197,7 @@ def flow_judge_api_as_judge(model_path, input_data, task_type=None):
                     ),
                 ),
                 total=len(questions),
-                desc="Flow-Judge API (5-point)",
+                desc=bar_desc,
             )
         )
 
@@ -207,13 +208,14 @@ def flow_judge_api_as_judge(model_path, input_data, task_type=None):
     return {'judge_score': avg_score, 'success_rate': success_rate}, all_details
 
 
-def flow_judge_api_as_judge_binary(model_path, input_data, task_type=None):
+def flow_judge_api_as_judge_binary(model_path, input_data, task_type=None, desc=None):
     """Binary scoring (0-1). Returns (results_dict, all_details)."""
     from audio_bench.scoring_src.metrics import get_task_evaluation_context
     questions, references, predictions = input_data
     task_context = get_task_evaluation_context(task_type)
 
     num_processes = min(8, len(questions))
+    bar_desc = f"{desc} | Flow-Judge API (binary)" if desc else "Flow-Judge API (binary)"
 
     with Pool(processes=num_processes) as pool:
         all_details = list(
@@ -230,7 +232,7 @@ def flow_judge_api_as_judge_binary(model_path, input_data, task_type=None):
                     ),
                 ),
                 total=len(questions),
-                desc="Flow-Judge API (binary)",
+                desc=bar_desc,
             )
         )
 

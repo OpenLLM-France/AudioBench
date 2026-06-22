@@ -221,7 +221,7 @@ class BaseModel:
                 all_messages.append(self._build_vllm_messages(seg, sr, instruction))
                 meta.append(('normal', i, is_asr))
 
-        outputs = self.llm.chat(all_messages, sampling_params=self.sampling_params, **self._vllm_chat_kwargs())
+        outputs = self.llm.chat(all_messages, sampling_params=self.sampling_params, use_tqdm=False, **self._vllm_chat_kwargs())
 
         for output, m in zip(outputs, meta):
             text = output.outputs[0].text

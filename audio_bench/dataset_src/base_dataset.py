@@ -191,6 +191,10 @@ class BaseDatasetProcessor:
         if self.sub_task and self.sub_task.upper().strip() in _TASK_GUIDANCE:
             task_type = self.sub_task
 
+        # Context label surfaced in judge progress bars so the model/dataset stay
+        # identifiable even while the judge's vLLM logs scroll past.
+        judge_desc = " | ".join(p for p in (getattr(self, "model_label", ""), self.name) if p)
+
         if metrics == 'llama3_70b_judge':
             if self.judge_binary:
                 from audio_bench.scoring_src.eval_llama3_70b import llama3_70b_as_judge_binary
@@ -229,10 +233,10 @@ class BaseDatasetProcessor:
         elif metrics == 'flow_judge_api':
             if self.judge_binary:
                 from audio_bench.scoring_src.eval_flow_judge_api import flow_judge_api_as_judge_binary
-                results, all_details = flow_judge_api_as_judge_binary("", [questions, references, predictions], task_type=task_type)
+                results, all_details = flow_judge_api_as_judge_binary("", [questions, references, predictions], task_type=task_type, desc=judge_desc)
             else:
                 from audio_bench.scoring_src.eval_flow_judge_api import flow_judge_api_as_judge
-                results, all_details = flow_judge_api_as_judge("", [questions, references, predictions], task_type=task_type)
+                results, all_details = flow_judge_api_as_judge("", [questions, references, predictions], task_type=task_type, desc=judge_desc)
             return self._enrich_judge('flow_judge_api', results, all_details)
 
         elif metrics == 'linagora_api_oss120':

@@ -265,6 +265,9 @@ def run_evaluation(
         logger.info(' ='*30)
         logger.info(f'Model name: {model_name} [id={model_id}]')
         logger.info(f'Dataset name: {processor.name.upper()}')
+        # Surfaced in judge progress bars / banners so model+dataset stay visible
+        # amid the judge's vLLM logs.
+        processor.model_label = model_id or model_name
         for metric in dataset_config["metrics"]:
             metric_score = processor.compute_score(data_with_model_predictions, metrics=metric)
             results.update(metric_score)
