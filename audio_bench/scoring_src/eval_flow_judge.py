@@ -38,24 +38,58 @@ def _run_flow_judge(metric, input_data, task_type=None):
     questions, references, predictions = input_data
 
     restore_logs = _quiet_vllm_logs()
+    max_model_len = 6000
+
     try:
-        model = Vllm(quantized=True, gpu_memory_utilization=0.3, max_model_len=6200, max_num_seqs=50)
+        model = Vllm(
+            quantized=True,
+            gpu_memory_utilization=0.3,
+            max_model_len=max_model_len,
+            max_num_seqs=50,
+        )
         judge = FlowJudge(metric=metric, model=model, output_dir=None)
 
+        tokenizer = model.model.get_tokenizer()
         task_context = get_task_evaluation_context(task_type)
 
-        eval_inputs = [
-            EvalInput(
-                inputs=[{"query": f"{task_context}\n{q}" if task_context else q}, {"reference_answer": r}],
+        eval_inputs = []
+        kept_items = []
+        all_details = []
+
+        for q, r, p in zip(questions, references, predictions):
+            query = f"{task_context}\n{q}" if task_context else q
+
+            eval_input = EvalInput(
+                inputs=[
+                    {"query": query},
+                    {"reference_answer": r},
+                ],
                 output={"response": p},
             )
-            for q, r, p in zip(questions, references, predictions)
-        ]
 
-        results = judge.batch_evaluate(eval_inputs, save_results=False)
+            prompt = judge._format_prompt(eval_input)
+            n_tokens = len(tokenizer.encode(prompt))
 
-        all_details = []
-        for q, r, p, result in zip(questions, references, predictions, results):
+            if n_tokens > max_model_len:
+                all_details.append({
+                    "question": q,
+                    "reference": r,
+                    "model_prediction": p,
+                    "judge_response": (
+                        f"Discarded: prompt has {n_tokens} tokens, "
+                        f"exceeds max_model_len={max_model_len}"
+                    ),
+                    "rate_score": 0,
+                    "success": 0,
+                })
+                continue
+
+            eval_inputs.append(eval_input)
+            kept_items.append((q, r, p))
+
+        results = judge.batch_evaluate(eval_inputs, save_results=False) if eval_inputs else []
+
+        for (q, r, p), result in zip(kept_items, results):
             all_details.append({
                 "question": q,
                 "reference": r,
@@ -67,6 +101,7 @@ def _run_flow_judge(metric, input_data, task_type=None):
 
         del model
         torch.cuda.empty_cache()
+
     finally:
         restore_logs()
 

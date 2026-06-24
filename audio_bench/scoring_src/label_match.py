@@ -153,11 +153,28 @@ def _age(text):
     return None
 
 
+def _yesno(text):
+    """Closed yes/no answer (EN + FR). Used for binary verification tasks such
+    as speaker identification ("is the speaker in both clips the same?"), where
+    the reference is the gold yes/no for the question as asked, so a direct
+    match needs no polarity handling. `no` is checked first because the French
+    "non" / English "no" are the unambiguous negatives; positives never contain
+    them.
+    """
+    t = _norm(text)
+    if re.search(r"\b(no|non|nope|nan|false|faux)\b", t):
+        return "no"
+    if re.search(r"\b(yes|yeah|yep|yup|true|oui|ouais|vrai)\b", t):
+        return "yes"
+    return None
+
+
 _EXTRACTORS = {
     "GENDER RECOGNITION": _gender,
     "SPOKEN LANGUAGE IDENTIFICATION": _language,
     "EMOTION RECOGNITION": _emotion,
     "AGE RECOGNITION": _age,
+    "SPEAKER IDENTIFICATION": _yesno,
 }
 
 

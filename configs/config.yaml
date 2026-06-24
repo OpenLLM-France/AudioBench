@@ -1,7 +1,7 @@
 global:
   batch_size: 25
   overwrite: False
-  number_of_samples: 500
+  number_of_samples: 250
   skip_errors: False
   backend: vllm
   gpu_memory_utilization: 0.4
@@ -16,6 +16,8 @@ global:
     - group: asr
       metrics: wer
       task: asr
+      number_of_samples: 500   # ASR has no judge (cheap to score) and long-form sets
+                               # (YouTubeFr, SUMM-RE, TEDx) lose precision at 250
       min_audio_duration: 1
       max_audio_duration: 30
       datasets:
@@ -231,8 +233,7 @@ global:
 
     # Age Recognition
     - group: age_recognition
-      metrics: flow_judge
-      judge_binary: true
+      metrics: label_match
       task: Age Recognition
       datasets:
         - group: age_recognition_fr
@@ -313,7 +314,6 @@ global:
       metrics: temporal_regex
       task: Temporal
       language: en
-      number_of_samples: 100
       prompt_prefix: |
         Answer with only the requested value. No prose, no quotes, no extra words.
         Output formats:
@@ -342,7 +342,6 @@ global:
       metrics: format_check
       task: Format Following
       language: en
-      number_of_samples: 100
       datasets:
         - name: SLUE-SQA5_format_json_answer
           path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/format_json_answer/verified_test.jsonl
@@ -351,7 +350,6 @@ global:
       metrics: flow_judge
       task: Timestamped Transcription
       language: en
-      number_of_samples: 100
       prompt_prefix: |
         Transcribe the audio word by word with per-word start times.
         Separate tokens with single spaces, in order. No prose, no header, no JSON, no markdown.
