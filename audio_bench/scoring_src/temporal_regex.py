@@ -33,6 +33,15 @@ from audio_bench.scoring_src.metrics import build_metric_stats
 _TIMESTAMP_SCALE_S = 1.0
 _TIMESTAMP_MATCH_MAX_S = 5.0
 
+# time2word asks for the single word spoken at a timestamp. A correct answer is
+# either bare ("computer") or wrapped in a short carrier ("The word is
+# 'computer'."). Models that instead transcribe the whole passage would earn
+# full credit just because the reference word appears somewhere in the
+# transcription. To avoid that, the "word appears as a standalone token" credit
+# is only granted when the prediction is short enough to be an answer rather
+# than a transcription, OR the model explicitly quoted the reference word.
+_TIME2WORD_MAX_PRED_WORDS = 5
+
 
 def _gap_score(d):
     """Graded credit in [0, 100] for a timestamp gap of ``d`` seconds."""
@@ -75,6 +84,12 @@ def _normalize(text):
     s = s.strip("\"'`“”‘’ ")
     s = re.sub(r"\s+", " ", s)
     return s
+
+
+def _quoted_spans(text):
+    """Return the contents of quoted spans in ``text`` (straight or curly
+    quotes), e.g. "the word 'security' here" -> ["security"]."""
+    return re.findall(r"['\"“”‘’]([^'\"“”‘’]+)['\"“”‘’]", str(text or ""))
 
 
 def _is_negative_phrase(text):
@@ -192,11 +207,19 @@ def _score_time2word(reference, prediction):
     if len(ref_words) > 1:
         content = [w for w in ref_words if w not in {"the", "a", "an"}]
         ref_n = (content or ref_words)[0]
-    # Full credit for an exact match or for the reference word appearing as a
-    # standalone token anywhere in the prediction (e.g. wrapped in a sentence).
     if pred_n == ref_n:
         return 100.0
-    if re.search(rf"(?<!\w){re.escape(ref_n)}(?!\w)", pred_n):
+    # Reference word present as a standalone token somewhere in the prediction.
+    token_re = rf"(?<!\w){re.escape(ref_n)}(?!\w)"
+    if not re.search(token_re, pred_n):
+        return 0.0
+    # Only credit it if the prediction is short (a plausible answer, not a full
+    # transcription) or the model explicitly quoted the reference word — a
+    # transcription that merely contains the word earns nothing.
+    is_short = len(pred_n.split()) <= _TIME2WORD_MAX_PRED_WORDS
+    quoted = " | ".join(_quoted_spans(prediction)).lower()
+    is_quoted = bool(re.search(token_re, quoted))
+    if is_short or is_quoted:
         return 100.0
     return 0.0
 
