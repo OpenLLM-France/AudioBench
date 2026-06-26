@@ -56,6 +56,7 @@ try:
     from plot_results_to_html import (  # when run as a script from audio_bench/
         LOWER_IS_BETTER,
         ZERO_TO_ONE_RANGE,
+        _TASK_METRIC_OVERRIDE,
         _lang_sort_key,
         _task_display_name,
     )
@@ -63,9 +64,16 @@ except ImportError:  # when run as a module: python -m audio_bench.compare_two_s
     from audio_bench.plot_results_to_html import (
         LOWER_IS_BETTER,
         ZERO_TO_ONE_RANGE,
+        _TASK_METRIC_OVERRIDE,
         _lang_sort_key,
         _task_display_name,
     )
+
+# Metrics that are unbounded above and dominated by a few catastrophic samples
+# (e.g. WER can exceed 100% when the model loops/hallucinates). Per-sample values
+# are clipped to this ceiling before any statistic/test so that means and tests
+# reflect typical behaviour rather than a handful of outliers.
+CLIP_AT_ONE = {"wer"}
 
 
 # ---------------------------------------------------------------------------
@@ -167,6 +175,8 @@ def paired_stats(a, b, metric, alpha):
     sf = 100.0 if metric in ZERO_TO_ONE_RANGE else 1.0
     mean_a = float(np.mean(a)) * sf if n else float("nan")
     mean_b = float(np.mean(b)) * sf if n else float("nan")
+    median_a = float(np.median(a)) * sf if n else float("nan")
+    median_b = float(np.median(b)) * sf if n else float("nan")
 
     # Two-sided p-values
     t_p = wil_p = float("nan")
@@ -204,10 +214,17 @@ def paired_stats(a, b, metric, alpha):
     base = mean_b if winner == "A" else mean_a
     rel_pct = (abs(adv_a) / abs(base) * 100.0) if base not in (0, float("nan")) and base else float("nan")
 
+    # Do the two tests disagree about significance at this alpha?
+    t_sig = (t_p is not None) and (not math.isnan(t_p)) and (t_p < alpha)
+    w_sig = (wil_p is not None) and (not math.isnan(wil_p)) and (wil_p < alpha)
+    disagree = (t_sig != w_sig)
+
     return {
         "n": n,
         "mean_a": mean_a,
         "mean_b": mean_b,
+        "median_a": median_a,
+        "median_b": median_b,
         "adv_a": adv_a,          # display units, +ve => A better
         "rel_pct": rel_pct,      # winner improvement over loser, %
         "t_p": t_p,
@@ -217,6 +234,7 @@ def paired_stats(a, b, metric, alpha):
         "dz_hi": dz_hi,
         "winner": winner,
         "sig": _sig_stars(t_p, alpha),
+        "disagree": disagree,
         "lower_better": lower_better,
     }
 
@@ -225,7 +243,15 @@ def paired_stats(a, b, metric, alpha):
 # Comparison driver
 # ---------------------------------------------------------------------------
 
-def compare(results_folder, name_a, name_b, check_ref=True):
+def _clip(scores, metric, clip_wer):
+    """Clip unbounded metrics to a sensible ceiling. Returns (scores, n_clipped)."""
+    if not (clip_wer and metric in CLIP_AT_ONE):
+        return scores, 0
+    n_clipped = sum(1 for s in scores if s > 1.0)
+    return [min(s, 1.0) for s in scores], n_clipped
+
+
+def compare(results_folder, name_a, name_b, check_ref=True, clip_wer=True):
     """Pair up per-sample scores for the two systems.
 
     Returns (group_samples, dataset_rows, warnings) where:
@@ -235,6 +261,10 @@ def compare(results_folder, name_a, name_b, check_ref=True):
     * dataset_rows is a list of per-dataset dicts (relpath, task, language,
       metric, a-scores, b-scores) for the detail table,
     * warnings is a list of human-readable warning strings.
+
+    When *clip_wer* is True, per-sample WER values above 100% are clipped to
+    100% before pooling so that means and tests are not dominated by a few
+    catastrophic samples.
     """
     dir_a = resolve_system_dir(results_folder, name_a)
     dir_b = resolve_system_dir(results_folder, name_b)
@@ -243,6 +273,7 @@ def compare(results_folder, name_a, name_b, check_ref=True):
     files_b = collect_score_files(dir_b)
 
     warnings = []
+    clipped_total = 0
     for rel in sorted(set(files_a) - set(files_b)):
         warnings.append(f"'{rel}' present for {name_a} but missing for {name_b} — skipped")
     for rel in sorted(set(files_b) - set(files_a)):
@@ -304,6 +335,10 @@ def compare(results_folder, name_a, name_b, check_ref=True):
                     f"  The two systems were not evaluated on the same number of samples."
                 )
 
+            scores_a, ca = _clip(scores_a, m, clip_wer)
+            scores_b, cb = _clip(scores_b, m, clip_wer)
+            clipped_total += ca + cb
+
             key = (task, language, m)
             group_samples[key]["a"].extend(scores_a)
             group_samples[key]["b"].extend(scores_b)
@@ -316,6 +351,12 @@ def compare(results_folder, name_a, name_b, check_ref=True):
                 "a": scores_a,
                 "b": scores_b,
             })
+
+    if clipped_total:
+        warnings.append(
+            f"Clipped {clipped_total} per-sample WER value(s) above 100% to 100% "
+            f"(metrics {sorted(CLIP_AT_ONE)}); disable with --no-clip-wer"
+        )
 
     return dict(group_samples), dataset_rows, warnings
 
@@ -342,19 +383,28 @@ def _group_sort_key(key):
     return (_task_display_name(task or ""), _lang_sort_key(lang or ""), metric)
 
 
+def _winner_cell(s, name_a, name_b, alpha):
+    """Return the HTML <td> for the winner column (color + name + stars + flags)."""
+    winner_name = {"A": name_a, "B": name_b, "tie": "—"}[s["winner"]]
+    if s["winner"] == "tie":
+        color = _NS_COLOR
+    elif s["t_p"] is not None and not math.isnan(s["t_p"]) and s["t_p"] < alpha:
+        color = _FIRST_COLOR if s["winner"] == "A" else _SECOND_COLOR
+    else:
+        color = _NS_COLOR
+    # Mark when the two tests disagree about significance at this alpha.
+    flag = (' <span title="t-test and Wilcoxon disagree on significance '
+            'at this &alpha; — treat with caution">&Dagger;</span>') if s.get("disagree") else ""
+    return (f"<td style='background:{color};color:white;font-weight:600'>"
+            f"{winner_name} {s['sig']}{flag}</td>")
+
+
 def build_summary_table(group_stats, name_a, name_b, alpha):
     """HTML table, one row per {task, language, metric}."""
     rows = []
     for key in sorted(group_stats, key=_group_sort_key):
         task, lang, metric = key
         s = group_stats[key]
-        winner_name = {"A": name_a, "B": name_b, "tie": "—"}[s["winner"]]
-        if s["winner"] == "tie":
-            color = _NS_COLOR
-        elif s["t_p"] is not None and not math.isnan(s["t_p"]) and s["t_p"] < alpha:
-            color = _FIRST_COLOR if s["winner"] == "A" else _SECOND_COLOR
-        else:
-            color = _NS_COLOR
         unit = " %" if metric in ZERO_TO_ONE_RANGE else ""
         rel = f"{s['rel_pct']:.1f}%" if math.isfinite(s["rel_pct"]) else "—"
         rows.append(
@@ -365,19 +415,22 @@ def build_summary_table(group_stats, name_a, name_b, alpha):
             f"<td>{s['n']}</td>"
             f"<td>{s['mean_a']:.2f}</td>"
             f"<td>{s['mean_b']:.2f}</td>"
+            f"<td>{s['median_a']:.2f}</td>"
+            f"<td>{s['median_b']:.2f}</td>"
             f"<td>{s['adv_a']:+.2f}</td>"
             f"<td>{rel}</td>"
             f"<td>{s['dz']:+.3f}</td>"
             f"<td>{_fmt_p(s['t_p'])}</td>"
             f"<td>{_fmt_p(s['wil_p'])}</td>"
-            f"<td style='background:{color};color:white;font-weight:600'>{winner_name} {s['sig']}</td>"
-            "</tr>"
+            + _winner_cell(s, name_a, name_b, alpha)
+            + "</tr>"
         )
     head = (
         "<tr>"
         "<th>Task</th><th>Lang</th><th>Metric</th><th>n</th>"
         f"<th>{name_a}<br>(mean)</th><th>{name_b}<br>(mean)</th>"
-        f"<th>&Delta; (A&minus;B)<br><span class='sub'>+&rArr;{name_a} better</span></th>"
+        f"<th>{name_a}<br>(median)</th><th>{name_b}<br>(median)</th>"
+        f"<th>&Delta; mean<br><span class='sub'>+&rArr;{name_a} better</span></th>"
         "<th>Rel.<br>impr.</th>"
         "<th>Cohen&rsquo;s d<sub>z</sub></th>"
         "<th>t-test<br>p</th><th>Wilcoxon<br>p</th><th>Winner</th>"
@@ -391,13 +444,6 @@ def build_dataset_table(dataset_rows, group_stats_fn, name_a, name_b, alpha):
     rows = []
     for r in sorted(dataset_rows, key=lambda r: _group_sort_key((r["task"], r["language"], r["metric"]))):
         s = group_stats_fn(r["a"], r["b"], r["metric"])
-        winner_name = {"A": name_a, "B": name_b, "tie": "—"}[s["winner"]]
-        if s["winner"] == "tie":
-            color = _NS_COLOR
-        elif s["t_p"] is not None and not math.isnan(s["t_p"]) and s["t_p"] < alpha:
-            color = _FIRST_COLOR if s["winner"] == "A" else _SECOND_COLOR
-        else:
-            color = _NS_COLOR
         unit = " %" if r["metric"] in ZERO_TO_ONE_RANGE else ""
         rows.append(
             "<tr>"
@@ -408,17 +454,20 @@ def build_dataset_table(dataset_rows, group_stats_fn, name_a, name_b, alpha):
             f"<td>{s['n']}</td>"
             f"<td>{s['mean_a']:.2f}</td>"
             f"<td>{s['mean_b']:.2f}</td>"
+            f"<td>{s['median_a']:.2f}</td>"
+            f"<td>{s['median_b']:.2f}</td>"
             f"<td>{s['adv_a']:+.2f}</td>"
             f"<td>{_fmt_p(s['t_p'])}</td>"
             f"<td>{_fmt_p(s['wil_p'])}</td>"
-            f"<td style='background:{color};color:white;font-weight:600'>{winner_name} {s['sig']}</td>"
-            "</tr>"
+            + _winner_cell(s, name_a, name_b, alpha)
+            + "</tr>"
         )
     head = (
         "<tr>"
         "<th>Task</th><th>Lang</th><th>Dataset</th><th>Metric</th><th>n</th>"
         f"<th>{name_a}<br>(mean)</th><th>{name_b}<br>(mean)</th>"
-        "<th>&Delta; (A&minus;B)</th>"
+        f"<th>{name_a}<br>(median)</th><th>{name_b}<br>(median)</th>"
+        "<th>&Delta; mean</th>"
         "<th>t-test p</th><th>Wilcoxon p</th><th>Winner</th>"
         "</tr>"
     )
@@ -505,6 +554,125 @@ def grouped_bar_plots(group_stats, name_a, name_b):
     return figs
 
 
+# ---------------------------------------------------------------------------
+# Radar plots
+# ---------------------------------------------------------------------------
+
+def _primary_metric_by_task(keys):
+    """Pick one representative metric per task (e.g. AST -> meteor)."""
+    from collections import Counter, defaultdict as dd
+    counts = dd(Counter)
+    for task, _lang, metric in keys:
+        counts[task][metric] += 1
+    primary = {}
+    for task, c in counts.items():
+        override = _TASK_METRIC_OVERRIDE.get((task or "").upper())
+        primary[task] = override if (override and override in c) else c.most_common(1)[0][0]
+    return primary
+
+
+def _radar_quality(mean_raw, metric):
+    """Map a raw metric mean to a 0..100 'quality' score (higher = better).
+
+    Every metric is normalised onto a common outward-is-better scale so that
+    different tasks can share one radar without their native scales clashing.
+    """
+    if metric == "wer":
+        q = 1.0 - mean_raw                 # WER (already clipped to <=1) -> accuracy
+    elif metric == "flow_judge":
+        q = (mean_raw + 1.0) / 6.0         # judge score in [-1, 5]
+    elif metric in ("bleu", "temporal_regex"):
+        q = mean_raw / 100.0               # already 0..100
+    else:
+        q = mean_raw                       # meteor, acc, label_match, format_check: 0..1
+    return max(0.0, min(1.0, q)) * 100.0
+
+
+def _radar_figure(axis_labels, qual_a, qual_b, name_a, name_b, title):
+    """Build a two-trace radar (Scatterpolar) figure. Needs >= 3 axes."""
+    # Close the polygon by repeating the first point.
+    theta = axis_labels + [axis_labels[0]]
+    ra = qual_a + [qual_a[0]]
+    rb = qual_b + [qual_b[0]]
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=ra, theta=theta, name=name_a, fill="toself",
+        line=dict(color=_FIRST_COLOR), opacity=0.7,
+        hovertemplate="%{theta}<br>%{r:.1f}/100<extra>" + name_a + "</extra>",
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r=rb, theta=theta, name=name_b, fill="toself",
+        line=dict(color=_SECOND_COLOR), opacity=0.7,
+        hovertemplate="%{theta}<br>%{r:.1f}/100<extra>" + name_b + "</extra>",
+    ))
+    fig.update_layout(
+        title_text=title, title_font_size=14,
+        polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+        height=480, width=640, template="plotly_white",
+        legend=dict(orientation="h", yanchor="bottom", y=-0.12),
+    )
+    return fig
+
+
+def task_radar(group_samples, name_a, name_b):
+    """Overall radar: one axis per task, outward = better (normalised quality).
+
+    Returns a figure, or None when fewer than 3 tasks are available.
+    """
+    primary = _primary_metric_by_task(group_samples.keys())
+    # Pool per-task across languages for the task's primary metric.
+    task_a = defaultdict(list)
+    task_b = defaultdict(list)
+    for (task, _lang, metric), samples in group_samples.items():
+        if metric != primary.get(task):
+            continue
+        task_a[task].extend(samples["a"])
+        task_b[task].extend(samples["b"])
+
+    tasks = sorted(task_a, key=lambda t: _task_display_name(t or ""))
+    if len(tasks) < 3:
+        return None
+
+    labels = [f"{_task_display_name(t or '?')}<br>({primary[t]})" for t in tasks]
+    qual_a = [_radar_quality(float(np.mean(task_a[t])), primary[t]) for t in tasks]
+    qual_b = [_radar_quality(float(np.mean(task_b[t])), primary[t]) for t in tasks]
+    return _radar_figure(
+        labels, qual_a, qual_b, name_a, name_b,
+        "Task profile — normalised quality (0–100, outward = better)",
+    )
+
+
+def dataset_radars_by_task(dataset_rows, name_a, name_b):
+    """Per-task radars: one axis per {dataset, language} pair (>= 3 pairs).
+
+    Returns a list of (task_display_name, figure).
+    """
+    primary = _primary_metric_by_task(
+        (r["task"], r["language"], r["metric"]) for r in dataset_rows
+    )
+    by_task = defaultdict(list)
+    for r in dataset_rows:
+        if r["metric"] == primary.get(r["task"]):
+            by_task[r["task"]].append(r)
+
+    figs = []
+    for task in sorted(by_task, key=lambda t: _task_display_name(t or "")):
+        rows = sorted(by_task[task], key=lambda r: (_lang_sort_key(r["language"] or ""), r["dataset"]))
+        if len(rows) < 3:
+            continue
+        metric = primary[task]
+        labels = [f"{r['dataset']}<br>({r['language'] or '?'})" for r in rows]
+        qual_a = [_radar_quality(float(np.mean(r["a"])), metric) for r in rows]
+        qual_b = [_radar_quality(float(np.mean(r["b"])), metric) for r in rows]
+        fig = _radar_figure(
+            labels, qual_a, qual_b, name_a, name_b,
+            f"{_task_display_name(task or '?')} ({metric}) — per dataset×language "
+            f"(normalised, outward = better)",
+        )
+        figs.append((_task_display_name(task or "?"), fig))
+    return figs
+
+
 _HTML = """<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
@@ -545,6 +713,8 @@ _HTML = """<!DOCTYPE html>
 {warnings}
 <h2>Summary per {{task, language}}</h2>
 {summary_table}
+<h2>Task profile (radar)</h2>
+{task_radar}
 <h2>Effect size (forest plot)</h2>
 <div class="fig">{forest}</div>
 <h2>Mean scores per metric</h2>
@@ -553,11 +723,19 @@ _HTML = """<!DOCTYPE html>
 <details><summary>Show per-dataset table ({n_datasets} datasets)</summary>
 {dataset_table}
 </details>
+<details><summary>Show per-task radars (one axis per dataset×language)</summary>
+{dataset_radars}
+</details>
 </body></html>
 """
 
 
-def build_report(group_stats, dataset_rows, warnings, name_a, name_b, alpha, output_path):
+def _fig_div(fig):
+    return f"<div class='fig'>{fig.to_html(full_html=False, include_plotlyjs=False)}</div>"
+
+
+def build_report(group_stats, group_samples, dataset_rows, warnings,
+                 name_a, name_b, alpha, output_path):
     if warnings:
         warn_html = ("<div class='warn'><b>⚠ Warnings (data not perfectly aligned):</b><ul>"
                      + "".join(f"<li>{w}</li>" for w in warnings) + "</ul></div>")
@@ -569,10 +747,22 @@ def build_report(group_stats, dataset_rows, warnings, name_a, name_b, alpha, out
     forest_html = forest_plot(group_stats, name_a, name_b, alpha).to_html(
         full_html=False, include_plotlyjs=False)
 
-    bar_blocks = []
-    for _metric, fig in grouped_bar_plots(group_stats, name_a, name_b):
-        bar_blocks.append(f"<div class='fig'>{fig.to_html(full_html=False, include_plotlyjs=False)}</div>")
-    bars_html = "\n".join(bar_blocks)
+    bars_html = "\n".join(_fig_div(fig) for _metric, fig in grouped_bar_plots(group_stats, name_a, name_b))
+
+    # Overall task radar (>= 3 tasks)
+    radar_fig = task_radar(group_samples, name_a, name_b)
+    task_radar_html = _fig_div(radar_fig) if radar_fig else (
+        "<p style='font-size:12px;color:#64748b'>Need at least 3 tasks for a radar plot.</p>")
+
+    # Per-task dataset radars (>= 3 dataset×language pairs each)
+    ds_radars = dataset_radars_by_task(dataset_rows, name_a, name_b)
+    if ds_radars:
+        dataset_radars_html = "\n".join(
+            f"<h3 style='font-size:14px;margin:14px 0 0'>{task}</h3>{_fig_div(fig)}"
+            for task, fig in ds_radars)
+    else:
+        dataset_radars_html = ("<p style='font-size:12px;color:#64748b'>No task has "
+                               "at least 3 dataset×language pairs.</p>")
 
     def _stats_fn(a, b, metric):
         return paired_stats(a, b, metric, alpha)
@@ -583,7 +773,8 @@ def build_report(group_stats, dataset_rows, warnings, name_a, name_b, alpha, out
         name_a=name_a, name_b=name_b, alpha=alpha,
         c1=_FIRST_COLOR, c2=_SECOND_COLOR, cns=_NS_COLOR,
         warnings=warn_html, summary_table=summary_html, forest=forest_html,
-        bars=bars_html, dataset_table=dataset_html, n_datasets=len(dataset_rows),
+        bars=bars_html, task_radar=task_radar_html, dataset_radars=dataset_radars_html,
+        dataset_table=dataset_html, n_datasets=len(dataset_rows),
     )
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     Path(output_path).write_text(html, encoding="utf-8")
@@ -628,6 +819,12 @@ def main():
         action="store_true",
         help="Skip the strong check that reference texts line up in the same order",
     )
+    parser.add_argument(
+        "--no-clip-wer", "--no_clip_wer", dest="clip_wer", action="store_false",
+        help="Do not clip per-sample WER above 100%% to 100%% "
+             "(by default it is clipped so a few catastrophic samples do not "
+             "dominate means/tests)",
+    )
     args = parser.parse_args()
 
     name_a = Path(args.system_a).name
@@ -635,7 +832,7 @@ def main():
 
     group_samples, dataset_rows, warnings = compare(
         args.results_folder, args.system_a, args.system_b,
-        check_ref=not args.dont_check_ref,
+        check_ref=not args.dont_check_ref, clip_wer=args.clip_wer,
     )
 
     for w in warnings:
@@ -659,7 +856,8 @@ def main():
     print_console_summary(group_stats, name_a, name_b)
 
     out = os.path.join(args.output_folder, f"comparison_{name_a}_vs_{name_b}.html")
-    build_report(group_stats, dataset_rows, warnings, name_a, name_b, args.alpha, out)
+    build_report(group_stats, group_samples, dataset_rows, warnings,
+                 name_a, name_b, args.alpha, out)
 
 
 if __name__ == "__main__":
