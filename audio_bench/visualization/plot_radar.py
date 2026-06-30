@@ -8,10 +8,17 @@ model over a set of axes (super-categories, tasks, or individual datasets).
 
 Because the benchmark mixes metrics with different scales and directions
 (WER lower-is-better, BLEU/judge-scores higher-is-better, accuracy 0-1, ...),
-the default ``--normalize minmax`` mode rescales every dataset to ``[0, 1]``
-across the compared models so that ``1.0 = best model on that dataset`` and
-``0.0 = worst``. Each axis value is then the mean of its datasets' normalized
-scores. Use ``--normalize raw`` only when every axis shares one metric.
+scores are normalized before plotting (each axis value is the mean of its
+datasets' normalized scores):
+
+* ``--normalize global`` (default) — absolute score against a fixed per-metric
+  ideal (WER→0, BLEU/judge/acc→100), rescaled to ``[0, 1]``. Independent of the
+  other models, so a tiny gap stays tiny and a large gap stays large. Honest
+  when comparing only 2-3 models.
+* ``--normalize minmax`` — rescale each dataset across the compared models so
+  ``1.0 = best of them`` and ``0.0 = worst``. Good for spotting relative
+  ordering, but exaggerates negligible gaps when few models are compared.
+* ``--normalize raw`` — plot oriented raw scores (use with a single metric).
 
 Outputs a PNG (matplotlib) and, unless ``--no-html``, an interactive HTML
 radar (plotly).
@@ -49,8 +56,12 @@ import numpy as np
 from audio_bench.plot_results_to_html import (
     LOWER_IS_BETTER,
     ZERO_TO_ONE_RANGE,
+    _SUPER_CATEGORY_ORDER,
+    _TASK_METRIC_OVERRIDE,
     _display_score,
+    _lang_sort_key,
     _model_color_map,
+    _most_common_metric,
     _super_category,
     _task_display_name,
     load_all_scores,
@@ -61,22 +72,86 @@ from audio_bench.plot_results_to_html import (
 # Aggregation
 # ---------------------------------------------------------------------------
 
+# Subtitle shown under each figure title, per normalization mode.
+_NORMALIZE_SUBTITLE = {
+    "minmax": "min-max normalized per dataset across the compared models "
+              "(outward = best of them; exaggerates ties)",
+    "global": "absolute score vs a fixed per-metric ideal "
+              "(WER→0, BLEU/judge/acc→100); outward = ideal",
+    "raw": "raw scores, oriented so outward = better",
+}
+
+
+def _lang_suffix(entry):
+    lang = entry.get("language")
+    return f" [{lang}]" if lang and lang != "UNKNOWN" else ""
+
+
 def _axis_of(entry, by):
     """Return the radar-axis label for an entry given the grouping mode."""
     if by == "super":
         return _super_category(entry.get("task") or "")
+    if by == "super-language":
+        return _super_category(entry.get("task") or "") + _lang_suffix(entry)
     if by == "task":
+        # One axis per task, no folding. "Others" is reserved for --by super.
         return _task_display_name(entry.get("task") or "Unknown")
+    if by == "task-language":
+        return _task_display_name(entry.get("task") or "Unknown") + _lang_suffix(entry)
     if by == "dataset":
-        name = entry["dataset_name"]
-        lang = entry.get("language")
-        return f"{name} [{lang}]" if lang and lang != "UNKNOWN" else name
+        return entry["dataset_name"] + _lang_suffix(entry)
     raise ValueError(f"unknown --by value: {by}")
 
 
 def _dataset_key(entry):
     """Identity of a comparable cell: same dataset + language + metric."""
     return (entry["dataset_name"], entry.get("language"), entry["metric_name"])
+
+
+def _split_axis(axis):
+    """Split 'ASR [FR]' -> ('ASR', 'FR'); 'ASR' -> ('ASR', None)."""
+    if axis.endswith("]") and " [" in axis:
+        i = axis.rindex(" [")
+        return axis[:i], axis[i + 2:-1]
+    return axis, None
+
+
+def _axis_sort_key(axis, by):
+    """Order axes by super-category (canonical order), then group, then language,
+    so related sectors sit next to each other instead of alphabetically."""
+    group, lang = _split_axis(axis)
+    if by in ("super", "super-language"):
+        super_cat = group
+    elif by in ("task", "task-language"):
+        super_cat = _super_category(group.upper())
+    else:  # dataset: no task info in the label
+        super_cat = None
+    cat_idx = (_SUPER_CATEGORY_ORDER.index(super_cat)
+               if super_cat in _SUPER_CATEGORY_ORDER else len(_SUPER_CATEGORY_ORDER))
+    return (cat_idx, group, _lang_sort_key(lang) if lang else ())
+
+
+def _select_task_metrics(entries):
+    """Keep a single metric per task, as report.html does.
+
+    A dataset may be scored with several metrics (e.g. AST's Multilingual_TEDx
+    has both ``bleu`` and ``meteor``). Counting both would double-weight that
+    task on the radar and mix two scales, so we keep the task's override metric
+    (``_TASK_METRIC_OVERRIDE``, e.g. AST→meteor) when present, else its most
+    common metric.
+    """
+    by_task = defaultdict(list)
+    for e in entries:
+        by_task[(e.get("task") or "").upper()].append(e)
+    chosen = {}
+    for task, ents in by_task.items():
+        override = _TASK_METRIC_OVERRIDE.get(task)
+        if override and any(x["metric_name"] == override for x in ents):
+            chosen[task] = override
+        else:
+            chosen[task] = _most_common_metric(ents)
+    return [e for e in entries
+            if e["metric_name"] == chosen[(e.get("task") or "").upper()]]
 
 
 def _oriented_raw(entry):
@@ -94,42 +169,82 @@ def _oriented_raw(entry):
 
 
 def build_axis_values(entries, models, by, normalize):
-    """Return (axes, {model: {axis: value}}, axis_dataset_counts).
+    """Return (axes, {model: {axis: value}}, axis_dataset_counts, hover).
 
-    ``value`` is in [0, 1] for minmax mode, or the oriented raw score for raw
-    mode. Models missing every dataset of an axis get no entry for that axis.
+    ``value`` is in [0, 1] for minmax/global, or the oriented raw score for raw
+    mode. ``hover`` maps ``(model, axis) -> (mean_display_score, metric_label,
+    n_datasets)`` for tooltips, where ``metric_label`` is the metric name when
+    the axis is single-metric else ``"mixed"``.
     """
+    # One metric per task (e.g. AST→meteor only), so a dataset scored with
+    # several metrics is not counted/averaged twice.
+    entries = _select_task_metrics(entries)
+
     # Group the comparable cells: cell_key -> {model: oriented_raw_score}
     cells = defaultdict(dict)
+    cell_disp = defaultdict(dict)  # cell_key -> {model: display_score (raw, for hover)}
     cell_axis = {}
+    cell_metric = {}
     for e in entries:
         if e["model_name"] not in models:
             continue
         key = _dataset_key(e)
         cells[key][e["model_name"]] = _oriented_raw(e)
+        cell_disp[key][e["model_name"]] = _display_score(e["score"], e["metric_name"])
         cell_axis[key] = _axis_of(e, by)
+        cell_metric[key] = e["metric_name"]
+
+    # Keep only datasets that *every* compared model has, so no model can "win"
+    # an axis just by being the only one evaluated on it. Dropped cells are
+    # reported rather than silently neutralized.
+    n_models = len(models)
+    dropped = [(k, set(models) - set(ms.keys())) for k, ms in cells.items()
+               if len(ms) < n_models]
+    if dropped:
+        print(f"[warn] {len(dropped)} dataset cell(s) dropped — not present for "
+              f"all {n_models} compared models:", file=sys.stderr)
+        for key, missing in sorted(dropped, key=lambda x: x[0])[:40]:
+            ds, lang, metric = key
+            label = f"{ds} [{lang}]" if lang and lang != "UNKNOWN" else ds
+            print(f"         - {label} ({metric}) — missing for: "
+                  f"{', '.join(sorted(missing))}", file=sys.stderr)
+        if len(dropped) > 40:
+            print(f"         ... and {len(dropped) - 40} more", file=sys.stderr)
+    cells = {k: ms for k, ms in cells.items() if len(ms) == n_models}
 
     # Per cell, convert to the value we average over.
     # minmax: rescale across the participating models to [0, 1].
     per_model_axis_vals = defaultdict(lambda: defaultdict(list))
+    per_model_axis_disp = defaultdict(lambda: defaultdict(list))  # for hover
+    axis_metrics = defaultdict(set)
     axis_datasets = defaultdict(set)
     for key, model_scores in cells.items():
         axis = cell_axis[key]
         axis_datasets[axis].add(key)
+        axis_metrics[axis].add(cell_metric[key])
+        for m, dv in cell_disp[key].items():
+            per_model_axis_disp[m][axis].append(dv)
         if normalize == "raw":
             for m, v in model_scores.items():
                 per_model_axis_vals[m][axis].append(v)
+            continue
+        if normalize == "global":
+            # _oriented_raw is already on a fixed 0-100 per-metric scale, so
+            # divide by the ideal (100) and clamp. No dependence on the other
+            # models -> a tiny gap stays tiny, a large gap stays large.
+            for m, v in model_scores.items():
+                per_model_axis_vals[m][axis].append(min(max(v / 100.0, 0.0), 1.0))
             continue
         lo = min(model_scores.values())
         hi = max(model_scores.values())
         span = hi - lo
         for m, v in model_scores.items():
-            # Degenerate cell (one model, or all tied) -> neutral 0.5 so it
-            # neither rewards nor punishes; otherwise linear rescale.
+            # All models are present here (others were dropped above); a zero
+            # span now means a genuine tie -> neutral 0.5. Otherwise rescale.
             norm = 0.5 if span <= 1e-12 else (v - lo) / span
             per_model_axis_vals[m][axis].append(norm)
 
-    axes = sorted(axis_datasets.keys())
+    axes = sorted(axis_datasets.keys(), key=lambda a: _axis_sort_key(a, by))
     model_axis_value = {}
     for m in models:
         model_axis_value[m] = {
@@ -138,7 +253,17 @@ def build_axis_values(entries, models, by, normalize):
             if vals
         }
     axis_counts = {axis: len(ds) for axis, ds in axis_datasets.items()}
-    return axes, model_axis_value, axis_counts
+    axis_metric_label = {
+        ax: (next(iter(ms)) if len(ms) == 1 else "mixed")
+        for ax, ms in axis_metrics.items()
+    }
+    hover = {
+        (m, ax): (float(np.mean(vals)), axis_metric_label[ax], axis_counts[ax])
+        for m in models
+        for ax, vals in per_model_axis_disp.get(m, {}).items()
+        if vals
+    }
+    return axes, model_axis_value, axis_counts, hover
 
 
 # ---------------------------------------------------------------------------
@@ -166,10 +291,11 @@ def render_png(axes, model_axis_value, axis_counts, colors, normalize, title, ou
     ax.set_xticks(angles)
     ax.set_xticklabels([f"{a}\n({axis_counts.get(a, 0)} ds)" for a in axes], fontsize=9)
 
-    if normalize == "minmax":
+    if normalize in ("minmax", "global"):
         ax.set_ylim(0, 1)
         ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.set_yticklabels(["0.2", "0.4", "0.6", "0.8", "best"], fontsize=7)
+        outer = "best" if normalize == "minmax" else "ideal"
+        ax.set_yticklabels(["0.2", "0.4", "0.6", "0.8", outer], fontsize=7)
     ax.tick_params(axis="y", labelcolor="#888")
 
     for model, axis_vals in model_axis_value.items():
@@ -179,8 +305,7 @@ def render_png(axes, model_axis_value, axis_counts, colors, normalize, title, ou
         ax.plot(closed, line, color=colors[model], lw=2, label=model)
         ax.fill(closed, line, color=colors[model], alpha=0.08)
 
-    sub = "min-max normalized per dataset (outward = best)" if normalize == "minmax" \
-        else "raw scores, oriented so outward = better"
+    sub = _NORMALIZE_SUBTITLE[normalize]
     ax.set_title(f"{title}\n{sub}", fontsize=13, pad=28)
     ax.legend(loc="upper right", bbox_to_anchor=(1.32, 1.12), fontsize=8)
     fig.tight_layout()
@@ -189,7 +314,7 @@ def render_png(axes, model_axis_value, axis_counts, colors, normalize, title, ou
     print(f"[ok] wrote {out_path}")
 
 
-def render_html(axes, model_axis_value, axis_counts, colors, normalize, title, out_path):
+def render_html(axes, model_axis_value, axis_counts, hover, colors, normalize, title, out_path):
     try:
         import plotly.graph_objects as go
     except ImportError:
@@ -199,18 +324,32 @@ def render_html(axes, model_axis_value, axis_counts, colors, normalize, title, o
     fig = go.Figure()
     for model, axis_vals in model_axis_value.items():
         r = [axis_vals.get(a) for a in axes]
+        # customdata per point: [raw score string, normalized value] so the
+        # tooltip shows the real metric value, not just the plotted radius.
+        cdata = []
+        for a in axes:
+            info = hover.get((model, a))
+            if info is None:
+                cdata.append(["—"])
+            else:
+                raw, metric, _ = info
+                cdata.append([f"{metric.upper()} {raw:.1f}"])
         fig.add_trace(go.Scatterpolar(
             r=r + r[:1],
             theta=theta + theta[:1],
+            customdata=cdata + cdata[:1],
             name=model,
             line=dict(color=colors[model], width=2),
             fill="toself",
             opacity=0.7,
             connectgaps=False,
+            hovertemplate=("<b>%{theta}</b><br>"
+                           "score: %{customdata[0]}<br>"
+                           "radius: %{r:.2f}"
+                           "<extra>%{fullData.name}</extra>"),
         ))
-    radial = dict(range=[0, 1]) if normalize == "minmax" else {}
-    sub = "min-max normalized per dataset (outward = best)" if normalize == "minmax" \
-        else "raw scores, oriented so outward = better"
+    radial = dict(range=[0, 1]) if normalize in ("minmax", "global") else {}
+    sub = _NORMALIZE_SUBTITLE[normalize]
     fig.update_layout(
         title=f"{title}<br><sup>{sub}</sup>",
         polar=dict(radialaxis=radial),
@@ -231,14 +370,24 @@ def main(argv=None):
     p.add_argument("-m", "--models", nargs="*", default=None,
                    help="model_id (folder name) or corrected model_name to include; "
                         "default = all found")
-    p.add_argument("--by", choices=["super", "task", "dataset"], default="super",
-                   help="what each radar axis represents (default: super-category)")
-    p.add_argument("--language", default=None,
-                   help="keep only entries for this language (e.g. FR, EN)")
+    p.add_argument("--by",
+                   choices=["super", "super-language", "task", "task-language", "dataset"],
+                   default="super",
+                   help="what each radar axis represents (default: super-category). "
+                        "The *-language variants split every group per language "
+                        "(e.g. 'ASR [FR]', 'ASR [EN]')")
+    p.add_argument("--language", nargs="+", default=None, metavar="LANG",
+                   help="keep only entries whose language is among these "
+                        "(e.g. --language FR EN to restrict to French/English). "
+                        "For translation pairs like FR-EN, every side must be in "
+                        "the set. Entries with no/UNKNOWN language are dropped.")
     p.add_argument("--metric", default=None,
                    help="keep only entries computed with this metric (e.g. wer, bleu)")
-    p.add_argument("--normalize", choices=["minmax", "raw"], default="minmax",
-                   help="minmax: rescale each dataset across models to [0,1] (default); "
+    p.add_argument("--normalize", choices=["global", "minmax", "raw"], default="global",
+                   help="global: absolute score vs a fixed per-metric ideal, [0,1] "
+                        "(default, honest with few models); "
+                        "minmax: rescale each dataset across the compared models to "
+                        "[0,1] (exaggerates ties when comparing 2-3 models); "
                         "raw: plot oriented raw scores (use with a single metric)")
     p.add_argument("--show-all", action="store_true",
                    help="bypass the curated dataset/model filters in plot_results_to_html")
@@ -251,7 +400,14 @@ def main(argv=None):
 
     entries = load_all_scores(args.input_folder, show_all=args.show_all)
     if args.language:
-        entries = [e for e in entries if (e.get("language") or "").upper() == args.language.upper()]
+        allowed = {l.upper() for l in args.language}
+        def _lang_ok(e):
+            lang = (e.get("language") or "").upper()
+            if not lang or lang == "UNKNOWN":
+                return False
+            # Mono ("FR") or pair ("FR-EN"): every side must be allowed.
+            return all(part in allowed for part in lang.split("-"))
+        entries = [e for e in entries if _lang_ok(e)]
     if args.metric:
         entries = [e for e in entries if e["metric_name"] == args.metric]
     if not entries:
@@ -286,7 +442,7 @@ def main(argv=None):
     if len(models) < 2:
         print(f"[warn] only {len(models)} model(s); a comparison radar wants 2+.", file=sys.stderr)
 
-    axes, model_axis_value, axis_counts = build_axis_values(
+    axes, model_axis_value, axis_counts, hover = build_axis_values(
         entries, models, args.by, args.normalize)
     if not axes:
         print("[error] no axes to plot after grouping", file=sys.stderr)
@@ -299,7 +455,7 @@ def main(argv=None):
     render_png(axes, model_axis_value, axis_counts, colors, args.normalize,
                args.title, out_dir / "radar.png")
     if not args.no_html:
-        render_html(axes, model_axis_value, axis_counts, colors, args.normalize,
+        render_html(axes, model_axis_value, axis_counts, hover, colors, args.normalize,
                     args.title, out_dir / "radar.html")
     return 0
 
