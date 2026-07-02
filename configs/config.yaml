@@ -6,10 +6,11 @@ global:
   backend: vllm
   gpu_memory_utilization: 0.4
   device: cuda
-  compute_metrics: False
-  skip_inference: False
+  compute_metrics: false
+  skip_inference: false
   min_audio_duration: 1
   max_audio_duration: 120
+  output_folder: results
 
   datasets:
     # ASR
@@ -85,14 +86,13 @@ global:
               path: <DATA_FOLDER>/nemo/asr/pt/context/FLEURS/test.jsonl
             - name: Multilingual_TEDx
               path: <DATA_FOLDER>/nemo/asr/pt/context/Multilingual_TEDx/test.jsonl
-
-        # - group: asr_ar
-        #   language: ar
-        #   datasets:
-        #     - name: Fleurs
-        #       path: <DATA_FOLDER>/nemo/asr/ar/context/FLEURS/test.jsonl
-        #     - name: Multilingual_TEDx
-        #       path: <DATA_FOLDER>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
+        - group: asr_ar
+          language: ar
+          datasets:
+            - name: Fleurs
+              path: <DATA_FOLDER>/nemo/asr/ar/context/FLEURS/test.jsonl
+            - name: Multilingual_TEDx
+              path: <DATA_FOLDER>/nemo/asr/ar/context/Multilingual_TEDx/test.jsonl
 
     # AST
     - group: ast
@@ -114,6 +114,37 @@ global:
           path: <DATA_FOLDER>/nemo/ast/es-it/context/Multilingual_TEDx/test.jsonl
           language: es-it
 
+    # Temporal
+    - group: temporal_regex
+      metrics: [temporal_regex]
+      task: Temporal
+      language: en
+      datasets:
+        - name: SLUE-SQA5_time2word
+          sub_task: time2word
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/time2word/verified_test_pure.jsonl
+          prompt_prefix: Answer with only the word (e.g. "Mid-Atlantic"). Plain word, no sentence, no quotes, no extra words.
+        - name: SLUE-SQA5_word2time
+          sub_task: word2time
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/word2time/verified_test_pure.jsonl
+          prompt_prefix: 'Give only the timestamp (or a list of timestamps if many) in seconds. No sentence, no quotes, no extra words. Format like: 12.1s if one occurence or 12.1s,13.2s if many occurences or 19.3s-23.6s if start and end are asked or "invalid_timestamp" if not found.'
+
+    - group: format_follwing
+      metrics: format_check
+      task: Format Following
+      language: en
+      datasets:
+        - name: SLUE-SQA5_format_json_answer
+          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/format_json_answer/verified_test.jsonl
+
+    # Math Question Answering
+    - group: math_qa
+      metrics: acc
+      task: Math Question Answering
+      language: en
+      datasets:
+        - name: spoken-mqa_short_digit
+    
     # Spoken Question Answering
     - group: sqa
       metrics: flow_judge
@@ -148,18 +179,9 @@ global:
             - name: SpokenWOZ_AIR-Bench
               path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Chat/speech/spokenwoz/test.jsonl
 
-
-    # Math Question Answering
-    - group: math_qa
-      metrics: acc
-      task: Math Question Answering
-      language: en
-      datasets:
-        - name: spoken-mqa_short_digit
-
     # Dialogue Summarization
     - group: dialogue_summarization
-      metrics: flow_judge   # should take into account that the task is to summarize
+      metrics: flow_judge
       task: Dialogue Summarization
       language: en
       datasets:
@@ -204,15 +226,6 @@ global:
             - name: MELD_Emotion
               path: <DATA_FOLDER>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
 
-    # Accent Recognition
-    # Answer is 50% USA
-    # - group: accent_recognition
-    #   metrics: flow_judge
-    #   task: Accent Recognition
-    #   language: en
-    #   datasets:
-    #     - name: voxceleb_accent_test
-
     # Gender Recognition
     - group: gender_recognition
       metrics: label_match
@@ -222,14 +235,14 @@ global:
           language: fr
           datasets:
             - name: CommonVoice_Gender
-              path: <DATA_FOLDER>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/fr/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test_balanced.jsonl
 
         - group: gender_recognition_en
           language: en
           datasets:
             - name: iemocap_gender_test
             - name: CommonVoice_Gender
-              path: <DATA_FOLDER>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test.jsonl
+              path: <DATA_FOLDER>/nemo/misc/en/context/CommonVoice_spk_attributes_reco/CommonVoice-gender-recognition/test_balanced.jsonl
 
     # Age Recognition
     - group: age_recognition
@@ -256,7 +269,7 @@ global:
         - group: music_qa_en
           language: en
           datasets:
-            - name: muchomusic_test   # various type of questions
+            - name: muchomusic_test   # various type of questions (mcq)
             - name: MTJ-Jamendo_AIR-Bench  # various type of questions (mcq)
               path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/music/MTJ-Jamendo/test.jsonl
               judge_binary: true
@@ -276,7 +289,6 @@ global:
       datasets:
         - name: MusicCaps
           path: <DATA_FOLDER>/nemo/music/music-captioning/en/context/MusicCaps/test.jsonl
-        # possible FR version
 
     # Spoken Language Identification
     - group: language_identification
@@ -287,75 +299,21 @@ global:
         - name: CoVost2_AIR-Bench
           path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
 
-    # - group: speaker_count
-    #   metrics: flow_judge
-    #   judge_binary: true
-    #   task: Speaker Count
-    #   language: en
-    #   datasets: 
-    #     - name: VoxCeleb_AIR-Bench  # Answer is mostly 2
-    #       path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/speech/voxceleb1/test.jsonl
-
-    # Stress Test
-    # All models roughly have same scores except voxtral, judge not doing very well here
-    # - group: stress_test
-    #   metrics: flow_judge
-    #   task: Stress Test
-    #   datasets:
-    #     - group: stress_test_en
-    #       language: en
-    #       datasets:
-    #         - name: StressTest_SSR
-    #           path: <DATA_FOLDER>/nemo/misc/en/context/Stress/ssr/test.jsonl
-    #           sub_task: SSR
-
-    # Information Extraction
-    - group: temporal
-      metrics: temporal_regex
-      task: Temporal
-      language: en
-      prompt_prefix: |
-        Answer with only the requested value. No prose, no quotes, no extra words.
-        Output formats:
-        - timestamp: "12.1s"  (multi: "12.1s,25.6s"  range: "19.3s-23.6s")
-        - word: just the word, e.g. "Mid-Atlantic"
-        - sentence: the literal sentence as heard
-        - combined fields are separated by "|"  e.g.  answer|12.1s  or  answer|12.1s|sentence
-        - if the cue does not occur, reply exactly: not_found
-        - if the timestamp is out of range, reply exactly: invalid_timestamp
-        - JSON answers must be a single JSON object, no markdown.
-      datasets:
-        - name: SLUE-SQA5_time2word
-          sub_task: time2word
-          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/time2word/verified_test_pure.jsonl
-        - name: SLUE-SQA5_word2time
-          sub_task: word2time
-          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/word2time/verified_test_pure.jsonl
-        - name: SLUE-SQA5_time2sentence
-          sub_task: time2sentence
-          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/time2sentence/verified_test_pure.jsonl
-        - name: SLUE-SQA5_word2sentence
-          sub_task: word2sentence
-          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/word2sentence/verified_test_pure.jsonl
-
-    - group: format_follwing
-      metrics: format_check
-      task: Format Following
-      language: en
-      datasets:
-        - name: SLUE-SQA5_format_json_answer
-          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/format_json_answer/verified_test.jsonl
-
-    - group: timestamped_transcription
+    - group: diarization
       metrics: flow_judge
-      task: Timestamped Transcription
+      task: Diarization
       language: en
-      prompt_prefix: |
-        Transcribe the audio word by word with per-word start times.
-        Separate tokens with single spaces, in order. No prose, no header, no JSON, no markdown.
       datasets:
-        - name: SLUE-SQA5_format_timestamped_transcription
-          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/format_timestamped_transcription/verified_test.jsonl
+        - name: AMI
+          path: <DATA_FOLDER>/nemo/diarization/en/ami/timestamps/test.jsonl
+
+    # - group: speaker_id
+    #   metrics: label_match
+    #   task: Speaker Identification
+    #   language: other
+    #   datasets:
+    #     - name: VoxCeleb
+    #       path: <DATA_FOLDER>/nemo/misc/multilang/context/VoxCeleb/yes_no/test.jsonl
 
 models:
   - id: qwen2_omni_3b
