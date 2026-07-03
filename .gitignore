@@ -179,3 +179,8 @@ eval_spoken_mqa.sh
 results*
 CLAUDE.md
 plots*
+old*
+log_for_all_models*
+tmp*
+local*
+airflow
