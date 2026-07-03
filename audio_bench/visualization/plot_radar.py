@@ -53,7 +53,7 @@ import numpy as np
 
 # Reuse the score-loading / classification conventions from the HTML reporter so
 # both tools agree on what a "score" is and which way is better.
-from audio_bench.plot_results_to_html import (
+from audio_bench.visualization.plot_results_to_html import (
     LOWER_IS_BETTER,
     ZERO_TO_ONE_RANGE,
     _SUPER_CATEGORY_ORDER,

@@ -31,7 +31,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-from audio_bench.plot_results_to_html import (  # noqa: E402
+from audio_bench.visualization.plot_results_to_html import (  # noqa: E402
     AGGREGATE_MEASURES,
     LOWER_IS_BETTER,
     _compute_overview_ranks,

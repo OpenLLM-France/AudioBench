@@ -8,9 +8,9 @@ per-dataset sub-columns, and optionally violin plots).
 Output: {output_folder}/report.html
 
 Usage examples:
-    python src/plot_results_to_html.py results/
-    python src/plot_results_to_html.py results/ --violin
-    python src/plot_results_to_html.py results/ --output_folder my_plots/
+    python -m audio_bench.visualization.plot_results_to_html results/
+    python -m audio_bench.visualization.plot_results_to_html results/ --violin
+    python -m audio_bench.visualization.plot_results_to_html results/ --output_folder my_plots/
 """
 
 import argparse
