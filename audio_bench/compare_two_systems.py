@@ -53,7 +53,7 @@ from scipy import stats
 # Reuse the metric conventions (direction + %-scaling) from the plotting script
 # so the two tools never disagree about how a metric is interpreted.
 try:
-    from plot_results_to_html import (  # when run as a script from audio_bench/
+    from visualization.plot_results_to_html import (  # when run as a script from audio_bench/
         LOWER_IS_BETTER,
         ZERO_TO_ONE_RANGE,
         _TASK_METRIC_OVERRIDE,
@@ -61,7 +61,7 @@ try:
         _task_display_name,
     )
 except ImportError:  # when run as a module: python -m audio_bench.compare_two_systems
-    from audio_bench.plot_results_to_html import (
+    from audio_bench.visualization.plot_results_to_html import (
         LOWER_IS_BETTER,
         ZERO_TO_ONE_RANGE,
         _TASK_METRIC_OVERRIDE,

@@ -370,6 +370,11 @@ def main(argv=None):
     p.add_argument("-m", "--models", nargs="*", default=None,
                    help="model_id (folder name) or corrected model_name to include; "
                         "default = all found")
+    p.add_argument("--ids", nargs="*", default=None,
+                   help="select models by EXACT model_id (the results/ folder name), "
+                        "e.g. linagora_luciole_v3_stage3_step_083650-last. Combined "
+                        "(union) with -m. Exact match, so it never over-selects sibling "
+                        "variants (e.g. a _canary or other _step of the same experiment).")
     p.add_argument("--by",
                    choices=["super", "super-language", "task", "task-language", "dataset"],
                    default="super",
@@ -398,7 +403,7 @@ def main(argv=None):
     p.add_argument("--no-html", action="store_true", help="skip the interactive HTML output")
     args = p.parse_args(argv)
 
-    entries = load_all_scores(args.input_folder, show_all=args.show_all)
+    entries = load_all_scores(args.input_folder, show_all_models=args.show_all, show_all_datasets=args.show_all)
     if args.language:
         allowed = {l.upper() for l in args.language}
         def _lang_ok(e):
@@ -415,14 +420,18 @@ def main(argv=None):
         return 1
 
     all_models = sorted({e["model_name"] for e in entries})
-    if args.models:
-        # For each token: if it matches a model_name exactly, take only that
-        # model; otherwise fall back to case-insensitive substring matching so
-        # "flamingo" or "Phi-4" work without typing the full HF path. The
-        # exact-first rule avoids a token like ".../Canary_Luciole-1B" also
-        # pulling in ".../Canary_Luciole-1B_LLM-LoRA_8h".
+    # model_id (results/ folder name) -> its corrected model_name(s), for --ids selection.
+    id_to_names = defaultdict(set)
+    for e in entries:
+        id_to_names[e.get("model_id")].add(e["model_name"])
+    if args.models or args.ids:
+        # Union of two selectors:
+        #  -m/--models : match on corrected model_name — exact first, else case-insensitive
+        #    substring (so "flamingo"/"Phi-4" work). Exact-first avoids a token like
+        #    ".../Canary_Luciole-1B" also pulling in ".../Canary_Luciole-1B_LLM-LoRA_8h".
+        #  --ids       : EXACT match on model_id (folder name) — never over-selects siblings.
         selected, missing = [], []
-        for tok in args.models:
+        for tok in (args.models or []):
             if tok in all_models:
                 hits = [tok]
             else:
@@ -431,10 +440,16 @@ def main(argv=None):
                 selected.extend(hits)
             else:
                 missing.append(tok)
+        for tok in (args.ids or []):
+            if tok in id_to_names:
+                selected.extend(id_to_names[tok])
+            else:
+                missing.append(tok)
         models = [m for m in all_models if m in set(selected)]
         if missing:
             print(f"[warn] no model matched: {', '.join(missing)}", file=sys.stderr)
-            print(f"[info] available: {', '.join(all_models)}", file=sys.stderr)
+            print(f"[info] available names: {', '.join(all_models)}", file=sys.stderr)
+            print(f"[info] available ids: {', '.join(sorted(i for i in id_to_names if i))}", file=sys.stderr)
         if not models:
             return 1
     else:

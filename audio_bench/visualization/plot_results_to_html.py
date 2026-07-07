@@ -14,6 +14,7 @@ Usage examples:
 """
 
 import argparse
+import html
 import json
 import math
 import os
@@ -32,6 +33,7 @@ import plotly.express.colors as pxcolors
 _IGNORED_DATASETS = {
     "StressTest_SSR",
     "VoxCeleb-accent",
+    "VoxCeleb",  # Speaker identification — only run on some models
     "MuChoMusic",
     "SLU-SQA5_format_json_answer", # Format following
     "SLU-SQA5_time2sentence", "SLU-SQA5_time2word", "SLU-SQA5_word2sentence", "SLU-SQA5_word2time", # Information Extraction
@@ -68,6 +70,18 @@ _MODEL_NAME_CORRECTIONS = {
     "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s020000": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Encoder_8h",
     "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s217983": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Encoder_80h",
 } | ONLY_SHOW_CONSORTIUM_MODELS
+
+# Maps the (possibly shortened) display model name -> the model id (the
+# results folder name). Populated by load_all_scores and used to show the
+# model id as a hover tooltip in the tables.
+_MODEL_CHECKPOINT = {}
+
+
+def _model_name_td(m):
+    """Render the model-name table cell, showing the model id on hover."""
+    model_id = _MODEL_CHECKPOINT.get(m, m)
+    title_attr = f' title="{html.escape(model_id, quote=True)}"' if model_id != m else ""
+    return f"<td{title_attr}>{m}</td>"
 
 LOWER_IS_BETTER = {"wer"}
 ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
@@ -211,16 +225,19 @@ LANGUAGE_GROUPS = {
 # Data Loading
 # ---------------------------------------------------------------------------
 
-def load_all_scores(input_folder, show_all=False):
+def load_all_scores(input_folder, show_all_models=False, show_all_datasets=False):
     """Scan input_folder/{model_dir}/**/*_score.json and return list of entry dicts.
 
     Supports the new results/ directory structure where score files may be nested
     in language subdirectories (e.g. results/model/FR/fleurs_score.json) and each
     file contains multiple metrics listed in data["metrics"].
 
-    When ``show_all`` is True, the curated benchmark filters
-    (``_IGNORED_DATASETS`` and the model allowlist/ignore patterns) are bypassed
-    so ablation runs over arbitrary datasets/models are shown as-is.
+    The two curated-benchmark filters can be bypassed independently:
+
+    * ``show_all_datasets`` True bypasses ``_IGNORED_DATASETS`` (ablation datasets
+      are shown as-is).
+    * ``show_all_models`` True bypasses the model allowlist/ignore patterns
+      (all models are shown, not just the curated consortium ones).
     """
     entries = []
     input_path = Path(input_folder)
@@ -228,11 +245,20 @@ def load_all_scores(input_folder, show_all=False):
     for model_dir in sorted(input_path.iterdir()):
         if not model_dir.is_dir():
             continue
+        # Skip any "exclude" subfolder (a place to stash results that should
+        # not appear in the plots) at the top level of results/.
+        if model_dir.name.lower() == "exclude":
+            continue
         model_id = model_dir.name
 
         for filepath in sorted(model_dir.rglob("*_score.json")):
+            # Also skip score files nested under an "exclude" component
+            # (e.g. results/<model>/exclude/... ).
+            if any(part.lower() == "exclude"
+                   for part in filepath.relative_to(model_dir).parts):
+                continue
             dataset_name = filepath.name.removesuffix("_score.json")
-            if not show_all and dataset_name in _IGNORED_DATASETS:
+            if not show_all_datasets and dataset_name in _IGNORED_DATASETS:
                 continue
 
             try:
@@ -244,10 +270,12 @@ def load_all_scores(input_folder, show_all=False):
             if not metrics:
                 continue
 
-            model_name = data.get("model_name", model_id)
-            model_name = _MODEL_NAME_CORRECTIONS.get(model_name, model_name)
-            if not show_all and _is_model_ignored(model_name):
+            raw_model_name = data.get("model_name", model_id)
+            model_name = _MODEL_NAME_CORRECTIONS.get(raw_model_name, raw_model_name)
+            if not show_all_models and _is_model_ignored(model_name):
                 continue
+            # Remember the model id (results folder name) for the hover tooltip.
+            _MODEL_CHECKPOINT.setdefault(model_name, model_id)
             task = data.get("task")
             language = data.get("language")
             sub_task = data.get("sub_task")
@@ -443,11 +471,16 @@ def _compute_ci(std, n):
     return 1.96 * std / math.sqrt(n)
 
 
-def _format_score_with_ci(score, metric, std=None, n=None):
+def _format_score_with_ci(score, metric, std=None, n=None, model=None, rank=None):
     """Return (html_str, tooltip_str) with optional CI display.
 
     html_str:   '18.50 <span class="ci">±0.32</span>'  (or just '18.50')
     tooltip_str: '18.50 [18.18, 18.82], n=676'          (or just '18.50')
+
+    When *model* is given, it is prepended to the tooltip (helps identify the
+    row on wide tables where the model column has scrolled out of view).
+    When *rank* is a (position, total) tuple, the column ranking is inserted
+    (e.g. '3e').
     """
     disp = _display_score(score, metric)
     base = f"{disp:.2f}"
@@ -462,7 +495,27 @@ def _format_score_with_ci(score, metric, std=None, n=None):
     else:
         html_str = base
         tooltip_str = base
+    if rank:
+        tooltip_str = f"{rank[0]}e — {tooltip_str}"
+    if model:
+        tooltip_str = f"{model}\n{tooltip_str}"
     return html_str, tooltip_str
+
+
+def _tooltip_subline(name, score, metric, std=None, n=None, rank=None):
+    """One sub-item tooltip line, e.g. 'FLEURS: 18.50±1.20 (3e)'.
+
+    Used to enumerate the datasets/languages hidden behind an expandable cell.
+    """
+    disp = _display_score(score, metric)
+    ci = _compute_ci(std, n)
+    if ci is not None:
+        ci_disp = ci * 100 if metric in ZERO_TO_ONE_RANGE else ci
+        val = f"{disp:.2f}±{ci_disp:.2f}"
+    else:
+        val = f"{disp:.2f}"
+    rank_str = f" ({rank[0]}e)" if rank else ""
+    return f"{name}: {val}{rank_str}"
 
 
 def _classify_language(lang_str):
@@ -533,6 +586,19 @@ def _ranked_rows(pairs, asc):
     if len(ranked) >= 4:
         result[ranked[-2][1]] = "before_last"
     return result
+
+
+def _full_ranks(pairs, asc):
+    """Return {row_index: (rank, total)} for every row in *pairs* (1 = best).
+
+    *pairs* is a list of (value, row_index). *asc* True means lower is better.
+    Ties are broken positionally (stable sort), so ranks are always 1..N.
+    """
+    if not pairs:
+        return {}
+    ranked = sorted(pairs, key=lambda x: x[0], reverse=not asc)
+    total = len(ranked)
+    return {ri: (i + 1, total) for i, (_, ri) in enumerate(ranked)}
 
 
 def _most_common_metric(entries):
@@ -1295,6 +1361,7 @@ def plot_overview_table(entries, collector, *, title="Overview",
 
     # --- Ranked row indices for highlighting ---
     task_ranks = {}
+    task_full_ranks = {}
     for task in column_tasks:
         asc = task_ascending[task]
         pairs = [
@@ -1302,9 +1369,11 @@ def plot_overview_table(entries, collector, *, title="Overview",
             for ri, m in enumerate(sorted_models) if m in task_disp_score[task]
         ]
         task_ranks[task] = _ranked_rows(pairs, asc)
+        task_full_ranks[task] = _full_ranks(pairs, asc)
 
     # Ranked rows for sub-columns (languages for ASR, datasets for others, tasks for Others group)
     task_subcol_ranks = defaultdict(dict)
+    task_subcol_full_ranks = defaultdict(dict)
     for task in column_tasks:
         for subcol in task_subcols.get(task, []):
             metric = task_subcol_metric[task][subcol]
@@ -1315,6 +1384,7 @@ def plot_overview_table(entries, collector, *, title="Overview",
                 for ri, m in enumerate(sorted_models) if m in scores_map
             ]
             task_subcol_ranks[task][subcol] = _ranked_rows(pairs, sub_asc)
+            task_subcol_full_ranks[task][subcol] = _full_ranks(pairs, sub_asc)
 
     agg_render = _agg_columns_html(table_aggregates, sorted_models, {
         "avg_rank": model_avg_rank, "minmax": model_minmax, "zscore": model_zscore,
@@ -1395,7 +1465,7 @@ def plot_overview_table(entries, collector, *, title="Overview",
     lines.append("<tbody>")
     for ri, m in enumerate(sorted_models):
         lines.append("<tr>")
-        lines.append(f"<td>{m}</td>")
+        lines.append(_model_name_td(m))
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
         # Aggregate columns
@@ -1411,35 +1481,57 @@ def plot_overview_table(entries, collector, *, title="Overview",
             task_slug = _slug(task)
             subcols = task_subcols.get(task, [])
             is_group = task in group_members
+            expandable = len(subcols) >= 2 or is_group
+
+            # When the cell can be expanded, list its sub-items in the tooltip.
+            sub_suffix = ""
+            if expandable:
+                sub_lines = []
+                for subcol in subcols:
+                    smap = task_subcol_scores[task].get(subcol, {})
+                    if m in smap:
+                        sv0, sst0, sn0 = smap[m]
+                        sub_lines.append(_tooltip_subline(
+                            subcol, sv0, task_subcol_metric[task][subcol], sst0, sn0,
+                            rank=task_subcol_full_ranks[task].get(subcol, {}).get(ri)))
+                if sub_lines:
+                    sub_suffix = "\n" + "\n".join(sub_lines)
 
             # Main task cell
             if is_group:
                 members = group_members[task]
                 if m in task_disp_score.get(task, {}):
                     val = task_disp_score[task][m]
+                    rk = task_full_ranks.get(task, {}).get(ri)
+                    rank_str = f"{rk[0]}e — " if rk else ""
                     lines.append(_td(f"{val:.2f}",
                                      rank_key=task_ranks.get(task, {}).get(ri),
-                                     title=f"Mean across {len(members)} tasks"))
+                                     title=f"{m}\n{rank_str}Mean across {len(members)} tasks{sub_suffix}"))
                 else:
                     lines.append(_td("-", is_missing=True))
             else:
                 metric = task_metric[task]
                 if m in task_model_score.get(task, {}):
                     t_val, st, n = task_model_score[task][m]
-                    html_v, tip = _format_score_with_ci(t_val, metric, st, n)
-                    lines.append(_td(html_v, rank_key=task_ranks.get(task, {}).get(ri), title=tip))
+                    html_v, tip = _format_score_with_ci(
+                        t_val, metric, st, n, model=m,
+                        rank=task_full_ranks.get(task, {}).get(ri))
+                    lines.append(_td(html_v, rank_key=task_ranks.get(task, {}).get(ri),
+                                     title=tip + sub_suffix))
                 else:
                     lines.append(_td("-", is_missing=True))
 
             # Sub-column cells (hidden by default)
-            if len(subcols) >= 2 or is_group:
+            if expandable:
                 for subcol in subcols:
                     attr = f' class="lang-col" data-task="{task_slug}"'
                     sub_metric = task_subcol_metric[task][subcol]
                     scores_map = task_subcol_scores[task].get(subcol, {})
                     if m in scores_map:
                         sv, st, n = scores_map[m]
-                        html_v, tip = _format_score_with_ci(sv, sub_metric, st, n)
+                        html_v, tip = _format_score_with_ci(
+                            sv, sub_metric, st, n, model=m,
+                            rank=task_subcol_full_ranks[task].get(subcol, {}).get(ri))
                         lines.append(_td(html_v,
                                          rank_key=task_subcol_ranks[task].get(subcol, {}).get(ri),
                                          extra_attrs=attr, title=tip))
@@ -1612,14 +1704,17 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
 
     # --- Ranked row indices for highlighting ---
     lang_ranks = {}
+    lang_full_ranks = {}
     for lang in languages:
         pairs = [
             (_display_score(lang_model_score[lang][m][0], metric), ri)
             for ri, m in enumerate(sorted_models) if m in lang_model_score[lang]
         ]
         lang_ranks[lang] = _ranked_rows(pairs, ascending)
+        lang_full_ranks[lang] = _full_ranks(pairs, ascending)
 
     lang_ds_ranks = defaultdict(dict)
+    lang_ds_full_ranks = defaultdict(dict)
     rank_langs = flat_cols and [l for l, _ in flat_cols] or expandable_langs
     for lang in (set(rank_langs) if use_flat_mode else expandable_langs):
         for ds in lang_datasets.get(lang, []):
@@ -1628,6 +1723,7 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
                 for ri, m in enumerate(sorted_models) if m in lang_ds_model[lang][ds]
             ]
             lang_ds_ranks[lang][ds] = _ranked_rows(pairs, ascending)
+            lang_ds_full_ranks[lang][ds] = _full_ranks(pairs, ascending)
 
     avg_ranks = _ranked_rows(
         [(_display_score(model_avg[m], metric), ri)
@@ -1688,7 +1784,7 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
     lines.append("<tbody>")
     for ri, m in enumerate(sorted_models):
         lines.append("<tr>")
-        lines.append(f"<td>{m}</td>")
+        lines.append(_model_name_td(m))
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
         # Aggregate columns
@@ -1711,7 +1807,9 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
             for lang, ds in flat_cols:
                 if m in lang_ds_model[lang][ds]:
                     sc, st, n = lang_ds_model[lang][ds][m]
-                    html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                    html_v, tip = _format_score_with_ci(
+                        sc, metric, st, n, model=m,
+                        rank=lang_ds_full_ranks[lang].get(ds, {}).get(ri))
                     lines.append(_td(html_v,
                                      rank_key=lang_ds_ranks[lang].get(ds, {}).get(ri),
                                      title=tip))
@@ -1724,7 +1822,19 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
                 # Aggregate cell
                 if m in lang_model_score[lang]:
                     sc, st, n = lang_model_score[lang][m]
-                    html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                    html_v, tip = _format_score_with_ci(
+                        sc, metric, st, n, model=m,
+                        rank=lang_full_ranks.get(lang, {}).get(ri))
+                    if lang in expandable_langs:
+                        sub_lines = []
+                        for ds in lang_datasets.get(lang, []):
+                            if m in lang_ds_model[lang][ds]:
+                                dsc, dst, dn = lang_ds_model[lang][ds][m]
+                                sub_lines.append(_tooltip_subline(
+                                    ds, dsc, metric, dst, dn,
+                                    rank=lang_ds_full_ranks[lang].get(ds, {}).get(ri)))
+                        if sub_lines:
+                            tip = tip + "\n" + "\n".join(sub_lines)
                     lines.append(_td(html_v, rank_key=lang_ranks.get(lang, {}).get(ri), title=tip))
                 else:
                     lines.append(_td("-", is_missing=True))
@@ -1735,7 +1845,9 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
                         attr = f' class="lang-col" data-group="{grp}"'
                         if m in lang_ds_model[lang][ds]:
                             sc, st, n = lang_ds_model[lang][ds][m]
-                            html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                            html_v, tip = _format_score_with_ci(
+                                sc, metric, st, n, model=m,
+                                rank=lang_ds_full_ranks[lang].get(ds, {}).get(ri))
                             lines.append(_td(html_v, rank_key=lang_ds_ranks[lang].get(ds, {}).get(ri),
                                              extra_attrs=attr, title=tip))
                         else:
@@ -1973,6 +2085,7 @@ def _build_language_summary_table(entries, lang_group, category, collector,
 
     # Ranked rows for highlighting
     task_ranks = {}
+    task_full_ranks = {}
     for task in tasks:
         metric = task_metric[task]
         asc = ascending_map[task]
@@ -1981,8 +2094,10 @@ def _build_language_summary_table(entries, lang_group, category, collector,
             for ri, m in enumerate(sorted_models) if m in task_model_score[task]
         ]
         task_ranks[task] = _ranked_rows(pairs, asc)
+        task_full_ranks[task] = _full_ranks(pairs, asc)
 
     task_ds_ranks = defaultdict(dict)
+    task_ds_full_ranks = defaultdict(dict)
     for task in expandable_tasks:
         metric = task_metric[task]
         asc = ascending_map[task]
@@ -1992,6 +2107,7 @@ def _build_language_summary_table(entries, lang_group, category, collector,
                 for ri, m in enumerate(sorted_models) if m in task_ds_model[task][ds]
             ]
             task_ds_ranks[task][ds] = _ranked_rows(pairs, asc)
+            task_ds_full_ranks[task][ds] = _full_ranks(pairs, asc)
 
     agg_render = _agg_columns_html(table_aggregates, sorted_models, agg_values)
 
@@ -2036,7 +2152,7 @@ def _build_language_summary_table(entries, lang_group, category, collector,
         if not any(m in task_model_score[t] for t in tasks):
             continue
         lines.append("<tr>")
-        lines.append(f"<td>{m}</td>")
+        lines.append(_model_name_td(m))
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
         # Aggregate columns
@@ -2054,7 +2170,19 @@ def _build_language_summary_table(entries, lang_group, category, collector,
 
             if m in task_model_score[task]:
                 sc, st, n = task_model_score[task][m]
-                html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                html_v, tip = _format_score_with_ci(
+                    sc, metric, st, n, model=m,
+                    rank=task_full_ranks.get(task, {}).get(ri))
+                if task in expandable_tasks:
+                    sub_lines = []
+                    for ds in task_datasets.get(task, []):
+                        if m in task_ds_model[task][ds]:
+                            dsc, dst, dn = task_ds_model[task][ds][m]
+                            sub_lines.append(_tooltip_subline(
+                                ds, dsc, metric, dst, dn,
+                                rank=task_ds_full_ranks[task].get(ds, {}).get(ri)))
+                    if sub_lines:
+                        tip = tip + "\n" + "\n".join(sub_lines)
                 lines.append(_td(html_v, rank_key=task_ranks.get(task, {}).get(ri), title=tip))
             else:
                 lines.append(_td("-", is_missing=True))
@@ -2064,7 +2192,9 @@ def _build_language_summary_table(entries, lang_group, category, collector,
                     attr = f' class="lang-col" data-group="{slug}"'
                     if m in task_ds_model[task][ds]:
                         sc, st, n = task_ds_model[task][ds][m]
-                        html_v, tip = _format_score_with_ci(sc, metric, st, n)
+                        html_v, tip = _format_score_with_ci(
+                            sc, metric, st, n, model=m,
+                            rank=task_ds_full_ranks[task].get(ds, {}).get(ri))
                         lines.append(_td(html_v, rank_key=task_ds_ranks[task].get(ds, {}).get(ri),
                                          extra_attrs=attr, title=tip))
                     else:
@@ -2257,8 +2387,21 @@ def main():
     parser.add_argument("--violin", action="store_true", help="Include violin plots in the report")
     parser.add_argument(
         "--show-all", "--show_all", dest="show_all", action="store_true",
-        help="Bypass curated-benchmark filtering (ignored datasets + model "
-             "allowlist/ignore patterns) so ablation datasets/models are shown.",
+        help="Bypass BOTH curated filters (ignored datasets + model "
+             "allowlist/ignore patterns). Equivalent to "
+             "--show_all_models --show_all_datasets.",
+    )
+    parser.add_argument(
+        "--show_all_models", "--show-all-models", dest="show_all_models",
+        action="store_true",
+        help="Bypass the model allowlist/ignore patterns (show all models). "
+             "Ignored datasets are still filtered out.",
+    )
+    parser.add_argument(
+        "--show_all_datasets", "--show-all-datasets", dest="show_all_datasets",
+        action="store_true",
+        help="Bypass _IGNORED_DATASETS (show ablation datasets). "
+             "The model allowlist/ignore patterns still apply.",
     )
     parser.add_argument(
         "--table_aggregates", nargs="+", default=AGGREGATE_MEASURES,
@@ -2272,14 +2415,19 @@ def main():
     )
     args = parser.parse_args()
 
+    # --show-all is a shorthand that enables both granular flags.
+    show_all_models = args.show_all or args.show_all_models
+    show_all_datasets = args.show_all or args.show_all_datasets
+
     # Load all scores
-    entries = load_all_scores(args.input_folder, show_all=args.show_all)
+    entries = load_all_scores(
+        args.input_folder,
+        show_all_models=show_all_models,
+        show_all_datasets=show_all_datasets,
+    )
     if not entries:
         print(f"No score files found in {args.input_folder}")
         return
-
-    # Filter out Arabic entries globally
-    entries = [e for e in entries if (e.get("language") or "").upper() != "AR"]
 
     print(f"Loaded {len(entries)} score entries from {len({e['model_name'] for e in entries})} models")
 

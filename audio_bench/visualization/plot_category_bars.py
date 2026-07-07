@@ -259,16 +259,31 @@ def main():
     ap.add_argument("--output_folder", default="plots/",
                     help="Where to write the PNGs (default: plots/)")
     ap.add_argument("--show-all", "--show_all", dest="show_all", action="store_true",
-                    help="Bypass curated dataset/model filters (include ablation "
-                         "models), matching plot_results_to_html --show-all.")
+                    help="Bypass BOTH curated filters (datasets + models), "
+                         "matching plot_results_to_html --show-all.")
+    ap.add_argument("--show_all_models", "--show-all-models", dest="show_all_models",
+                    action="store_true",
+                    help="Bypass the model allowlist/ignore patterns (show all "
+                         "models). Ignored datasets are still filtered out.")
+    ap.add_argument("--show_all_datasets", "--show-all-datasets", dest="show_all_datasets",
+                    action="store_true",
+                    help="Bypass _IGNORED_DATASETS (show ablation datasets). "
+                         "The model allowlist/ignore patterns still apply.")
+    ap.add_argument("--overview-only", dest="overview_only", action="store_true",
+                    help="write only overview_table.png (skip the per-category bar PNGs)")
     args = ap.parse_args()
 
     os.makedirs(args.output_folder, exist_ok=True)
-    entries = load_all_scores(args.input_folder, show_all=args.show_all)
+    entries = load_all_scores(
+        args.input_folder,
+        show_all_models=args.show_all or args.show_all_models,
+        show_all_datasets=args.show_all or args.show_all_datasets,
+    )
     if not entries:
         print(f"No score files found in {args.input_folder}")
         return
-    plot_category_bars(entries, args.output_folder)
+    if not args.overview_only:
+        plot_category_bars(entries, args.output_folder)
     plot_overview_table(entries, os.path.join(args.output_folder, "overview_table.png"))
 
 
