@@ -12,7 +12,9 @@ Companion to ``plot_radar.py`` / ``plot_results_to_html.py``, used by the
   group is annotated and marked with a dotted horizontal line (best = lowest for
   WER, highest otherwise). ASR is capped at y=50 for readability.
 * ``overview_table.png``: models (rows, sorted by avg rank) × the aggregate
-  measures (minmax, zscore, avg_rank) plus each super-category's normalized score.
+  measures (minmax, zscore, avg_rank) plus each super-category's normalized score
+  (or, with ``--by dataset``, one column per individual dataset — for trimmed
+  non-default suites whose datasets all collapse into a single super-category).
 
 Usage:
     python -m audio_bench.visualization.plot_category_bars results/ \
@@ -36,12 +38,14 @@ from audio_bench.visualization.plot_results_to_html import (  # noqa: E402
     LOWER_IS_BETTER,
     _compute_overview_ranks,
     _display_score,
+    _excluded_from_task_avg,
     _model_color_map,
     _super_category,
     _SUPER_CATEGORY_ORDER,
     load_all_scores,
 )
 from audio_bench.visualization.plot_radar import (  # noqa: E402
+    _lang_suffix,
     _oriented_raw,
     _select_task_metrics,
 )
@@ -200,6 +204,8 @@ def _super_cat_scores(entries):
     entries = _select_task_metrics(entries)
     acc = defaultdict(lambda: defaultdict(list))  # sc -> model -> [values]
     for e in entries:
+        if _excluded_from_task_avg(e):
+            continue  # e.g. Arabic ASR is not folded into the ASR average
         sc = _super_category(e.get("task") or "")
         acc[sc][e["model_name"]].append(min(max(_oriented_raw(e) / 100.0, 0.0), 1.0))
     scs = [sc for sc in _SUPER_CATEGORY_ORDER if sc in acc]
@@ -207,31 +213,62 @@ def _super_cat_scores(entries):
     return out, scs
 
 
-def plot_overview_table(entries, out_path) -> str | None:
-    """Render the overview aggregate table (models × measures + per-super-cat) to PNG."""
+def _dataset_scores(entries):
+    """Per-model mean global-normalized score for each individual dataset (for the
+    overview table's per-dataset columns, used by trimmed non-default suites where a
+    single super-category collapses every dataset into one column). Unlike
+    ``_super_cat_scores`` this does NOT drop ``_excluded_from_task_avg`` datasets —
+    the trimmed suite (e.g. the Arabic ASR datasets) IS what we want to show.
+    Returns (label -> model -> float, [labels])."""
+    entries = _select_task_metrics(entries)
+    acc = defaultdict(lambda: defaultdict(list))  # label -> model -> [values]
+    for e in entries:
+        label = e["dataset_name"] + _lang_suffix(e)
+        acc[label][e["model_name"]].append(min(max(_oriented_raw(e) / 100.0, 0.0), 1.0))
+    labels = sorted(acc)
+    out = {lbl: {m: float(np.mean(v)) for m, v in acc[lbl].items()} for lbl in acc}
+    return out, labels
+
+
+def plot_overview_table(entries, out_path, by="super") -> str | None:
+    """Render the overview aggregate table (models × measures + per-column score) to PNG.
+
+    ``by="super"`` (default) uses one column per super-category; ``by="dataset"`` uses
+    one column per individual dataset — the latter for non-default trimmed suites whose
+    datasets all share a single super-category (which would otherwise be one column).
+    """
     data = _compute_overview_ranks(entries)
     if not data:
         print("[warn] no aggregate data for overview table")
         return None
 
     models = data["sorted_models"]
-    sc_scores, super_cats = _super_cat_scores(entries)
+    if by == "dataset":
+        col_scores, cols = _dataset_scores(entries)
+        title = "Overview — aggregate measures & per-dataset score (normalized)"
+    else:
+        col_scores, cols = _super_cat_scores(entries)
+        title = "Overview — aggregate measures & per-super-category score (normalized)"
     meas_dec = {"minmax": 3, "zscore": 2, "avg_rank": 1}
     meas_src = {
         "minmax": data["model_minmax"],
         "zscore": data["model_zscore"],
         "avg_rank": data["model_avg_rank"],
     }
-    col_labels = list(AGGREGATE_MEASURES) + list(super_cats)
+    # Dataset labels ("Multilingual_TEDx [FR]") are far longer than super-category
+    # labels ("ASR"); wrap the "[LANG]" suffix onto a second line and give each
+    # column more width so the headers don't collide.
+    col_labels = list(AGGREGATE_MEASURES) + [c.replace(" [", "\n[") for c in cols]
 
     rows = []
     for m in models:
         row = [_fmt(meas_src[meas].get(m), meas_dec[meas]) for meas in AGGREGATE_MEASURES]
-        row += [_fmt(sc_scores.get(sc, {}).get(m), 2) for sc in super_cats]
+        row += [_fmt(col_scores.get(c, {}).get(m), 2) for c in cols]
         rows.append(row)
 
     n_rows, n_cols = len(models), len(col_labels)
-    fig, ax = plt.subplots(figsize=(max(8.0, 1.5 + n_cols * 1.15),
+    per_col = 1.6 if by == "dataset" else 1.15
+    fig, ax = plt.subplots(figsize=(max(8.0, 1.5 + n_cols * per_col),
                                     max(2.0, 0.45 * n_rows + 1.0)))
     fig.patch.set_facecolor("white")
     ax.axis("off")
@@ -245,8 +282,7 @@ def plot_overview_table(entries, out_path) -> str | None:
         if r == 0 or c == -1:
             cell.set_text_props(fontweight="bold")
             cell.set_facecolor("#f2f2f2")
-    ax.set_title("Overview — aggregate measures & per-super-category score (normalized)",
-                 fontsize=12, fontweight="bold", pad=12)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=12)
     fig.savefig(out_path, dpi=_DPI, bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close(fig)
     print(f"[ok] wrote {out_path}")
@@ -269,8 +305,20 @@ def main():
                     action="store_true",
                     help="Bypass _IGNORED_DATASETS (show ablation datasets). "
                          "The model allowlist/ignore patterns still apply.")
-    ap.add_argument("--overview-only", dest="overview_only", action="store_true",
+    # overview_table vs per-category bar PNGs. The DAG picks one per config: the default
+    # suite gets the overview leaderboard (--overview-only); a trimmed non-default suite
+    # gets the raw-metric bars (--no-overview), which already emit one PNG per super-
+    # category actually present (so an ASR-only Arabic suite yields just ASR.png).
+    outputs = ap.add_mutually_exclusive_group()
+    outputs.add_argument("--overview-only", dest="overview_only", action="store_true",
                     help="write only overview_table.png (skip the per-category bar PNGs)")
+    outputs.add_argument("--no-overview", dest="no_overview", action="store_true",
+                    help="write only the per-category bar PNGs (skip overview_table.png); "
+                         "one PNG per super-category present in the data")
+    ap.add_argument("--by", choices=["super", "dataset"], default="super",
+                    help="overview-table columns: one per super-category (default) or "
+                         "one per individual dataset (for trimmed non-default suites "
+                         "whose datasets collapse into a single super-category column)")
     args = ap.parse_args()
 
     os.makedirs(args.output_folder, exist_ok=True)
@@ -284,7 +332,9 @@ def main():
         return
     if not args.overview_only:
         plot_category_bars(entries, args.output_folder)
-    plot_overview_table(entries, os.path.join(args.output_folder, "overview_table.png"))
+    if not args.no_overview:
+        plot_overview_table(entries, os.path.join(args.output_folder, "overview_table.png"),
+                            by=args.by)
 
 
 if __name__ == "__main__":

@@ -40,6 +40,18 @@ _IGNORED_DATASETS = {
     "SLU-SQA5_format_timestamped_transcription", # Timestamped transcription
 }
 
+# (task, language) pairs excluded from a task's AVERAGE (still shown individually
+# as their own sub-column/row — just not folded into the super-category mean).
+# Arabic ASR is dropped from the ASR average but stays visible as its own AR column.
+_AVG_EXCLUDED_TASK_LANGS = {("ASR", "AR")}
+
+
+def _excluded_from_task_avg(entry):
+    """True if this entry's (task, language) must be dropped from task averages."""
+    task = str(entry.get("task") or "").upper()
+    lang = str(entry.get("language") or "").upper()
+    return (task, lang) in _AVG_EXCLUDED_TASK_LANGS
+
 # CONSORTIUM_NAME = "LINAGORA"
 CONSORTIUM_NAME = "OpenLLM-France"
 
@@ -303,6 +315,7 @@ def load_all_scores(input_folder, show_all_models=False, show_all_datasets=False
                     continue
 
                 entry = {
+                    "model_id": model_id,
                     "model_name": model_name,
                     "dataset_name": dataset_name,
                     "metric_name": metric_name,
@@ -404,6 +417,11 @@ def aggregate_entries(entries, task_filter=None, by_language=False, by_subtask=F
                         e for e in lang_entries
                         if e["model_name"] == model and e["metric_name"] == metric
                     ]
+                    if lang_key is None:
+                        # Plain aggregate (task mean): drop languages excluded from
+                        # a task's average, e.g. Arabic ASR. They still surface via
+                        # the by_language path as their own sub-column.
+                        matching = [e for e in matching if not _excluded_from_task_avg(e)]
                     scores = [e["score"] for e in matching]
 
                     if not scores:
@@ -458,10 +476,9 @@ def _model_color_map(models):
 
 
 def _display_score(score, metric):
-    """Format score for display: multiply by 100 for 0-1 range metrics."""
-    if metric in ZERO_TO_ONE_RANGE:
-        return score * 100
-    return score
+    """Format score for display: multiply by 100 for 0-1 range metrics, clamp to 100."""
+    disp = score * 100 if metric in ZERO_TO_ONE_RANGE else score
+    return min(disp, 100)
 
 
 def _compute_ci(std, n):
@@ -1667,10 +1684,15 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
 
     # Average per model across languages
     ascending = _sort_ascending(metric)
-    # Compute model_avg (needed for the "Average" column)
+    # Compute model_avg (needed for the "Average" column). Drop languages excluded
+    # from this task's average (e.g. Arabic ASR) — they keep their own column.
+    avg_languages = [
+        l for l in languages
+        if not _excluded_from_task_avg({"task": task, "language": l})
+    ]
     model_avg = {}
     for m in all_models:
-        scores = [lang_model_score[l][m][0] for l in languages if m in lang_model_score[l]]
+        scores = [lang_model_score[l][m][0] for l in avg_languages if m in lang_model_score[l]]
         model_avg[m] = sum(scores) / len(scores) if scores else None
 
     # Per-language ranks and avg rank per model
@@ -2257,6 +2279,22 @@ _HTML_TEMPLATE = """\
                        padding: 6px 0; user-select: none; }
   details > summary:hover { color: #1e40af; }
   .figure-wrapper { margin: 12px 0; overflow-x: auto; }
+
+  /* Custom aligned cell tooltip (replaces the native title="" tooltip so that
+     sub-task scores line up in columns regardless of task-name length). */
+  #celltip { position: fixed; z-index: 9999; pointer-events: none; display: none;
+             background: #0f172a; color: #e2e8f0; border: 1px solid #334155;
+             border-radius: 6px; padding: 8px 10px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
+             font-size: 12px; line-height: 1.5; max-width: 460px; }
+  #celltip.show { display: block; }
+  #celltip .ct-head { font-weight: 700; color: #f8fafc; white-space: nowrap; }
+  #celltip .ct-head + .ct-head { font-weight: 400; color: #cbd5e1; }
+  #celltip .ct-grid { display: grid; grid-template-columns: auto max-content max-content;
+                      column-gap: 12px; row-gap: 1px; margin-top: 3px; }
+  #celltip .ct-k { color: #94a3b8; white-space: nowrap; }
+  #celltip .ct-v { text-align: right; white-space: nowrap;
+                   font-variant-numeric: tabular-nums; }
+  #celltip .ct-r { color: #64748b; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -2269,6 +2307,81 @@ __NAV_ITEMS__
 <main>
 __SECTIONS__
 </main>
+<div id="celltip"></div>
+<script>
+(function () {
+  var tip = document.getElementById('celltip');
+  var NL = String.fromCharCode(10);
+
+  function stripEnd(str) {
+    while (str.length && str.charAt(str.length - 1) === ' ') str = str.slice(0, -1);
+    return str;
+  }
+
+  function render(text) {
+    tip.textContent = '';
+    var grid = null;
+    text.split(NL).forEach(function (line) {
+      if (line === '') return;
+      var idx = line.indexOf(': ');
+      if (idx === -1) {                       // header / summary line -> full width
+        grid = null;
+        var h = document.createElement('div');
+        h.className = 'ct-head';
+        h.textContent = line;
+        tip.appendChild(h);
+        return;
+      }
+      if (!grid) {                            // start a fresh aligned block
+        grid = document.createElement('div');
+        grid.className = 'ct-grid';
+        tip.appendChild(grid);
+      }
+      var k = line.slice(0, idx), v = line.slice(idx + 2), r = '';
+      if (v.charAt(v.length - 1) === ')') {   // peel a trailing "(3e)" rank marker
+        var op = v.lastIndexOf('(');
+        if (op !== -1) { r = v.slice(op + 1, v.length - 1); v = stripEnd(v.slice(0, op)); }
+      }
+      var ke = document.createElement('span'); ke.className = 'ct-k'; ke.textContent = k;
+      var ve = document.createElement('span'); ve.className = 'ct-v'; ve.textContent = v;
+      var re = document.createElement('span'); re.className = 'ct-r'; re.textContent = r;
+      grid.appendChild(ke); grid.appendChild(ve); grid.appendChild(re);
+    });
+  }
+
+  function position(e) {
+    var pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+    var x = e.clientX + pad, y = e.clientY + pad;
+    if (x + w > window.innerWidth - 8)  x = e.clientX - w - pad;
+    if (y + h > window.innerHeight - 8) y = e.clientY - h - pad;
+    tip.style.left = Math.max(4, x) + 'px';
+    tip.style.top  = Math.max(4, y) + 'px';
+  }
+
+  // Move native title="" onto data-tip so the browser tooltip does not compete.
+  document.querySelectorAll('td[title], th[title]').forEach(function (el) {
+    el.setAttribute('data-tip', el.getAttribute('title'));
+    el.removeAttribute('title');
+  });
+
+  document.addEventListener('mouseover', function (e) {
+    var el = e.target.closest('[data-tip]');
+    if (!el) return;
+    render(el.getAttribute('data-tip'));
+    tip.classList.add('show');
+    position(e);
+  });
+  document.addEventListener('mousemove', function (e) {
+    if (tip.classList.contains('show')) position(e);
+  });
+  document.addEventListener('mouseout', function (e) {
+    var el = e.target.closest('[data-tip]');
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    tip.classList.remove('show');
+  });
+})();
+</script>
 </body>
 </html>
 """

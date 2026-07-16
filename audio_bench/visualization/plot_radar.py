@@ -460,6 +460,16 @@ def main(argv=None):
     axes, model_axis_value, axis_counts, hover = build_axis_values(
         entries, models, args.by, args.normalize)
     if not axes:
+        if len(models) >= 2:
+            # Every comparable cell was dropped because the compared models were
+            # evaluated on disjoint datasets (e.g. an Arabic-only probe vs a
+            # baseline with no Arabic coverage). There is genuinely nothing to
+            # compare on a shared axis -- that is not an error in the eval (the
+            # scores are already persisted), so warn and exit cleanly instead of
+            # failing the whole pipeline.
+            print("[warn] no datasets in common between the compared models "
+                  f"({', '.join(models)}); skipping radar", file=sys.stderr)
+            return 0
         print("[error] no axes to plot after grouping", file=sys.stderr)
         return 1
 
