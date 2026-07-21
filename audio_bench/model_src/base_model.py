@@ -37,11 +37,9 @@ class BaseModel:
     """Base class for all AudioBench models."""
 
     name = None
-    supports_vllm = False
-    # Label for the non-vllm execution path. Reporting only -- nothing ever compares
-    # `backend` to anything but "vllm". Subclasses that do not generate through HuggingFace
-    # transformers override it, so the log names the code that actually runs: a NeMo SALM
-    # model announcing "transformers" is simply wrong.
+    # Names the code that actually generates, for logs only. Subclasses that do not go
+    # through HuggingFace transformers override it (NeMoModel -> "nemo", VLLMModel ->
+    # "vllm"): a NeMo SALM model announcing "transformers" is simply wrong.
     native_backend = "transformers"
     max_audio_duration = 120
 
@@ -149,16 +147,20 @@ class BaseModel:
 
     def generate(self, input):
         try:
-            if self.backend == "vllm":
-                if not isinstance(input, list):
-                    input = [input]
-                return self.generate_vllm(input)
             with torch.no_grad():
                 if isinstance(input, list):
                     return self._generate_batch(input)
                 return self._generate(input)
         finally:
             self._cleanup_temp_files()
+
+    def prediction_chunk_size(self, batch_size):
+        """How many samples main_evaluate should hand to generate() at a time.
+
+        Here the batch IS the unit of work, so it is the batch size itself. VLLMModel
+        overrides it -- asking the model beats testing a backend string at the call site.
+        """
+        return batch_size
 
     def _generate_batch(self, inputs):
         """Batched generation for the transformers backend.
@@ -181,85 +183,6 @@ class BaseModel:
 
     def _generate(self, input):
         raise NotImplementedError
-
-    def load_vllm(self):
-        if not self.supports_vllm:
-            raise NotImplementedError(
-                f"{type(self).__name__} does not support VLLM backend"
-            )
-        from vllm import LLM, SamplingParams
-        self.llm = LLM(
-            model=self.model_path,
-            max_model_len=4096,
-            max_num_seqs=self.batch_size,
-            limit_mm_per_prompt={"audio": 1},
-            gpu_memory_utilization=self.gpu_memory_utilization,
-        )
-        self.sampling_params = SamplingParams(temperature=0, max_tokens=512)
-
-    def generate_vllm(self, inputs):
-        """Batched VLLM generation with chunk/truncate/pad support.
-
-        Subclasses must implement _build_vllm_messages().
-        They may optionally override the hooks below.
-        """
-        results = [None] * len(inputs)
-        all_messages = []
-        meta = []
-        chunk_buffers = {}
-
-        for i, inp in enumerate(inputs):
-            instruction = inp["instruction"]
-            is_asr = inp['task_type'] == 'ASR'
-
-            segments, sampling_rate, mode = self._prepare_audio_segments(inp["audio"], inp['task_type'])
-
-            if mode == 'chunked':
-                chunk_buffers[i] = []
-                for seg in segments:
-                    seg, sr = self._preprocess_audio_for_vllm(seg, sampling_rate)
-                    all_messages.append(self._build_vllm_messages(seg, sr, instruction))
-                    meta.append(('chunk', i))
-            else:
-                seg = segments[0]
-                seg, sr = self._preprocess_audio_for_vllm(seg, sampling_rate)
-                all_messages.append(self._build_vllm_messages(seg, sr, instruction))
-                meta.append(('normal', i, is_asr))
-
-        outputs = self.llm.chat(all_messages, sampling_params=self.sampling_params, use_tqdm=False, **self._vllm_chat_kwargs())
-
-        for output, m in zip(outputs, meta):
-            text = output.outputs[0].text
-            if m[0] == 'chunk':
-                chunk_buffers[m[1]].append(self._postprocess_asr_text(text))
-            else:
-                _, result_idx, is_asr = m
-                if is_asr:
-                    text = self._postprocess_asr_text(text)
-                results[result_idx] = text
-
-        for result_idx, chunks in chunk_buffers.items():
-            results[result_idx] = ' '.join(chunks)
-
-        return results
-
-    # --- VLLM hooks (override in subclasses) ---
-
-    def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
-        """Build the chat messages list for a single audio. Must be overridden."""
-        raise NotImplementedError
-
-    def _preprocess_audio_for_vllm(self, audio_array, sampling_rate):
-        """Optional audio preprocessing (e.g. resampling). Default: identity."""
-        return audio_array, sampling_rate
-
-    def _postprocess_asr_text(self, text):
-        """Optional ASR text postprocessing. Default: identity."""
-        return text
-
-    def _vllm_chat_kwargs(self):
-        """Extra kwargs passed to llm.chat(). Default: empty dict."""
-        return {}
 
     def destroy(self):
         """Explicitly release resources."""

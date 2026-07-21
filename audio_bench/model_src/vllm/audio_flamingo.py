@@ -4,9 +4,8 @@ import re
 import tempfile
 from pathlib import Path
 
-import torch
 
-from audio_bench.model_src.base_model import BaseModel
+from audio_bench.model_src.vllm_model import VLLMModel
 
 logger = logging.getLogger(__name__)
 
@@ -23,55 +22,18 @@ def _post_process_flamingo_asr(model_output):
 
     return model_output
 
-class AudioFlamingo(BaseModel):
+class AudioFlamingo(VLLMModel):
 
     name = "nvidia/audio-flamingo-3-hf"
-    supports_vllm = True    # need a very recent version of vllm
 
     def __init__(self, model_path="nvidia/audio-flamingo-3-hf", gpu_memory_utilization=0.4, device=None):
         super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
         self.name = model_path
 
-    def load(self):
-        from transformers import AutoModel, AutoProcessor
-
-        self.model = AutoModel.from_pretrained(
-            self.model_path, device_map=self.device, torch_dtype=torch.bfloat16
-        ).eval()
-        self.processor = AutoProcessor.from_pretrained(self.model_path)
-
-    def _generate(self, input):
-        audio_array    = input["audio"]["array"]
-        sampling_rate  = input["audio"]["sampling_rate"]
-        prompt = input["instruction"]+"\nPut the result in the following format: \\boxed\{.\}"
-
-        audio_path = self._write_temp_audio(audio_array, sampling_rate)
-
-        conversation = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "audio", "path": audio_path},
-                ],
-            }
-        ]
-
-        inputs = self.processor.apply_chat_template(
-            conversation,
-            tokenize=True,
-            add_generation_prompt=True,
-            return_dict=True,
-        ).to(self.model.device)
-
-        outputs = self.model.generate(**inputs, max_new_tokens=500)
-
-        decoded_outputs = self.processor.batch_decode(outputs[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)
-        return decoded_outputs
 
     # --- VLLM backend ---
 
-    def load_vllm(self):
+    def load(self):
         from vllm import LLM, SamplingParams
 
         os.environ["VLLM_ALLOW_LONG_MAX_MODEL_LEN"] = "1"

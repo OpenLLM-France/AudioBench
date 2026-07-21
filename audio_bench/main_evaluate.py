@@ -50,12 +50,15 @@ def do_model_prediction(input_data, model):
     batch_size = model.batch_size
 
     with logging_redirect_tqdm():
-        if model.backend=="vllm":
-            # Process in batches to avoid massive RAM spike from building chat messages
-            vllm_batch_size = max(100, batch_size*4)
+        # The model decides how much work it wants per call: vllm builds all chat messages up
+        # front, so it takes larger slices than batch_size to avoid a RAM spike, while the
+        # others treat the batch itself as the unit. Asking the model beats testing a backend
+        # name here.
+        chunk = model.prediction_chunk_size(batch_size)
+        if chunk > batch_size:
             model_predictions = []
-            for i in tqdm(range(0, len(input_data), vllm_batch_size), desc="vLLM Inference Batches", leave=False):
-                batch = input_data[i:i + vllm_batch_size]
+            for i in tqdm(range(0, len(input_data), chunk), desc="vLLM Inference Batches", leave=False):
+                batch = input_data[i:i + chunk]
                 results = model.generate(batch)
                 model_predictions.extend(results)
             return model_predictions

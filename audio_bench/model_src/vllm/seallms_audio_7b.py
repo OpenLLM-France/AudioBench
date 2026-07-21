@@ -1,10 +1,8 @@
 import logging
 
-import torch
 import librosa
-from transformers import Qwen2AudioForConditionalGeneration, AutoProcessor
 
-from audio_bench.model_src.base_model import BaseModel
+from audio_bench.model_src.vllm_model import VLLMModel
 
 logger = logging.getLogger(__name__)
 
@@ -50,19 +48,14 @@ def _do_sample_inference(self, audio_array, prompt):
     return response
 
 
-class SeallmsAudio7B(BaseModel):
+class SeallmsAudio7B(VLLMModel):
 
     name = "SeaLLMs/SeaLLMs-Audio-7B"
     max_audio_duration = 40
-    supports_vllm = True
 
     def __init__(self, gpu_memory_utilization=0.4, device=None):
         super().__init__(model_path="SeaLLMs/SeaLLMs-Audio-7B", gpu_memory_utilization=gpu_memory_utilization, device=device)
 
-    def load(self):
-        self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map=self.device, torch_dtype=torch.bfloat16).eval()
-        logger.info(f"Model loaded: {self.model_path}")
 
     def _vllm_chat_kwargs(self):
         return {"chat_template_content_format": "string"}
@@ -77,12 +70,3 @@ class SeallmsAudio7B(BaseModel):
             ]},
         ]
 
-    def _generate(self, input):
-
-        instruction   = input['instruction']
-
-        segments, sampling_rate, mode = self._prepare_audio_segments(input["audio"], input['task_type'])
-
-        if mode == 'chunked':
-            return ' '.join(_do_sample_inference(self, seg, instruction) for seg in segments)
-        return _do_sample_inference(self, segments[0], instruction)

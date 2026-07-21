@@ -2,9 +2,8 @@ import logging
 from pathlib import Path
 
 import librosa
-from transformers import AutoModelForCausalLM, AutoProcessor, GenerationConfig
 
-from audio_bench.model_src.base_model import BaseModel
+from audio_bench.model_src.vllm_model import VLLMModel
 
 logger = logging.getLogger(__name__)
 
@@ -34,45 +33,15 @@ def _do_sample_inference(self, audio_array, prompt):
     return response
 
 
-class Phi4MultimodalInstruct(BaseModel):
+class Phi4MultimodalInstruct(VLLMModel):
 
     name = "microsoft/Phi-4-multimodal-instruct"
-    supports_vllm = True
 
     def __init__(self, gpu_memory_utilization=0.4, device=None):
         super().__init__(model_path="microsoft/Phi-4-multimodal-instruct", gpu_memory_utilization=gpu_memory_utilization, device=device)
 
+
     def load(self):
-        self.processor = AutoProcessor.from_pretrained(self.model_path, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_path,
-                trust_remote_code=True,
-                torch_dtype='auto',
-                _attn_implementation='flash_attention_2',
-                device_map=self.device,
-            ).eval()
-        print("model.config._attn_implementation:", self.model.config._attn_implementation)
-        self.generation_config = GenerationConfig.from_pretrained(self.model_path, 'generation_config.json')
-        logger.info(f"Model loaded: {self.model_path}")
-
-    def _generate(self, input):
-
-        instruction   = input['instruction']
-
-        user_prompt      = '<|user|>'
-        assistant_prompt = '<|assistant|>'
-        prompt_suffix    = '<|end|>'
-        prompt = f'{user_prompt}<|audio_1|>{instruction}{prompt_suffix}{assistant_prompt}'
-
-        segments, sampling_rate, mode = self._prepare_audio_segments(input["audio"], input['task_type'])
-
-        if mode == 'chunked':
-            return ' '.join(_do_sample_inference(self, seg, prompt) for seg in segments)
-        return _do_sample_inference(self, segments[0], prompt)
-
-    # --- VLLM support ---
-
-    def load_vllm(self):
         from vllm import LLM, SamplingParams
         from huggingface_hub import snapshot_download
         from vllm.lora.request import LoRARequest

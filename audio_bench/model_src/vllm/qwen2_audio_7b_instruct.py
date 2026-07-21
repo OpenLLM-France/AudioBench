@@ -1,11 +1,9 @@
 import re
 import logging
 
-import torch
 import librosa
-from transformers import Qwen2AudioForConditionalGeneration, AutoProcessor
 
-from audio_bench.model_src.base_model import BaseModel
+from audio_bench.model_src.vllm_model import VLLMModel
 
 logger = logging.getLogger(__name__)
 
@@ -32,18 +30,13 @@ def _post_process_qwen2_asr(model_output):
 
     return model_output
 
-class Qwen2Audio7BInstruct(BaseModel):
+class Qwen2Audio7BInstruct(VLLMModel):
 
     name = "Qwen/Qwen2-Audio-7B-Instruct"
-    supports_vllm = True
 
     def __init__(self, gpu_memory_utilization=0.4, device=None):
         super().__init__(model_path="Qwen/Qwen2-Audio-7B-Instruct", gpu_memory_utilization=gpu_memory_utilization, device=device)
 
-    def load(self):
-        self.processor = AutoProcessor.from_pretrained(self.model_path)
-        self.model = Qwen2AudioForConditionalGeneration.from_pretrained(self.model_path, device_map=self.device, torch_dtype=torch.bfloat16).eval()
-        logger.info(f"Model loaded: {self.model_path}")
 
     def _infer_single(self, audio_array, sampling_rate, instruction, is_asr):
         """Run inference on a single audio segment."""
@@ -82,16 +75,6 @@ class Qwen2Audio7BInstruct(BaseModel):
 
         return response
 
-    def _generate(self, input):
-
-        instruction   = input["instruction"]
-        is_asr        = input['task_type'] == 'ASR'
-
-        segments, sampling_rate, mode = self._prepare_audio_segments(input["audio"], input['task_type'])
-
-        if mode == 'chunked':
-            return ' '.join(self._infer_single(seg, sampling_rate, instruction, is_asr) for seg in segments)
-        return self._infer_single(segments[0], sampling_rate, instruction, is_asr)
 
     # --- VLLM hooks ---
 

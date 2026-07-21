@@ -113,13 +113,10 @@ def load_model(model_id, model_path=None, gpu_memory_utilization=0.4, batch_size
         model.name = model_id
     model.batch_size = batch_size
 
-    # The model class is the source of truth: vllm when it has an implementation, its native
-    # path otherwise.
-    model.backend = "vllm" if model.supports_vllm else model.native_backend
-    if model.backend == "vllm":
-        model.load_vllm()
-    else:
-        model.load()
+    # No branch: the class IS the backend. VLLMModel.load() builds an LLM engine, NeMoModel's
+    # loads a SALM, and each generate() matches.
+    model.backend = model.native_backend
+    model.load()
 
     logger.info(f"Loaded model: {model.name} [id={model_id}] (backend: {model.backend})")
     logger.info("= = "*20)
