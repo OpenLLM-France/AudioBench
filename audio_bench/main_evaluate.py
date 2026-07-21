@@ -182,7 +182,7 @@ def run_evaluation(
 
         # Load model
         if model is None:
-            model = load_model(model_id, backend=model_config["backend"], model_path=model_config.get("path"), batch_size=model_config["batch_size"], device=model_config.get("device"))
+            model = load_model(model_id, model_path=model_config.get("path"), batch_size=model_config["batch_size"], device=model_config.get("device"))
             if model_display_name:
                 model.name = model_display_name
             if model_config.get("audio_locator_tag") is not None:
@@ -293,7 +293,6 @@ def main(
         metrics           : str  = None,
         number_of_samples : int  = -1,
         log_folder: str = "log_for_all_models",
-        backend: str = "transformers",
         min_audio_duration: float = None,
         max_audio_duration: float = None,
         compute_metrics: bool = True,
@@ -308,7 +307,6 @@ def main(
     logger.info(f"Overwrite: {overwrite}")
     logger.info(f"Metrics: {metrics}")
     logger.info(f"Number of samples: {number_of_samples}")
-    logger.info(f"Backend: {backend}")
     logger.info(" ="*30)
 
     dataset_config = dict(
@@ -317,7 +315,7 @@ def main(
         min_audio_duration=min_audio_duration,
         max_audio_duration=max_audio_duration,
     )
-    model_config = dict(batch_size=batch_size, backend=backend, device=device)
+    model_config = dict(batch_size=batch_size, device=device)
 
     run_evaluation(dataset_name, dataset_config, model_id=model_name, model_config=model_config, overwrite=overwrite, log_folder=log_folder, compute_metrics=compute_metrics, skip_inference=skip_inference)
 

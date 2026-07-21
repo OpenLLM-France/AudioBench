@@ -51,7 +51,6 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
     logger.info(" ="*30)
     logger.info("\n"*3)
 
-    global_backend = global_params.get("backend", "transformers")
 
     with logging_redirect_tqdm():
         pbar = tqdm(models, desc="Processing models", leave=False)
@@ -62,7 +61,6 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
             pbar.set_description(f"Processing model: {model_id}")
 
             model_batch_size = model_config.get("batch_size", global_params.get("batch_size", 1))
-            model_backend = model_config.get("backend", global_backend)
             model_device = model_config.get("device", global_params.get("device"))
 
             model_datasets = _flatten_datasets(model_config.get("datasets", [])) if "datasets" in model_config else global_datasets
@@ -83,7 +81,6 @@ def evaluate_models_from_config(config_path="configs/test.yaml"):
 
                     evaluation_model_config = dict(
                         batch_size=dataset_config.get("batch_size", model_batch_size),
-                        backend=model_backend,
                         path=model_config.get("path"),
                         gpu_memory_utilization=model_config.get("gpu_memory_utilization", global_params.get("gpu_memory_utilization", 0.4)),
                         device=model_device,

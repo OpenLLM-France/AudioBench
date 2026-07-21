@@ -4,8 +4,13 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def load_model(model_id, backend="transformers", model_path=None, gpu_memory_utilization=0.4, batch_size=1, device=None):
-    """Factory: return a BaseModel subclass, loaded and ready to generate."""
+def load_model(model_id, model_path=None, gpu_memory_utilization=0.4, batch_size=1, device=None):
+    """Factory: return a BaseModel subclass, loaded and ready to generate.
+
+    There is no `backend` argument: the backend is a property of the model, not of the run.
+    A model with a vllm implementation uses it (vllm is faster, so picking the other path is
+    never what you want); a model without one uses its native path. Nothing to configure.
+    """
     logger.info(f"Loading {model_id} model (path: {model_path}).")
     if model_path and "<MODELS_FOLDER>" in model_path:
         models_folder = os.getenv('MODELS_FOLDER')
@@ -106,19 +111,13 @@ def load_model(model_id, backend="transformers", model_path=None, gpu_memory_uti
     model.model_id = model_id
     if model.name is None:
         model.name = model_id
-    model.backend = backend
     model.batch_size = batch_size
 
-    if backend == "vllm":
-        if not model.supports_vllm:
-            logger.warning(
-                f"VLLM backend not supported for model '{model_id}'. "
-                f"Falling back to transformers backend."
-            )
-            model.backend = "transformers"
-            model.load()
-        else:
-            model.load_vllm()
+    # The model class is the source of truth: vllm when it has an implementation, its native
+    # path otherwise.
+    model.backend = "vllm" if model.supports_vllm else model.native_backend
+    if model.backend == "vllm":
+        model.load_vllm()
     else:
         model.load()
 

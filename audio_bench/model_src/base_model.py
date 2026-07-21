@@ -38,6 +38,11 @@ class BaseModel:
 
     name = None
     supports_vllm = False
+    # Label for the non-vllm execution path. Reporting only -- nothing ever compares
+    # `backend` to anything but "vllm". Subclasses that do not generate through HuggingFace
+    # transformers override it, so the log names the code that actually runs: a NeMo SALM
+    # model announcing "transformers" is simply wrong.
+    native_backend = "transformers"
     max_audio_duration = 120
 
     # Optional override for the audio placeholder inserted into prompts.

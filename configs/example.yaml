@@ -21,5 +21,4 @@ global:
 models:
   - name: canary_qwen
   - name: qwen2_audio_7b_instruct
-    backend: vllm
     batch_size: 5

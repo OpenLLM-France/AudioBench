@@ -3,7 +3,6 @@ global:
   overwrite: False
   number_of_samples: 250
   skip_errors: False
-  backend: vllm
   gpu_memory_utilization: 0.4
   device: cuda
   compute_metrics: false

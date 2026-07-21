@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 class NeMoModel(BaseModel):
     """Shared base for models using NeMo's SALM API."""
 
+    # Generation goes through SALM/SALMAutomodel.generate(), not HuggingFace transformers.
+    native_backend = "nemo"
+
     def _build_nemo_conversation(self, audio_path, prompt, audio_first=False):
         # Use the config-provided override when set, otherwise the model's
         # built-in tag. This lets the prompt use a custom locator tag without
