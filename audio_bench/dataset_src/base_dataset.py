@@ -6,6 +6,42 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from audio_bench.scoring_src.metrics import build_metric_stats
 
 
+def _normalize_audio(obj):
+    """Make a raw HF sample look the same under datasets 3.x and >=4.
+
+    datasets 3.x decoded an Audio feature into a dict {"array", "sampling_rate", "path"}.
+    datasets >=4 dropped that path and hands back a torchcodec AudioDecoder instead, which
+    the rest of AudioBench chokes on: base_model._prepare_audio_segments does
+    audio["array"] / audio.get("path"), _check_audio_duration guards on
+    isinstance(audio, dict), and every vllm/transformers backend reads
+    input["audio"]["array"]. Rather than port ~10 call sites to the new object, convert back
+    to the 3.x dict here -- the single point where raw samples enter the pipeline.
+
+    Duck-typed on get_all_samples() rather than importing torchcodec, so this stays a no-op
+    on a datasets 3.x env (the dgx image pins 3.1.0) where torchcodec is not installed.
+
+    "path" is None under >=4: AudioDecoder does not carry the source path. It is only used
+    for a log line in base_model, never to reopen the file.
+    """
+    if isinstance(obj, dict):
+        return {k: _normalize_audio(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_normalize_audio(v) for v in obj]
+    if hasattr(obj, "get_all_samples"):
+        samples = obj.get_all_samples()
+        data = samples.data
+        # AudioSamples.data is (channels, num_samples); AudioBench wants a 1-D array
+        # (it computes duration as len(array) / sampling_rate).
+        if data.ndim > 1:
+            data = data.mean(dim=0)
+        return {
+            "array": data.numpy(),
+            "sampling_rate": int(samples.sample_rate),
+            "path": None,
+        }
+    return obj
+
+
 class BaseDatasetProcessor:
     """Base class for all dataset processors in AudioBench.
 
@@ -75,7 +111,7 @@ class BaseDatasetProcessor:
         input_data = []
         with logging_redirect_tqdm():
             for sample in tqdm(raw_data, desc="Processing samples", leave=False):
-                input_data.append(self._process_sample(sample))
+                input_data.append(self._process_sample(_normalize_audio(sample)))
 
         # Duration filter (before subsampling so we get the requested count)
         if self._min_audio_duration is not None or self._max_audio_duration is not None:
