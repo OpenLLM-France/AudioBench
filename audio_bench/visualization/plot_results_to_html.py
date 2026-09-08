@@ -1481,7 +1481,7 @@ def plot_overview_table(entries, collector, *, title="Overview",
     # --- Body ---
     lines.append("<tbody>")
     for ri, m in enumerate(sorted_models):
-        lines.append("<tr>")
+        lines.append(f'<tr data-model="{html.escape(m, quote=True)}">')
         lines.append(_model_name_td(m))
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
@@ -1805,7 +1805,7 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
     # Body
     lines.append("<tbody>")
     for ri, m in enumerate(sorted_models):
-        lines.append("<tr>")
+        lines.append(f'<tr data-model="{html.escape(m, quote=True)}">')
         lines.append(_model_name_td(m))
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
@@ -2173,7 +2173,7 @@ def _build_language_summary_table(entries, lang_group, category, collector,
         # Skip models with no data in this group
         if not any(m in task_model_score[t] for t in tasks):
             continue
-        lines.append("<tr>")
+        lines.append(f'<tr data-model="{html.escape(m, quote=True)}">')
         lines.append(_model_name_td(m))
         lines.append(f"<td>{_extract_model_size(m)}</td>")
 
@@ -2255,7 +2255,7 @@ _HTML_TEMPLATE = """\
          display: flex; min-height: 100vh; background: #ffffff; color: #222; }
 
   /* Sidebar */
-  nav.sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+  nav.sidebar { position: fixed; top: 0; left: 0; width: 360px; height: 100vh;
                 overflow-y: auto; background: #1e293b; color: #cbd5e1; padding: 20px 0;
                 z-index: 100; }
   nav.sidebar h2 { font-size: 15px; font-weight: 700; padding: 0 16px 14px; color: #f1f5f9;
@@ -2267,8 +2267,39 @@ _HTML_TEMPLATE = """\
   nav.sidebar li.nav-group { font-size: 11px; font-weight: 700; text-transform: uppercase;
                               color: #64748b; padding: 14px 16px 4px; letter-spacing: .05em; }
 
+  /* Experiment filter panel */
+  #xp-filter { border-top: 1px solid #334155; margin-top: 8px; padding-top: 10px; }
+  #xp-filter .xp-filter-head { display: flex; align-items: center; justify-content: space-between;
+                                padding: 0 16px 8px; }
+  #xp-filter .xp-filter-head span { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                                     color: #64748b; letter-spacing: .05em; }
+  #xp-filter button#xp-toggle-all { font-size: 11px; background: #334155; color: #e2e8f0;
+                                     border: 1px solid #475569; border-radius: 4px; padding: 3px 8px;
+                                     cursor: pointer; }
+  #xp-filter button#xp-toggle-all:hover { background: #475569; }
+  #xp-filter-tree { max-height: 60vh; overflow-y: auto; padding: 0 10px 10px; }
+  #xp-filter-tree ul { list-style: none; margin: 0; padding-left: 16px; }
+  #xp-filter-tree > ul { padding-left: 0; }
+  #xp-filter-tree li { padding: 0; }
+  #xp-filter-tree label { display: flex; align-items: center; gap: 6px; padding: 3px 6px;
+                           font-size: 12px; color: #cbd5e1; cursor: pointer; border-radius: 4px;
+                           white-space: normal; word-break: break-word; line-height: 1.3; }
+  #xp-filter-tree label:hover { background: #334155; color: #e2e8f0; }
+  #xp-filter-tree input[type="checkbox"] { flex: none; accent-color: #3b82f6; margin-top: 1px; }
+  #xp-filter-tree .xp-group { font-weight: 600; color: #e2e8f0; }
+  #xp-filter-tree details { margin: 1px 0; }
+  #xp-filter-tree summary { list-style: none; cursor: pointer; display: flex; align-items: center;
+                             gap: 6px; padding: 3px 6px; border-radius: 4px; }
+  #xp-filter-tree summary::-webkit-details-marker { display: none; }
+  #xp-filter-tree summary:hover { background: #334155; }
+  #xp-filter-tree summary .xp-caret { flex: none; width: 10px; font-size: 10px; color: #64748b;
+                                       transition: transform .1s; }
+  #xp-filter-tree details[open] > summary .xp-caret { transform: rotate(90deg); }
+  #xp-filter-tree summary .xp-count { flex: none; font-size: 10px; color: #64748b; font-weight: 400; }
+  tr.xp-hidden { display: none !important; }
+
   /* Main content */
-  main { margin-left: 240px; padding: 28px 32px; flex: 1; max-width: calc(100vw - 240px); }
+  main { margin-left: 360px; padding: 28px 32px; flex: 1; max-width: calc(100vw - 360px); }
 
   /* Sections */
   section.category { margin-bottom: 36px; }
@@ -2303,6 +2334,13 @@ _HTML_TEMPLATE = """\
   <ul>
 __NAV_ITEMS__
   </ul>
+  <div id="xp-filter">
+    <div class="xp-filter-head">
+      <span>Experiments</span>
+      <button id="xp-toggle-all" type="button">Tout décocher</button>
+    </div>
+    <div id="xp-filter-tree"></div>
+  </div>
 </nav>
 <main>
 __SECTIONS__
@@ -2380,6 +2418,187 @@ __SECTIONS__
     if (e.relatedTarget && el.contains(e.relatedTarget)) return;
     tip.classList.remove('show');
   });
+})();
+</script>
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('tr[data-model]'));
+  var models = [];
+  rows.forEach(function (tr) {
+    var m = tr.getAttribute('data-model');
+    if (models.indexOf(m) === -1) models.push(m);
+  });
+  models.sort();
+  if (!models.length) return;
+
+  var treeEl = document.getElementById('xp-filter-tree');
+  var toggleBtn = document.getElementById('xp-toggle-all');
+  var checked = {};
+  models.forEach(function (m) { checked[m] = true; });
+
+  // -------------------------------------------------------------------
+  // Build a trie of models, tokenized on "/" and "_" (keeping the
+  // delimiter that preceded each token), so experiments that share a
+  // path/name prefix ("LINAGORA/Canary_Luciole-1B_..._v3_buckets_...")
+  // group and nest automatically -- no hardcoded naming knowledge needed.
+  // -------------------------------------------------------------------
+  function tokenize(name) {
+    var parts = name.split(/([/_])/);
+    var tokens = [], delims = [];
+    for (var i = 0; i < parts.length; i += 2) tokens.push(parts[i]);
+    for (var j = 1; j < parts.length; j += 2) delims.push(parts[j]);
+    return { tokens: tokens, delims: delims };
+  }
+
+  function newNode() { return { children: new Map(), models: [] }; }
+  var root = newNode();
+  models.forEach(function (m) {
+    var t = tokenize(m);
+    var cur = root;
+    for (var i = 0; i < t.tokens.length; i++) {
+      var tok = t.tokens[i];
+      var delim = i === 0 ? null : t.delims[i - 1];
+      if (!cur.children.has(tok)) cur.children.set(tok, { delim: delim, node: newNode() });
+      cur = cur.children.get(tok).node;
+    }
+    cur.models.push(m);
+  });
+
+  // Compress chains of single, model-less children into one label so the
+  // tree only branches where models actually diverge.
+  function compressChildren(node) {
+    var out = [];
+    node.children.forEach(function (edge, tok) {
+      var label = (edge.delim || '') + tok;
+      var child = edge.node;
+      while (child.models.length === 0 && child.children.size === 1) {
+        var onlyTok, onlyEdge;
+        child.children.forEach(function (e, t) { onlyTok = t; onlyEdge = e; });
+        label += (onlyEdge.delim || '') + onlyTok;
+        child = onlyEdge.node;
+      }
+      out.push({ label: label, node: child });
+    });
+    return out;
+  }
+
+  // -------------------------------------------------------------------
+  // Render. Returns the list of leaf model names under the rendered node,
+  // and registers group checkboxes so their tri-state can be refreshed.
+  // -------------------------------------------------------------------
+  var groupBoxes = []; // { cb, leaves: [model,...] }
+  var leafBoxes = {};  // model -> checkbox element
+
+  function renderLeaf(container, modelName) {
+    var li = document.createElement('li');
+    var label = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.addEventListener('change', function () {
+      checked[modelName] = cb.checked;
+      refreshGroups();
+      applyFilter();
+    });
+    leafBoxes[modelName] = cb;
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(modelName));
+    li.appendChild(label);
+    container.appendChild(li);
+  }
+
+  function renderNode(container, label, node, depth) {
+    var childEntries = compressChildren(node);
+    var isPureLeaf = node.models.length > 0 && childEntries.length === 0;
+
+    if (isPureLeaf) {
+      node.models.forEach(function (m) { renderLeaf(container, m); });
+      return node.models.slice();
+    }
+
+    var li = document.createElement('li');
+    var details = document.createElement('details');
+    details.open = depth < 1;
+    var summary = document.createElement('summary');
+    var caret = document.createElement('span');
+    caret.className = 'xp-caret';
+    caret.textContent = '▸';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    var text = document.createElement('span');
+    text.className = 'xp-group';
+    text.textContent = label;
+    summary.appendChild(caret);
+    summary.appendChild(cb);
+    summary.appendChild(text);
+    var count = document.createElement('span');
+    count.className = 'xp-count';
+    summary.appendChild(count);
+    details.appendChild(summary);
+
+    var ul = document.createElement('ul');
+    var leaves = [];
+    // A model that terminates exactly at this group node (rare: its name
+    // is itself a prefix of a sibling's name) is shown as its own leaf too.
+    node.models.forEach(function (m) {
+      renderLeaf(ul, m);
+      leaves.push(m);
+    });
+    childEntries.forEach(function (entry) {
+      leaves = leaves.concat(renderNode(ul, entry.label, entry.node, depth + 1));
+    });
+    details.appendChild(ul);
+    li.appendChild(details);
+    container.appendChild(li);
+
+    count.textContent = '(' + leaves.length + ')';
+    cb.addEventListener('click', function (e) { e.stopPropagation(); });
+    cb.addEventListener('change', function () {
+      leaves.forEach(function (m) {
+        checked[m] = cb.checked;
+        var lb = leafBoxes[m];
+        if (lb) lb.checked = cb.checked;
+      });
+      refreshGroups();
+      applyFilter();
+    });
+    groupBoxes.push({ cb: cb, leaves: leaves });
+    return leaves;
+  }
+
+  var rootUl = document.createElement('ul');
+  compressChildren(root).forEach(function (entry) {
+    renderNode(rootUl, entry.label, entry.node, 0);
+  });
+  treeEl.appendChild(rootUl);
+
+  function refreshGroups() {
+    groupBoxes.forEach(function (g) {
+      var n = g.leaves.filter(function (m) { return checked[m]; }).length;
+      g.cb.checked = n === g.leaves.length;
+      g.cb.indeterminate = n > 0 && n < g.leaves.length;
+    });
+  }
+
+  function applyFilter() {
+    rows.forEach(function (tr) {
+      var m = tr.getAttribute('data-model');
+      tr.classList.toggle('xp-hidden', !checked[m]);
+    });
+    var allChecked = models.every(function (m) { return checked[m]; });
+    toggleBtn.textContent = allChecked ? 'Tout décocher' : 'Tout cocher';
+  }
+
+  toggleBtn.addEventListener('click', function () {
+    var allChecked = models.every(function (m) { return checked[m]; });
+    var next = !allChecked;
+    models.forEach(function (m) { checked[m] = next; });
+    Object.keys(leafBoxes).forEach(function (m) { leafBoxes[m].checked = next; });
+    refreshGroups();
+    applyFilter();
+  });
+
+  refreshGroups();
 })();
 </script>
 </body>
