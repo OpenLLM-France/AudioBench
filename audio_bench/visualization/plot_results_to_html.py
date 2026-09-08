@@ -2292,7 +2292,8 @@ _HTML_TEMPLATE = """\
                              gap: 6px; padding: 3px 6px; border-radius: 4px; }
   #xp-filter-tree summary::-webkit-details-marker { display: none; }
   #xp-filter-tree summary:hover { background: #334155; }
-  #xp-filter-tree summary .xp-caret { flex: none; width: 10px; font-size: 10px; color: #64748b;
+  #xp-filter-tree summary .xp-caret { flex: none; width: 16px; text-align: center;
+                                       font-size: 16px; font-weight: 700; color: #e2e8f0;
                                        transition: transform .1s; }
   #xp-filter-tree details[open] > summary .xp-caret { transform: rotate(90deg); }
   #xp-filter-tree summary .xp-count { flex: none; font-size: 10px; color: #64748b; font-weight: 400; }
