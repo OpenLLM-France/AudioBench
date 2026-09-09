@@ -2,8 +2,8 @@ transformers
 vllm>=0.8.5
 fire
 evaluate
-datasets
-jiwer
+datasets<4
+jiwer<4
 more_itertools
 peft
 torchaudio

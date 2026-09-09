@@ -315,8 +315,10 @@ global:
     #       path: <DATA_FOLDER>/nemo/misc/multilang/context/VoxCeleb/yes_no/test.jsonl
 
 models:
+  - id: qwen3_omni_30b_instruct   # 30B-A3B MoE via vLLM; needs recent vLLM (nvcr.io/nvidia/vllm:26.04-py3)
   - id: qwen2_omni_3b
   - id: qwen2_omni_7b
+    gpu_memory_utilization: 0.65  # DGX Spark: unified memory shared with host, keep well below 1.0
   - id: qwen2_audio_7b_instruct
     batch_size: 20
   - id: phi_4_multimodal_instruct

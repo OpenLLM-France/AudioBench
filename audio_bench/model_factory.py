@@ -97,6 +97,10 @@ def load_model(model_id, model_path=None, gpu_memory_utilization=0.4, batch_size
         else:
             model = Qwen2Omni(gpu_memory_utilization=gpu_memory_utilization, device=device)
 
+    elif model_id.startswith('qwen3_omni'):
+        from audio_bench.model_src.vllm.qwen3_omni import Qwen3Omni
+        model = Qwen3Omni(gpu_memory_utilization=gpu_memory_utilization, device=device)
+
     elif model_id.startswith('voxtral'):
         from audio_bench.model_src.vllm.mistralai_voxtral import Voxtral
         model = Voxtral(gpu_memory_utilization=gpu_memory_utilization, device=device)
@@ -142,6 +146,7 @@ _MODEL_ID_TO_NAME = {
     "kimi_audio_7b_instruct": "moonshotai/Kimi-Audio-7B-Instruct",
     "qwen2_omni_7b": "Qwen/Qwen2.5-Omni-7B",
     "qwen2_omni_3b": "Qwen/Qwen2.5-Omni-3B",
+    "qwen3_omni_30b_instruct": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
 }
 
 # Prefix-based entries (checked when exact match fails)
@@ -149,6 +154,7 @@ _MODEL_ID_PREFIX_TO_NAME = {
     "audio_flamingo_next": "nvidia/audio-flamingo-next-hf",
     "audio_flamingo": "nvidia/audio-flamingo-3-hf",
     "voxtral": "mistralai/Voxtral-Mini-3B-2507",
+    "qwen3_omni": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
 }
 
 
