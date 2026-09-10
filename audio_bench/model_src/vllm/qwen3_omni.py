@@ -80,4 +80,7 @@ class Qwen3Omni(VLLMModel):
         ]
 
     def _postprocess_asr_text(self, text):
-        return text.strip()
+        # Qwen3-Omni Instruct often answers ASR conversationally (preamble + the transcript
+        # in quotes). Recover the transcript; a plain transcript is left unchanged.
+        from audio_bench.asr_postprocess import postprocess_asr_prediction
+        return postprocess_asr_prediction(text)
