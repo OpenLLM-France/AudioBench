@@ -93,7 +93,7 @@ def _model_name_td(m):
     """Render the model-name table cell, showing the model id on hover."""
     model_id = _MODEL_CHECKPOINT.get(m, m)
     title_attr = f' title="{html.escape(model_id, quote=True)}"' if model_id != m else ""
-    return f"<td{title_attr}>{m}</td>"
+    return f'<td class="mname"{title_attr}>{m}</td>'
 
 LOWER_IS_BETTER = {"wer"}
 ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
@@ -2547,6 +2547,11 @@ _HTML_TEMPLATE = """\
   .flt-tree summary .xp-count { flex: none; font-size: 10px; color: #64748b; font-weight: 400; }
   .flt-panel .xp-filter-head .flt-btns { display: flex; gap: 4px; }
   tr.xp-hidden { display: none !important; }
+  .flt-tree .xp-rename { flex: none; margin-left: auto; background: none; border: none;
+                         color: #64748b; cursor: pointer; font-size: 12px; padding: 0 2px; }
+  .flt-tree .xp-rename:hover { color: #e2e8f0; }
+  .flt-tree .xp-alias { color: #93c5fd; }
+  td.mname { cursor: text; }
   tr.ds-empty, .ds-hidden { display: none !important; }
 
   /* Main content */
@@ -2588,7 +2593,10 @@ __NAV_ITEMS__
   <div id="xp-filter" class="flt-panel">
     <div class="xp-filter-head">
       <span>Experiments</span>
-      <button id="xp-toggle-all" type="button">Tout décocher</button>
+      <div class="flt-btns">
+        <button id="xp-rename-reset" type="button" title="Annuler tous les renommages">Noms d'origine</button>
+        <button id="xp-toggle-all" type="button">Tout décocher</button>
+      </div>
     </div>
     <div id="xp-filter-tree" class="flt-tree"></div>
   </div>
@@ -2620,6 +2628,7 @@ __SECTIONS__
   }
 
   function render(text) {
+    if (window.xpRenameText) text = window.xpRenameText(text);
     tip.textContent = '';
     var grid = null;
     text.split(NL).forEach(function (line) {
@@ -2751,6 +2760,102 @@ __SECTIONS__
   // -------------------------------------------------------------------
   var groupBoxes = []; // { cb, leaves: [model,...] }
   var leafBoxes = {};  // model -> checkbox element
+  var leafAliases = {}; // model -> span showing its display name when renamed
+
+  // -------------------------------------------------------------------
+  // Display-only renaming (for clean screenshots, e.g. model cards).
+  // data-model and the filter tree keep the real name; only the visible
+  // name cells, tooltips and Plotly labels change. Saved per browser.
+  // -------------------------------------------------------------------
+  var RENAME_KEY = 'audiobench-xp-renames';
+  var renames = {};
+  try { renames = JSON.parse(localStorage.getItem(RENAME_KEY) || '{}') || {}; } catch (e) { renames = {}; }
+
+  function displayName(m) { return renames[m] || m; }
+
+  function saveRenames() {
+    try { localStorage.setItem(RENAME_KEY, JSON.stringify(renames)); } catch (e) {}
+  }
+
+  function askRename(m) {
+    var v = window.prompt('Nouveau nom pour ' + m + ' (vide = nom d\\'origine) :', displayName(m));
+    if (v === null) return;
+    v = v.trim();
+    if (v && v !== m) renames[m] = v; else delete renames[m];
+    saveRenames();
+    applyRenames();
+  }
+
+  // Longest names first so a name that prefixes another is not replaced inside it.
+  window.xpRenameText = function (text) {
+    Object.keys(renames).sort(function (a, b) { return b.length - a.length; }).forEach(function (m) {
+      text = text.split(m).join(renames[m]);
+    });
+    return text;
+  };
+
+  var isModel = {};
+  models.forEach(function (m) { isModel[m] = true; });
+
+  function hasModel(v) {
+    if (typeof v === 'string') return isModel[v] === true;
+    return Array.isArray(v) && v.some(function (x) { return typeof x === 'string' && isModel[x] === true; });
+  }
+
+  function renameValue(v) {
+    if (typeof v === 'string') return isModel[v] === true ? displayName(v) : v;
+    if (Array.isArray(v)) return v.map(renameValue);
+    return v;
+  }
+
+  // Each figure remembers, once, the original value of every trace field that
+  // holds a model name; renaming rewrites those fields in place and redraws
+  // only the figures that reference a model (one redraw per figure).
+  var PLOT_FIELDS = ['name', 'x', 'y', 'text', 'hovertext', 'legendgroup', 'labels', 'theta'];
+  function renamePlots() {
+    if (!window.Plotly) return;
+    document.querySelectorAll('.js-plotly-plot').forEach(function (gd) {
+      if (!gd.data) return;
+      if (!gd._xpOrig) {
+        if (!Object.keys(renames).length) return;
+        gd._xpOrig = [];
+        gd.data.forEach(function (tr, i) {
+          PLOT_FIELDS.forEach(function (f) {
+            if (hasModel(tr[f])) gd._xpOrig.push({ i: i, f: f, v: tr[f] });
+          });
+        });
+      }
+      if (!gd._xpOrig.length) return;
+      gd._xpOrig.forEach(function (o) { gd.data[o.i][o.f] = renameValue(o.v); });
+      window.Plotly.redraw(gd);
+    });
+  }
+
+  function applyRenames() {
+    rows.forEach(function (tr) {
+      var td = tr.querySelector('td.mname');
+      if (td) td.textContent = displayName(tr.getAttribute('data-model'));
+    });
+    models.forEach(function (m) {
+      var a = leafAliases[m];
+      if (a) a.textContent = renames[m] ? ' → ' + renames[m] : '';
+    });
+    renamePlots();
+  }
+
+  document.addEventListener('dblclick', function (e) {
+    var td = e.target.closest('td.mname');
+    if (!td || !td.parentNode.hasAttribute('data-model')) return;
+    askRename(td.parentNode.getAttribute('data-model'));
+  });
+
+  document.getElementById('xp-rename-reset').addEventListener('click', function () {
+    if (!Object.keys(renames).length) return;
+    if (!window.confirm('Revenir aux noms d\\'origine pour toutes les expériences ?')) return;
+    renames = {};
+    saveRenames();
+    applyRenames();
+  });
 
   function renderLeaf(container, modelName) {
     var li = document.createElement('li');
@@ -2765,7 +2870,24 @@ __SECTIONS__
     });
     leafBoxes[modelName] = cb;
     label.appendChild(cb);
-    label.appendChild(document.createTextNode(modelName));
+    var name = document.createElement('span');
+    name.textContent = modelName;
+    label.appendChild(name);
+    var alias = document.createElement('span');
+    alias.className = 'xp-alias';
+    label.appendChild(alias);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'xp-rename';
+    btn.title = 'Renommer (affichage uniquement)';
+    btn.textContent = '✎';
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      askRename(modelName);
+    });
+    label.appendChild(btn);
+    leafAliases[modelName] = alias;
     li.appendChild(label);
     container.appendChild(li);
   }
@@ -2863,6 +2985,7 @@ __SECTIONS__
   });
 
   refreshGroups();
+  applyRenames();
 })();
 </script>
 <script>
