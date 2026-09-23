@@ -35,9 +35,9 @@ _IGNORED_DATASETS = {
     "VoxCeleb-accent",
     "VoxCeleb",  # Speaker identification — only run on some models
     "MuChoMusic",
-    "SLU-SQA5_format_json_answer", # Format following
-    "SLU-SQA5_time2sentence", "SLU-SQA5_time2word", "SLU-SQA5_word2sentence", "SLU-SQA5_word2time", # Information Extraction
-    "SLU-SQA5_format_timestamped_transcription", # Timestamped transcription
+    "SLUE-SQA5_format_json_answer", # Format following
+    "SLUE-SQA5_time2sentence", "SLUE-SQA5_time2word", "SLUE-SQA5_word2sentence", "SLUE-SQA5_word2time", # Information Extraction
+    "SLUE-SQA5_format_timestamped_transcription", # Timestamped transcription
 }
 
 # (task, language) pairs excluded from a task's AVERAGE (still shown individually
@@ -475,8 +475,182 @@ def _model_color_map(models):
     return {m: palette[i % len(palette)] for i, m in enumerate(sorted(models))}
 
 
+# ---------------------------------------------------------------------------
+# Symbolic scores (client-side dataset filtering)
+# ---------------------------------------------------------------------------
+#
+# The tables are built from *symbolic* scores: each leaf score (one model on
+# one dataset) is a ``SymScore`` and every mean computed from it by the table
+# code (``sum(scores) / len(scores)``) or display scaling (``_display_score``)
+# becomes a node of an expression graph.  Each rendered cell records the node
+# it shows, so the report JS can re-evaluate every cell when datasets are
+# unchecked in the sidebar.  Comparisons and formatting use the concrete value,
+# so the Python-side layout, sorting and initial rendering are unchanged.
+
+_SYM_NODES = []        # node id -> JSON spec (see SymScore)
+_SYM_MEMO = {}         # dedup key -> SymScore
+_SYM_DATASETS = []     # dataset index -> dataset key (task, language, dataset_name)
+_SYM_DATASET_IDX = {}
+
+# Token delimiters embedded in rendered strings; _resolve_sym_tokens() turns
+# them into data-* attributes. Never valid in HTML, so they cannot clash.
+_TOK_START, _TOK_SEP, _TOK_END = "\x00", "\x01", "\x02"
+
+
+class SymScore:
+    """A score value that remembers how it was computed.
+
+    Node specs: ``["L", dataset_idx, value, asc, [n, sum, sumsq, std]]`` for a
+    leaf, ``["M", [child ids]]`` for a mean and ``["D", child_id, pct]`` for a
+    display score (x100 when *pct*, clamped to 100).
+    """
+    __slots__ = ("id", "val", "is_leaf")
+
+    def __init__(self, spec, val, memo_key=None):
+        self.id = len(_SYM_NODES)
+        self.val = val
+        self.is_leaf = spec[0] == "L"
+        _SYM_NODES.append(spec)
+        if memo_key is not None:
+            _SYM_MEMO[memo_key] = self
+
+    @classmethod
+    def leaf(cls, entry):
+        key = (_task_display_name(entry.get("task") or ""),
+               (entry.get("language") or "UNKNOWN").upper(),
+               entry["dataset_name"])
+        if key not in _SYM_DATASET_IDX:
+            _SYM_DATASET_IDX[key] = len(_SYM_DATASETS)
+            _SYM_DATASETS.append(key)
+        pooled = entry.get("all_scores") or []
+        stats = [len(pooled), float(sum(pooled)), float(sum(x * x for x in pooled)),
+                 entry.get("std")]
+        spec = ["L", _SYM_DATASET_IDX[key], entry["score"],
+                entry["metric_name"] in LOWER_IS_BETTER, stats]
+        return cls(spec, entry["score"])
+
+    @classmethod
+    def mean(cls, items):
+        key = ("M",) + tuple(i.id for i in items)
+        if key in _SYM_MEMO:
+            return _SYM_MEMO[key]
+        return cls(["M", [i.id for i in items]],
+                   sum(i.val for i in items) / len(items), key)
+
+    @classmethod
+    def display(cls, child, pct):
+        key = ("D", child.id, pct)
+        if key in _SYM_MEMO:
+            return _SYM_MEMO[key]
+        return cls(["D", child.id, pct],
+                   min(child.val * 100 if pct else child.val, 100), key)
+
+    # sum(scores) -> _SymSum, then / len(scores) -> mean node
+    def __radd__(self, other):
+        if isinstance(other, (int, float)) and other == 0:
+            return _SymSum([self])
+        return NotImplemented
+
+    def __add__(self, other):
+        if isinstance(other, SymScore):
+            return _SymSum([self, other])
+        return NotImplemented
+
+    def __float__(self):
+        return float(self.val)
+
+    def __lt__(self, other): return self.val < _sym_val(other)
+    def __le__(self, other): return self.val <= _sym_val(other)
+    def __gt__(self, other): return self.val > _sym_val(other)
+    def __ge__(self, other): return self.val >= _sym_val(other)
+
+    def __format__(self, spec):
+        return sym_token("V", self.id, format(self.val, spec))
+
+
+class _SymSum:
+    """Intermediate of ``sum(sym_scores)``; only valid divided by its length."""
+    __slots__ = ("items",)
+
+    def __init__(self, items):
+        self.items = items
+
+    def __add__(self, other):
+        if isinstance(other, SymScore):
+            return _SymSum(self.items + [other])
+        return NotImplemented
+
+    def __truediv__(self, k):
+        if k != len(self.items):
+            raise ValueError("symbolic sums may only be averaged over their own items")
+        return SymScore.mean(self.items)
+
+
+def _sym_val(x):
+    return x.val if isinstance(x, SymScore) else x
+
+
+def sym_token(kind, node_id, text, *args):
+    """Embed a token for node *node_id* displaying *text* (see _resolve_sym_tokens)."""
+    head = ":".join([kind, str(node_id)] + [str(a) for a in args])
+    return f"{_TOK_START}{head}{_TOK_SEP}{text}{_TOK_END}"
+
+
+_SYM_TOKEN_RE = re.compile(
+    re.escape(_TOK_START) + r"([^\x01]*)" + re.escape(_TOK_SEP) + r"([^\x02]*)" + re.escape(_TOK_END),
+    re.S)
+_TD_RE = re.compile(r"<td([^>]*)>(.*?)</td>", re.S)
+_TITLE_RE = re.compile(r' title="([^"]*)"')
+
+
+def _resolve_sym_tokens(raw_html):
+    """Replace symbolic tokens in rendered table cells by data-* attributes.
+
+    * ``data-f``  -- node id of the value shown in the cell
+    * ``data-ci`` -- present when the cell shows a CI (value: 1 for x100 metrics)
+    * ``data-tt`` -- tooltip template, tokens written as ``[[kind:id:args]]``
+    Tokens are replaced by their initial text, so the page renders as before.
+    """
+    def plain(text):
+        return _SYM_TOKEN_RE.sub(lambda m: m.group(2), text)
+
+    def td(match):
+        attrs, content = match.group(1), match.group(2)
+        extra = ""
+        first_v = next((t.group(1) for t in _SYM_TOKEN_RE.finditer(content)
+                        if t.group(1).startswith("V:")), None)
+        if first_v:
+            extra += f' data-f="{first_v.split(":")[1]}"'
+        ci = next((t.group(1) for t in _SYM_TOKEN_RE.finditer(content)
+                   if t.group(1).startswith("CI:")), None)
+        if ci:
+            extra += f' data-ci="{ci.split(":")[2]}"'
+
+        def title(tm):
+            text = tm.group(1)
+            if _TOK_START not in text:
+                return tm.group(0)
+            template = _SYM_TOKEN_RE.sub(lambda t: f"[[{t.group(1)}]]", text)
+            return (f' title="{plain(text)}"'
+                    f' data-tt="{html.escape(template, quote=True)}"')
+        attrs = _TITLE_RE.sub(title, attrs)
+        return f"<td{attrs}{extra}>{plain(content)}</td>"
+
+    out = _TD_RE.sub(td, raw_html)
+    if _TOK_START in out:
+        raise ValueError("symbolic score rendered outside a table cell")
+    return out
+
+
+def _symbolize_entries(entries):
+    """Return copies of *entries* whose score is a leaf ``SymScore``."""
+    return [dict(e, score=SymScore.leaf(e)) for e in entries]
+
+
 def _display_score(score, metric):
     """Format score for display: multiply by 100 for 0-1 range metrics, clamp to 100."""
+    if isinstance(score, SymScore):
+        return SymScore.display(score, metric in ZERO_TO_ONE_RANGE)
     disp = score * 100 if metric in ZERO_TO_ONE_RANGE else score
     return min(disp, 100)
 
@@ -500,20 +674,28 @@ def _format_score_with_ci(score, metric, std=None, n=None, model=None, rank=None
     (e.g. '3e').
     """
     disp = _display_score(score, metric)
+    sym = isinstance(disp, SymScore)
+    pct = int(metric in ZERO_TO_ONE_RANGE)
     base = f"{disp:.2f}"
     ci = _compute_ci(std, n)
     if ci is not None:
         # Scale CI the same way as the score display
         ci_disp = ci * 100 if metric in ZERO_TO_ONE_RANGE else ci
-        lo = disp - ci_disp
-        hi = disp + ci_disp
+        lo = float(disp) - ci_disp
+        hi = float(disp) + ci_disp
         html_str = f'{base} <span class="ci">\u00b1{ci_disp:.2f}</span>'
-        tooltip_str = f"{base} [{lo:.2f}, {hi:.2f}], n={n}"
+        ci_str = f" [{lo:.2f}, {hi:.2f}], n={n}"
     else:
         html_str = base
-        tooltip_str = base
+        ci_str = ""
+    if sym:
+        # The JS recomputes the CI (when available) and marks the cell as CI-capable.
+        html_str = base + sym_token("CI", disp.id, html_str[len(base):], pct)
+        ci_str = sym_token("C", disp.id, ci_str, pct, "m")
+    tooltip_str = base + ci_str
     if rank:
-        tooltip_str = f"{rank[0]}e — {tooltip_str}"
+        rank_str = f"{rank[0]}e — "
+        tooltip_str = (sym_token("R", disp.id, rank_str, "p") if sym else rank_str) + tooltip_str
     if model:
         tooltip_str = f"{model}\n{tooltip_str}"
     return html_str, tooltip_str
@@ -526,13 +708,15 @@ def _tooltip_subline(name, score, metric, std=None, n=None, rank=None):
     """
     disp = _display_score(score, metric)
     ci = _compute_ci(std, n)
+    ci_str = ""
     if ci is not None:
         ci_disp = ci * 100 if metric in ZERO_TO_ONE_RANGE else ci
-        val = f"{disp:.2f}±{ci_disp:.2f}"
-    else:
-        val = f"{disp:.2f}"
+        ci_str = f"±{ci_disp:.2f}"
     rank_str = f" ({rank[0]}e)" if rank else ""
-    return f"{name}: {val}{rank_str}"
+    if isinstance(disp, SymScore):
+        ci_str = sym_token("C", disp.id, ci_str, int(metric in ZERO_TO_ONE_RANGE), "s")
+        rank_str = sym_token("R", disp.id, rank_str, "s")
+    return f"{name}: {disp:.2f}{ci_str}{rank_str}"
 
 
 def _classify_language(lang_str):
@@ -645,7 +829,7 @@ def _compute_normalized_scores(all_models, item_model_score, item_ascending):
     item_stats = {}  # item -> (lo, hi, mean, std)
     for item, scores in item_model_score.items():
         asc = item_ascending[item]
-        hib = {m: (100.0 - s) if asc else s for m, s in scores.items()}
+        hib = {m: (100.0 - float(s)) if asc else float(s) for m, s in scores.items()}
         item_model_hib[item] = hib
         vals = np.array(list(hib.values()))
         item_stats[item] = (float(vals.min()), float(vals.max()),
@@ -699,6 +883,11 @@ def _agg_columns_html(table_aggregates, sorted_models, aggregate_values):
     return agg_render
 
 
+def _agg_payload_value(v):
+    """A symbolic score is referenced by node id ({"n": id}), a float inlined."""
+    return {"n": v.id} if isinstance(v, SymScore) else float(v)
+
+
 def _agg_payload_html(tbl_id, table_aggregates, item_model_score, item_ascending,
                       item_model_rank_score=None):
     """Embed the per-item display scores behind a table's aggregate columns.
@@ -719,9 +908,9 @@ def _agg_payload_html(tbl_id, table_aggregates, item_model_score, item_ascending
     }
     for item, scores in item_model_score.items():
         entry = {"asc": bool(item_ascending[item]),
-                 "s": {m: float(v) for m, v in scores.items()}}
+                 "s": {m: _agg_payload_value(v) for m, v in scores.items()}}
         if item_model_rank_score is not None:
-            entry["r"] = {m: float(v)
+            entry["r"] = {m: _agg_payload_value(v)
                           for m, v in item_model_rank_score[item].items()}
         payload["items"].append(entry)
     blob = json.dumps(payload, separators=(",", ":")).replace("</", "<\\/")
@@ -1289,7 +1478,8 @@ _AGG_META = {
 
 
 def plot_size_vs_performance(entries, collector, *, category="Overview",
-                             overview_data=None, figure_aggregates=None):
+                             overview_data=None, figure_aggregates=None,
+                             allowed_super_cats=None):
     """Scatter plot(s) of aggregate score vs model size.
 
     Generates one figure per measure in *figure_aggregates*.
@@ -1298,7 +1488,8 @@ def plot_size_vs_performance(entries, collector, *, category="Overview",
     if figure_aggregates is None:
         figure_aggregates = ["avg_rank"]
 
-    data = overview_data or _compute_overview_ranks(entries)
+    data = overview_data or _compute_overview_ranks(
+        entries, allowed_super_cats=allowed_super_cats)
     if data is None:
         return
 
@@ -1553,6 +1744,8 @@ def plot_overview_table(entries, collector, *, title="Overview",
                     val = task_disp_score[task][m]
                     rk = task_full_ranks.get(task, {}).get(ri)
                     rank_str = f"{rk[0]}e — " if rk else ""
+                    if isinstance(val, SymScore):
+                        rank_str = sym_token("R", val.id, rank_str, "p")
                     lines.append(_td(f"{val:.2f}",
                                      rank_key=task_ranks.get(task, {}).get(ri),
                                      title=f"{m}\n{rank_str}Mean across {len(members)} tasks{sub_suffix}"))
@@ -2017,12 +2210,13 @@ function toggleSumView(id, view) {
 # ---------------------------------------------------------------------------
 
 def plot_language_sections(entries, collector, include_violin=False,
-                           table_aggregates=None):
+                           table_aggregates=None, violin_entries=None):
     """Build per-language-group sections (French, English, Others).
 
     Each group gets violin plots per task (when *include_violin* is True)
     and a summary table (Models × Tasks) with expandable per-dataset
-    sub-columns.
+    sub-columns.  *violin_entries*, when given, replaces *entries* for the
+    violin plots (plain float scores).
     """
     # Classify entries by language group
     group_entries = defaultdict(list)
@@ -2045,9 +2239,12 @@ def plot_language_sections(entries, collector, include_violin=False,
                 task_raw_map[task].append(e)
 
         if include_violin:
-            for task in sorted(task_raw_map.keys()):
-                if task_raw_map[task]:
-                    plot_violin_charts(task_raw_map[task], category, collector)
+            violin_map = defaultdict(list)
+            for e in (violin_entries if violin_entries is not None else grp_ents):
+                if e.get("task") and _classify_language(e.get("language")) == group_name:
+                    violin_map[e["task"]].append(e)
+            for task in sorted(violin_map.keys()):
+                plot_violin_charts(violin_map[task], category, collector)
 
         # Summary table: Models × Tasks
         _build_language_summary_table(grp_ents, group_name, category, collector,
@@ -2313,37 +2510,39 @@ _HTML_TEMPLATE = """\
   nav.sidebar li.nav-group { font-size: 11px; font-weight: 700; text-transform: uppercase;
                               color: #64748b; padding: 14px 16px 4px; letter-spacing: .05em; }
 
-  /* Experiment filter panel */
-  #xp-filter { border-top: 1px solid #334155; margin-top: 8px; padding-top: 10px; }
-  #xp-filter .xp-filter-head { display: flex; align-items: center; justify-content: space-between;
+  /* Filter panels (experiments, datasets) */
+  .flt-panel { border-top: 1px solid #334155; margin-top: 8px; padding-top: 10px; }
+  .flt-panel .xp-filter-head { display: flex; align-items: center; justify-content: space-between;
                                 padding: 0 16px 8px; }
-  #xp-filter .xp-filter-head span { font-size: 11px; font-weight: 700; text-transform: uppercase;
+  .flt-panel .xp-filter-head span { font-size: 11px; font-weight: 700; text-transform: uppercase;
                                      color: #64748b; letter-spacing: .05em; }
-  #xp-filter button#xp-toggle-all { font-size: 11px; background: #334155; color: #e2e8f0;
+  .flt-panel .xp-filter-head button { font-size: 11px; background: #334155; color: #e2e8f0;
                                      border: 1px solid #475569; border-radius: 4px; padding: 3px 8px;
                                      cursor: pointer; }
-  #xp-filter button#xp-toggle-all:hover { background: #475569; }
-  #xp-filter-tree { max-height: 60vh; overflow-y: auto; padding: 0 10px 10px; }
-  #xp-filter-tree ul { list-style: none; margin: 0; padding-left: 16px; }
-  #xp-filter-tree > ul { padding-left: 0; }
-  #xp-filter-tree li { padding: 0; }
-  #xp-filter-tree label { display: flex; align-items: center; gap: 6px; padding: 3px 6px;
+  .flt-panel .xp-filter-head button:hover { background: #475569; }
+  .flt-tree { max-height: 60vh; overflow-y: auto; padding: 0 10px 10px; }
+  .flt-tree ul { list-style: none; margin: 0; padding-left: 16px; }
+  .flt-tree > ul { padding-left: 0; }
+  .flt-tree li { padding: 0; }
+  .flt-tree label { display: flex; align-items: center; gap: 6px; padding: 3px 6px;
                            font-size: 12px; color: #cbd5e1; cursor: pointer; border-radius: 4px;
                            white-space: normal; word-break: break-word; line-height: 1.3; }
-  #xp-filter-tree label:hover { background: #334155; color: #e2e8f0; }
-  #xp-filter-tree input[type="checkbox"] { flex: none; accent-color: #3b82f6; margin-top: 1px; }
-  #xp-filter-tree .xp-group { font-weight: 600; color: #e2e8f0; }
-  #xp-filter-tree details { margin: 1px 0; }
-  #xp-filter-tree summary { list-style: none; cursor: pointer; display: flex; align-items: center;
+  .flt-tree label:hover { background: #334155; color: #e2e8f0; }
+  .flt-tree input[type="checkbox"] { flex: none; accent-color: #3b82f6; margin-top: 1px; }
+  .flt-tree .xp-group { font-weight: 600; color: #e2e8f0; }
+  .flt-tree details { margin: 1px 0; }
+  .flt-tree summary { list-style: none; cursor: pointer; display: flex; align-items: center;
                              gap: 6px; padding: 3px 6px; border-radius: 4px; }
-  #xp-filter-tree summary::-webkit-details-marker { display: none; }
-  #xp-filter-tree summary:hover { background: #334155; }
-  #xp-filter-tree summary .xp-caret { flex: none; width: 16px; text-align: center;
+  .flt-tree summary::-webkit-details-marker { display: none; }
+  .flt-tree summary:hover { background: #334155; }
+  .flt-tree summary .xp-caret { flex: none; width: 16px; text-align: center;
                                        font-size: 16px; font-weight: 700; color: #e2e8f0;
                                        transition: transform .1s; }
-  #xp-filter-tree details[open] > summary .xp-caret { transform: rotate(90deg); }
-  #xp-filter-tree summary .xp-count { flex: none; font-size: 10px; color: #64748b; font-weight: 400; }
+  .flt-tree details[open] > summary .xp-caret { transform: rotate(90deg); }
+  .flt-tree summary .xp-count { flex: none; font-size: 10px; color: #64748b; font-weight: 400; }
+  .flt-panel .xp-filter-head .flt-btns { display: flex; gap: 4px; }
   tr.xp-hidden { display: none !important; }
+  tr.ds-empty, .ds-hidden { display: none !important; }
 
   /* Main content */
   main { margin-left: 360px; padding: 28px 32px; flex: 1; max-width: calc(100vw - 360px); }
@@ -2381,18 +2580,30 @@ _HTML_TEMPLATE = """\
   <ul>
 __NAV_ITEMS__
   </ul>
-  <div id="xp-filter">
+  <div id="xp-filter" class="flt-panel">
     <div class="xp-filter-head">
       <span>Experiments</span>
       <button id="xp-toggle-all" type="button">Tout décocher</button>
     </div>
-    <div id="xp-filter-tree"></div>
+    <div id="xp-filter-tree" class="flt-tree"></div>
+  </div>
+  <div id="ds-filter" class="flt-panel">
+    <div class="xp-filter-head">
+      <span>Datasets</span>
+      <div class="flt-btns">
+        <button id="ds-reset" type="button" title="Sélection par défaut">Défaut</button>
+        <button id="ds-core" type="button" title="Sélection par défaut, limitée aux tâches ASR, AST et QA">ASR/AST/QA</button>
+        <button id="ds-toggle-all" type="button">Tout cocher</button>
+      </div>
+    </div>
+    <div id="ds-filter-tree" class="flt-tree"></div>
   </div>
 </nav>
 <main>
 __SECTIONS__
 </main>
 <div id="celltip"></div>
+<script type="application/json" id="report-data">__REPORT_DATA__</script>
 <script>
 (function () {
   var tip = document.getElementById('celltip');
@@ -2627,113 +2838,12 @@ __SECTIONS__
     });
   }
 
-  // -------------------------------------------------------------------
-  // Recompute the aggregate columns (Avg Rank / Min-Max / Z-Score) of every
-  // table over the visible models only, recolor them and re-sort the rows
-  // by the first aggregate -- mirrors _compute_normalized_scores().
-  // -------------------------------------------------------------------
-  var AGG_COLORS = __AGG_COLORS__;
-  var aggTables = [];
-  document.querySelectorAll('script.agg-data').forEach(function (el) {
-    var tbl = document.getElementById(el.getAttribute('data-table'));
-    if (!tbl || !tbl.tBodies.length) return;
-    aggTables.push({ tbl: tbl, data: JSON.parse(el.textContent) });
-  });
-
-  function computeAggs(data) {
-    var rank = {}, mm = {}, zs = {};
-    data.items.forEach(function (item) {
-      var ms = Object.keys(item.s).filter(function (m) { return checked[m]; });
-      if (!ms.length) return;
-      var hib = ms.map(function (m) { return item.asc ? 100 - item.s[m] : item.s[m]; });
-      var lo = Math.min.apply(null, hib), hi = Math.max.apply(null, hib);
-      var mean = hib.reduce(function (a, b) { return a + b; }, 0) / hib.length;
-      var std = Math.sqrt(hib.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / hib.length);
-      // Avg Rank uses the unclamped scores when provided ("r").
-      var rs = item.r || item.s;
-      ms.slice().sort(function (a, b) { return item.asc ? rs[a] - rs[b] : rs[b] - rs[a]; })
-        .forEach(function (m, r) { (rank[m] = rank[m] || []).push(r + 1); });
-      ms.forEach(function (m, i) {
-        var v = hib[i];
-        (mm[m] = mm[m] || []).push(hi > lo ? (v - lo) / (hi - lo) : 1);
-        (zs[m] = zs[m] || []).push(std > 0 ? (v - mean) / std : 0);
-      });
-    });
-    function avg(obj) {
-      var out = {};
-      Object.keys(obj).forEach(function (m) {
-        out[m] = obj[m].reduce(function (a, b) { return a + b; }, 0) / obj[m].length;
-      });
-      return out;
-    }
-    return { avg_rank: avg(rank), minmax: avg(mm), zscore: avg(zs) };
-  }
-
-  // Match Python's f"{v:.nf}" (round-half-even on exact ties, e.g. 17.25 -> 17.2).
-  function fmt(v, digits) {
-    try {
-      return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: digits, maximumFractionDigits: digits,
-        roundingMode: 'halfEven', useGrouping: false }).format(v);
-    } catch (e) { return v.toFixed(digits); }
-  }
-
-  function updateAggTables() {
-    aggTables.forEach(function (t) {
-      var vals = computeAggs(t.data);
-      var body = t.tbl.tBodies[0];
-      var trs = Array.prototype.slice.call(body.querySelectorAll('tr[data-model]'));
-      var visible = trs.filter(function (tr) { return checked[tr.getAttribute('data-model')]; });
-
-      t.data.aggs.forEach(function (agg) {
-        var v = vals[agg.name];
-        var ranked = visible.filter(function (tr) { return tr.getAttribute('data-model') in v; })
-          .sort(function (a, b) {
-            var d = v[a.getAttribute('data-model')] - v[b.getAttribute('data-model')];
-            return agg.hib ? -d : d;
-          });
-        var color = new Map();
-        var n = ranked.length;
-        if (n >= 1) color.set(ranked[0], AGG_COLORS.first);
-        if (n >= 2) color.set(ranked[1], AGG_COLORS.second);
-        if (n >= 3) color.set(ranked[n - 1], AGG_COLORS.last);
-        if (n >= 4) color.set(ranked[n - 2], AGG_COLORS.before_last);
-        trs.forEach(function (tr) {
-          var td = tr.querySelector('td[data-agg="' + agg.name + '"]');
-          if (!td) return;
-          var m = tr.getAttribute('data-model');
-          if (m in v) {
-            td.textContent = fmt(v[m], agg.digits);
-            td.style.background = color.get(tr) || '';
-          } else {
-            td.textContent = '-';
-            td.style.background = AGG_COLORS.missing;
-          }
-        });
-      });
-
-      // Re-sort rows by the first aggregate (models without a value last).
-      var first = t.data.aggs[0];
-      if (!first) return;
-      var fv = vals[first.name];
-      trs.sort(function (a, b) {
-        var ma = a.getAttribute('data-model'), mb = b.getAttribute('data-model');
-        var ha = ma in fv, hb = mb in fv;
-        if (ha !== hb) return ha ? -1 : 1;
-        if (!ha) return 0;
-        var d = fv[ma] - fv[mb];
-        return first.hib ? -d : d;
-      });
-      trs.forEach(function (tr) { body.appendChild(tr); });
-    });
-  }
-
   function applyFilter() {
     rows.forEach(function (tr) {
       var m = tr.getAttribute('data-model');
       tr.classList.toggle('xp-hidden', !checked[m]);
     });
-    updateAggTables();
+    if (window.refreshReportTables) window.refreshReportTables();
     var allChecked = models.every(function (m) { return checked[m]; });
     toggleBtn.textContent = allChecked ? 'Tout décocher' : 'Tout cocher';
   }
@@ -2750,6 +2860,470 @@ __SECTIONS__
   refreshGroups();
 })();
 </script>
+<script>
+(function () {
+  // ===================================================================
+  // Table engine: every score cell carries data-f = the id of the node
+  // (in the score graph emitted by the Python side) it displays. Leaves are
+  // (model, dataset) scores; means and display scaling are inner nodes. When
+  // datasets or models are toggled, every cell, CI, rank colour, tooltip,
+  // aggregate column and row order is recomputed from that graph.
+  // ===================================================================
+  var DATA = JSON.parse(document.getElementById('report-data').textContent);
+  var NODES = DATA.nodes;
+  var COLORS = __AGG_COLORS__;
+  var NL = String.fromCharCode(10);
+  var dsOn = DATA.datasets.map(function () { return true; });
+  DATA.off.forEach(function (i) { dsOn[i] = false; });
+
+  // --- Graph evaluation (memoized per refresh) ---
+  var memo = new Array(NODES.length);
+  var ascMemo = new Array(NODES.length);
+
+  // sum() as CPython >= 3.12 computes it for floats (Neumaier compensation),
+  // so means tie exactly where they tie on the Python side.
+  function pysum(xs) {
+    var s = 0, c = 0;
+    for (var i = 0; i < xs.length; i++) {
+      var x = xs[i], t = s + x;
+      if (Math.abs(s) >= Math.abs(x)) c += (s - t) + x; else c += (x - t) + s;
+      s = t;
+    }
+    return c && isFinite(c) ? s + c : s;
+  }
+
+  function value(id) {
+    if (memo[id] !== undefined) return memo[id];
+    var n = NODES[id], v = null;
+    if (n[0] === 'L') {
+      v = dsOn[n[1]] ? n[2] : null;
+    } else if (n[0] === 'M') {
+      var xs = [];
+      n[1].forEach(function (c) {
+        var cv = value(c);
+        if (cv !== null) xs.push(cv);
+      });
+      v = xs.length ? pysum(xs) / xs.length : null;
+    } else {  // 'D'
+      var x = value(n[1]);
+      v = x === null ? null : Math.min(n[2] ? x * 100 : x, 100);
+    }
+    memo[id] = v;
+    return v;
+  }
+
+  function isAsc(id) {  // lower is better (mirrors task_ascending)
+    if (ascMemo[id] !== undefined) return ascMemo[id];
+    var n = NODES[id], a;
+    if (n[0] === 'L') a = n[3];
+    else if (n[0] === 'D') a = isAsc(n[1]);
+    else a = n[1].every(isAsc);
+    ascMemo[id] = a;
+    return a;
+  }
+
+  // CI half-width in display units, or null. A leaf uses its own std; a mean
+  // pools the per-sample scores of its enabled leaves (like np.std(pooled)).
+  function ciOf(id, pct) {
+    var n = NODES[id];
+    if (n[0] === 'D') n = NODES[id = n[1]];
+    var std, cnt;
+    if (n[0] === 'L') {
+      if (!dsOn[n[1]] || n[4][3] === null || !n[4][0]) return null;
+      std = n[4][3]; cnt = n[4][0];
+    } else {
+      var acc = { n: 0, s: 0, ss: 0 };
+      (function gather(i) {
+        var x = NODES[i];
+        if (x[0] === 'L') {
+          if (dsOn[x[1]] && x[4][0]) { acc.n += x[4][0]; acc.s += x[4][1]; acc.ss += x[4][2]; }
+        } else if (x[0] === 'D') gather(x[1]);
+        else x[1].forEach(gather);
+      })(id);
+      if (!acc.n) return null;
+      var mean = acc.s / acc.n;
+      std = Math.sqrt(Math.max(0, acc.ss / acc.n - mean * mean));
+      cnt = acc.n;
+    }
+    var ci = 1.96 * std / Math.sqrt(cnt);
+    return { ci: pct ? ci * 100 : ci, n: cnt };
+  }
+
+  // Match Python's f"{v:.nf}" (round-half-even on exact ties).
+  var formatters = {};
+  function fmt(v, digits) {
+    var f = formatters[digits];
+    if (f === undefined) {
+      try {
+        f = new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: digits, maximumFractionDigits: digits,
+          roundingMode: 'halfEven', useGrouping: false });
+      } catch (e) { f = null; }
+      formatters[digits] = f;
+    }
+    return f ? f.format(v) : v.toFixed(digits);
+  }
+
+  function aggVal(x) {  // aggregate payload value: inline float or {n: node id}
+    return typeof x === 'number' ? x : value(x.n);
+  }
+
+  // --- Tables ---
+  var tables = Array.prototype.slice.call(document.querySelectorAll('table.ov-tbl'))
+    .filter(function (t) { return t.tBodies.length && t.querySelector('td[data-f]'); })
+    .map(function (tbl) {
+      var payload = document.querySelector('script.agg-data[data-table="' + tbl.id + '"]');
+      // Column index -> header cell (data columns span both header rows).
+      var headers = {};
+      if (tbl.tHead && tbl.tHead.rows.length) {
+        var c = 0;
+        Array.prototype.forEach.call(tbl.tHead.rows[0].cells, function (th) {
+          if (th.rowSpan === 2) headers[c] = th;
+          c += th.colSpan;
+        });
+      }
+      var cols = {};
+      Array.prototype.forEach.call(tbl.querySelectorAll('td[data-f]'), function (td) {
+        (cols[td.cellIndex] = cols[td.cellIndex] || []).push(td);
+      });
+      return { tbl: tbl, headers: headers, cols: cols,
+               agg: payload ? JSON.parse(payload.textContent) : null };
+    });
+
+  function rowOn(tr) { return !tr.classList.contains('xp-hidden'); }
+
+  function computeAggs(data, on) {
+    var rank = {}, mm = {}, zs = {};
+    data.items.forEach(function (item) {
+      var ms = [], hib = [], raw = {};
+      Object.keys(item.s).forEach(function (m) {
+        if (!on[m]) return;
+        var v = aggVal(item.s[m]);
+        if (v === null) return;
+        ms.push(m); hib.push(item.asc ? 100 - v : v);
+        raw[m] = item.r ? aggVal(item.r[m]) : v;
+      });
+      if (!ms.length) return;
+      var lo = Math.min.apply(null, hib), hi = Math.max.apply(null, hib);
+      var mean = hib.reduce(function (a, b) { return a + b; }, 0) / hib.length;
+      var std = Math.sqrt(hib.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / hib.length);
+      // Avg Rank uses the unclamped scores when provided ("r").
+      ms.slice().sort(function (a, b) { return item.asc ? raw[a] - raw[b] : raw[b] - raw[a]; })
+        .forEach(function (m, r) { (rank[m] = rank[m] || []).push(r + 1); });
+      ms.forEach(function (m, i) {
+        var v = hib[i];
+        (mm[m] = mm[m] || []).push(hi > lo ? (v - lo) / (hi - lo) : 1);
+        (zs[m] = zs[m] || []).push(std > 0 ? (v - mean) / std : 0);
+      });
+    });
+    function avg(obj) {
+      var out = {};
+      Object.keys(obj).forEach(function (m) {
+        out[m] = pysum(obj[m]) / obj[m].length;
+      });
+      return out;
+    }
+    return { avg_rank: avg(rank), minmax: avg(mm), zscore: avg(zs) };
+  }
+
+  // Colour 1st / 2nd / before-last / last among *ranked* rows (best first).
+  function rankColors(ranked) {
+    var color = new Map(), n = ranked.length;
+    if (n >= 1) color.set(ranked[0], COLORS.first);
+    if (n >= 2) color.set(ranked[1], COLORS.second);
+    if (n >= 3) color.set(ranked[n - 1], COLORS.last);
+    if (n >= 4) color.set(ranked[n - 2], COLORS.before_last);
+    return color;
+  }
+
+  // Only touch the DOM when a cell actually changes (keeps toggling fast).
+  function setCell(td, html, bg) {
+    if (td._html !== html) { td.innerHTML = html; td._html = html; }
+    if (td._bg !== bg) { td.style.background = bg; td._bg = bg; }
+  }
+
+  function setMissing(td) {
+    setCell(td, '-', COLORS.missing);
+    td.removeAttribute('data-tip');
+    td._tip = undefined;
+  }
+
+  function fillTooltip(template, ranks) {
+    var out = [];
+    template.split(NL).forEach(function (line) {
+      var dropped = false;
+      var text = line.replace(/\\[\\[([^\\]]*)\\]\\]/g, function (_, tok) {
+        var p = tok.split(':'), id = +p[1];
+        if (p[0] === 'V') {
+          var v = value(id);
+          if (v === null) { dropped = true; return ''; }
+          return fmt(v, 2);
+        }
+        if (p[0] === 'R') {
+          var r = ranks[id];
+          if (!r) return '';
+          return p[2] === 'p' ? r + 'e — ' : ' (' + r + 'e)';
+        }
+        if (p[0] === 'C') {
+          var ci = value(id) === null ? null : ciOf(id, p[2] === '1');
+          if (!ci) return '';
+          if (p[3] === 's') return '±' + fmt(ci.ci, 2);
+          var v0 = value(id);
+          return ' [' + fmt(v0 - ci.ci, 2) + ', ' + fmt(v0 + ci.ci, 2) + '], n=' + ci.n;
+        }
+        return '';
+      });
+      if (!dropped) out.push(text);
+    });
+    return out.join(NL);
+  }
+
+  function refreshTable(t) {
+    var body = t.tbl.tBodies[0];
+    var trs = Array.prototype.slice.call(body.rows).filter(function (tr) { return tr.hasAttribute('data-model'); });
+    var on = {};
+    trs.forEach(function (tr) { if (rowOn(tr)) on[tr.getAttribute('data-model')] = true; });
+
+    // 1. Aggregates + row order (by the first aggregate).
+    if (t.agg) {
+      var vals = computeAggs(t.agg, on);
+      t.agg.aggs.forEach(function (agg) {
+        var v = vals[agg.name];
+        var ranked = trs.filter(function (tr) { return on[tr.getAttribute('data-model')] && tr.getAttribute('data-model') in v; })
+          .sort(function (a, b) {
+            var d = v[a.getAttribute('data-model')] - v[b.getAttribute('data-model')];
+            return agg.hib ? -d : d;
+          });
+        var color = rankColors(ranked);
+        trs.forEach(function (tr) {
+          var td = tr.querySelector('td[data-agg="' + agg.name + '"]');
+          if (!td) return;
+          var m = tr.getAttribute('data-model');
+          if (m in v) setCell(td, fmt(v[m], agg.digits), color.get(tr) || '');
+          else setCell(td, '-', COLORS.missing);
+        });
+      });
+      var first = t.agg.aggs[0];
+      if (first) {
+        var fv = vals[first.name];
+        trs.sort(function (a, b) {
+          var ma = a.getAttribute('data-model'), mb = b.getAttribute('data-model');
+          var ha = ma in fv, hb = mb in fv;
+          if (ha !== hb) return ha ? -1 : 1;
+          if (!ha) return 0;
+          var d = fv[ma] - fv[mb];
+          return first.hib ? -d : d;
+        });
+        var same = trs.every(function (tr, i) { return body.rows[i] === tr; });
+        if (!same) trs.forEach(function (tr) { body.appendChild(tr); });
+      }
+    }
+
+    // 2. Per-column values, ranks and colours over the visible rows.
+    var ranks = {};       // node id -> rank within its column
+    var rowHasData = new Map();
+    Object.keys(t.cols).forEach(function (ci) {
+      var cells = t.cols[ci];
+      var asc = isAsc(+cells[0].getAttribute('data-f'));
+      var present = cells.filter(function (td) {
+        var ok = value(+td.getAttribute('data-f')) !== null;
+        if (ok) rowHasData.set(td.parentNode, true);
+        return ok && rowOn(td.parentNode);
+      });
+      // Stable sort in (current) row order, as Python's _full_ranks.
+      present.sort(function (a, b) { return a.parentNode.rowIndex - b.parentNode.rowIndex; });
+      var ranked = present.slice().sort(function (a, b) {
+        var d = value(+a.getAttribute('data-f')) - value(+b.getAttribute('data-f'));
+        return asc ? d : -d;
+      });
+      ranked.forEach(function (td, i) { ranks[+td.getAttribute('data-f')] = i + 1; });
+      var color = rankColors(ranked);
+      cells.forEach(function (td) {
+        var id = +td.getAttribute('data-f');
+        var v = value(id);
+        if (v === null) { setMissing(td); return; }
+        var html = fmt(v, 2);
+        if (td.hasAttribute('data-ci')) {
+          var c = ciOf(id, td.getAttribute('data-ci') === '1');
+          if (c) html += ' <span class="ci">±' + fmt(c.ci, 2) + '</span>';
+        }
+        setCell(td, html, color.get(td) || '');
+      });
+      // Hide a column with no value for any visible model.
+      var hide = !present.length;
+      trs.forEach(function (tr) {  // includes the "-" cells of models without data
+        if (tr.cells[ci]) tr.cells[ci].classList.toggle('ds-hidden', hide);
+      });
+      if (t.headers[ci]) t.headers[ci].classList.toggle('ds-hidden', hide);
+    });
+
+    // 3. Tooltips (need the ranks of every column).
+    Object.keys(t.cols).forEach(function (ci) {
+      t.cols[ci].forEach(function (td) {
+        var tt = td.getAttribute('data-tt');
+        if (!tt || value(+td.getAttribute('data-f')) === null) return;
+        var tip = fillTooltip(tt, ranks);
+        if (td._tip !== tip) { td.setAttribute('data-tip', tip); td._tip = tip; }
+        td.removeAttribute('title');
+      });
+    });
+
+    // 4. Rows without any value left (all their datasets unchecked).
+    trs.forEach(function (tr) { tr.classList.toggle('ds-empty', !rowHasData.get(tr)); });
+    var anyCol = Object.keys(t.cols).some(function (ci) {
+      return !t.cols[ci][0].classList.contains('ds-hidden');
+    });
+    t.tbl.classList.toggle('ds-empty-tbl', !anyCol);
+  }
+
+  // Hide figure wrappers whose tables are all empty, then empty sections.
+  function refreshSections() {
+    document.querySelectorAll('.figure-wrapper').forEach(function (w) {
+      var tbls = w.querySelectorAll('table.ov-tbl');
+      var empty = tbls.length > 0 && Array.prototype.every.call(tbls, function (tb) {
+        return tb.classList.contains('ds-empty-tbl');
+      });
+      w.classList.toggle('ds-hidden', empty);
+    });
+    document.querySelectorAll('section.category').forEach(function (sec) {
+      var ws = sec.querySelectorAll('.figure-wrapper');
+      var empty = ws.length > 0 && Array.prototype.every.call(ws, function (w) {
+        return w.classList.contains('ds-hidden');
+      });
+      sec.classList.toggle('ds-hidden', empty);
+      var link = document.querySelector('nav.sidebar a[href="#' + sec.id + '"]');
+      if (link) link.parentNode.classList.toggle('ds-hidden', empty);
+    });
+  }
+
+  function refresh() {
+    memo = new Array(NODES.length);
+    tables.forEach(refreshTable);
+    refreshSections();
+  }
+  window.refreshReportTables = refresh;
+
+  // ===================================================================
+  // Dataset filter panel: Task -> "LANG · dataset" checkboxes.
+  // ===================================================================
+  var treeEl = document.getElementById('ds-filter-tree');
+  var toggleBtn = document.getElementById('ds-toggle-all');
+  var resetBtn = document.getElementById('ds-reset');
+  var leafBoxes = [];   // dataset idx -> checkbox
+  var groupBoxes = [];  // { cb, leaves: [idx] }
+
+  // Task -> language -> dataset. Tasks with a single language skip the
+  // language level (their leaves read "LANG · dataset").
+  function langKey(l) {  // FR, EN first, like the tables
+    var i = ['FR', 'EN'].indexOf(l.split('-')[0]);
+    return (i === -1 ? '2' : '' + i) + l;
+  }
+
+  function groupNode(container, label, idxs) {  // returns the <ul> for children
+    var li = document.createElement('li');
+    var details = document.createElement('details');
+    var summary = document.createElement('summary');
+    var caret = document.createElement('span');
+    caret.className = 'xp-caret';
+    caret.textContent = '▸';
+    var gcb = document.createElement('input');
+    gcb.type = 'checkbox';
+    var text = document.createElement('span');
+    text.className = 'xp-group';
+    text.textContent = label;
+    var count = document.createElement('span');
+    count.className = 'xp-count';
+    summary.appendChild(caret); summary.appendChild(gcb);
+    summary.appendChild(text); summary.appendChild(count);
+    details.appendChild(summary);
+    var ul = document.createElement('ul');
+    details.appendChild(ul);
+    li.appendChild(details);
+    container.appendChild(li);
+    gcb.addEventListener('click', function (e) { e.stopPropagation(); });
+    gcb.addEventListener('change', function () {
+      idxs.forEach(function (i) { dsOn[i] = gcb.checked; });
+      update();
+    });
+    groupBoxes.push({ cb: gcb, leaves: idxs, count: count });
+    return ul;
+  }
+
+  function leafNode(container, i, label) {
+    var li = document.createElement('li');
+    var lab = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.addEventListener('change', function () { dsOn[i] = cb.checked; update(); });
+    leafBoxes[i] = cb;
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(label));
+    li.appendChild(lab);
+    container.appendChild(li);
+  }
+
+  var byTask = {};
+  DATA.datasets.forEach(function (d, i) {
+    var langs = byTask[d[0]] = byTask[d[0]] || {};
+    (langs[d[1]] = langs[d[1]] || []).push(i);
+  });
+  var rootUl = document.createElement('ul');
+  Object.keys(byTask).sort().forEach(function (task) {
+    var langs = Object.keys(byTask[task]).sort(function (a, b) {
+      return langKey(a) < langKey(b) ? -1 : langKey(a) > langKey(b) ? 1 : 0;
+    });
+    var byName = function (a, b) {
+      var x = DATA.datasets[a][2], y = DATA.datasets[b][2];
+      return x < y ? -1 : x > y ? 1 : 0;
+    };
+    var all = [];
+    langs.forEach(function (l) { all = all.concat(byTask[task][l].sort(byName)); });
+    var taskUl = groupNode(rootUl, task, all);
+    if (langs.length === 1) {
+      all.forEach(function (i) {
+        leafNode(taskUl, i, DATA.datasets[i][1] + ' · ' + DATA.datasets[i][2]);
+      });
+      return;
+    }
+    langs.forEach(function (l) {
+      var idxs = byTask[task][l];
+      var langUl = groupNode(taskUl, l, idxs);
+      idxs.forEach(function (i) { leafNode(langUl, i, DATA.datasets[i][2]); });
+    });
+  });
+  treeEl.appendChild(rootUl);
+
+  function syncBoxes() {
+    leafBoxes.forEach(function (cb, i) { if (cb) cb.checked = dsOn[i]; });
+    groupBoxes.forEach(function (g) {
+      var n = g.leaves.filter(function (i) { return dsOn[i]; }).length;
+      g.cb.checked = n === g.leaves.length;
+      g.cb.indeterminate = n > 0 && n < g.leaves.length;
+      g.count.textContent = '(' + n + '/' + g.leaves.length + ')';
+    });
+    toggleBtn.textContent = dsOn.every(Boolean) ? 'Tout décocher' : 'Tout cocher';
+  }
+
+  function update() { syncBoxes(); refresh(); }
+
+  toggleBtn.addEventListener('click', function () {
+    var next = !dsOn.every(Boolean);
+    dsOn = dsOn.map(function () { return next; });
+    update();
+  });
+  function selectDefault(superCats) {
+    dsOn = DATA.super_cats.map(function (sc) { return !superCats || superCats.indexOf(sc) !== -1; });
+    DATA.off.forEach(function (i) { dsOn[i] = false; });
+    update();
+  }
+  resetBtn.addEventListener('click', function () { selectDefault(null); });
+  document.getElementById('ds-core').addEventListener('click', function () {
+    selectDefault(['ASR', 'AST', 'QA']);
+  });
+
+  update();
+})();
+</script>
 </body>
 </html>
 """
@@ -2760,12 +3334,16 @@ def _slug(text):
     return re.sub(r'[^a-zA-Z0-9]+', '_', text).strip('_')
 
 
-def build_html_report(collected_figures, output_path):
+def build_html_report(collected_figures, output_path, default_off_datasets=()):
     """Assemble a single HTML report from collected Plotly figures.
 
     Figures are grouped by category, with violin plots shown before tables
     within each group.  The sidebar is split into **Overview**, **Tasks**,
     and **Languages** groups.
+
+    Symbolic table cells are resolved into data-* attributes and the score
+    graph is embedded for the dataset filter; *default_off_datasets* lists the
+    dataset indices unchecked when the page loads.
     """
     from collections import OrderedDict
 
@@ -2832,7 +3410,8 @@ def build_html_report(collected_figures, output_path):
             section_html += f'  <details open>\n    <summary>{chart_label}</summary>\n'
             for it in chart_items:
                 if "raw_html" in it:
-                    section_html += f'    <div class="figure-wrapper">{it["raw_html"]}</div>\n'
+                    raw = _resolve_sym_tokens(it["raw_html"])
+                    section_html += f'    <div class="figure-wrapper">{raw}</div>\n'
                 else:
                     fig_counter += 1
                     div_id = f"fig-{fig_counter}"
@@ -2849,6 +3428,13 @@ def build_html_report(collected_figures, output_path):
 
     html = _HTML_TEMPLATE.replace('__NAV_ITEMS__', '\n'.join(nav_lines))
     html = html.replace('__SECTIONS__', '\n'.join(section_blocks))
+    report_data = json.dumps({
+        "nodes": _SYM_NODES,
+        "datasets": [list(k) for k in _SYM_DATASETS],
+        "super_cats": [_super_category(k[0]) for k in _SYM_DATASETS],
+        "off": list(default_off_datasets),
+    }, separators=(",", ":")).replace("</", "<\\/")
+    html = html.replace('__REPORT_DATA__', report_data)
     html = html.replace('__AGG_COLORS__', json.dumps({**RANK_COLORS, "missing": MISSING_COLOR}))
 
     os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
@@ -2901,17 +3487,33 @@ def main():
     show_all_models = args.show_all or args.show_all_models
     show_all_datasets = args.show_all or args.show_all_datasets
 
-    # Load all scores
-    entries = load_all_scores(
+    # Load all scores. Every dataset is loaded; _IGNORED_DATASETS are only
+    # unchecked by default in the report's dataset filter (unless
+    # --show_all_datasets), so they can be toggled back on in the browser.
+    all_entries = load_all_scores(
         args.input_folder,
         show_all_models=show_all_models,
-        show_all_datasets=show_all_datasets,
+        show_all_datasets=True,
     )
-    if not entries:
+    if not all_entries:
         print(f"No score files found in {args.input_folder}")
         return
 
-    print(f"Loaded {len(entries)} score entries from {len({e['model_name'] for e in entries})} models")
+    print(f"Loaded {len(all_entries)} score entries from {len({e['model_name'] for e in all_entries})} models")
+
+    def _default_on(e):
+        return show_all_datasets or e["dataset_name"] not in _IGNORED_DATASETS
+
+    # Plotly figures are static: they use the default dataset selection.
+    plot_entries = [e for e in all_entries if _default_on(e)]
+    # Tables use symbolic scores so the report JS can recompute them.
+    entries = _symbolize_entries(all_entries)
+    default_off = sorted({
+        _SYM_DATASET_IDX[(_task_display_name(e.get("task") or ""),
+                          (e.get("language") or "UNKNOWN").upper(),
+                          e["dataset_name"])]
+        for e in all_entries if not _default_on(e)
+    })
 
     collector = []
 
@@ -2919,15 +3521,16 @@ def main():
     # sibling task of QUESTION ANSWERING under the QA super-category gave it
     # ~50% weight in the QA aggregate. It still shows up in the per-task QA
     # summary section below, which uses the raw `entries`.
-    overview_entries = [
-        e for e in entries
-        if e.get("task", "").upper() != "MATH QUESTION ANSWERING"
-    ]
+    def _not_math_qa(e):
+        return e.get("task", "").upper() != "MATH QUESTION ANSWERING"
+
+    overview_entries = [e for e in entries if _not_math_qa(e)]
+    overview_plot_entries = [e for e in plot_entries if _not_math_qa(e)]
 
     # --- Step 0: Overview table (all tasks × models) ---
-    overview_data = plot_overview_table(overview_entries, collector,
-                                        table_aggregates=args.table_aggregates)
-    plot_size_vs_performance(overview_entries, collector, overview_data=overview_data,
+    plot_overview_table(overview_entries, collector,
+                        table_aggregates=args.table_aggregates)
+    plot_size_vs_performance(overview_plot_entries, collector,
                              figure_aggregates=args.figure_aggregates)
 
     # --- Step 0b: Filtered overview (FR/EN, ASR/AST/QA only) ---
@@ -2940,25 +3543,26 @@ def main():
         parts = lang.split("-")
         return any(p in _fren for p in parts)
 
-    filtered = [
-        e for e in overview_entries
-        if _lang_match(e)
-        and _super_category(e.get("task", "")) in _allowed_sc
-    ]
+    def _fren_core(e):
+        return _lang_match(e) and _super_category(e.get("task", "")) in _allowed_sc
+
+    filtered = [e for e in overview_entries if _fren_core(e)]
     if filtered:
-        filtered_data = plot_overview_table(
+        plot_overview_table(
             filtered, collector,
             title="Overview (FR/EN \u2014 ASR, AST, QA)",
             table_id="overview-filtered-tbl",
             allowed_super_cats=_allowed_sc,
             table_aggregates=args.table_aggregates,
         )
-        plot_size_vs_performance(
-            filtered, collector,
-            category="Overview (FR/EN \u2014 ASR, AST, QA)",
-            overview_data=filtered_data,
-            figure_aggregates=args.figure_aggregates,
-        )
+        filtered_plot = [e for e in overview_plot_entries if _fren_core(e)]
+        if filtered_plot:
+            plot_size_vs_performance(
+                filtered_plot, collector,
+                category="Overview (FR/EN \u2014 ASR, AST, QA)",
+                allowed_super_cats=_allowed_sc,
+                figure_aggregates=args.figure_aggregates,
+            )
 
     # --- Steps 1+2: Super-category sections (violin plots + summary tables) ---
     for super_cat, task_map in _group_by_super_category(entries).items():
@@ -2967,9 +3571,12 @@ def main():
 
         # Violin plots: one per task within the super-category
         if args.violin:
-            for task, task_raw in sorted(task_map.items()):
-                if task_raw:
-                    plot_violin_charts(task_raw, cat_label, collector)
+            for task in sorted(task_map):
+                task_plot = [e for e in plot_entries
+                             if _task_display_name(e.get("task") or "") == task
+                             and _super_category(e.get("task", "")) == super_cat]
+                if task_plot:
+                    plot_violin_charts(task_plot, cat_label, collector)
 
         # Summary tables per task within the super-category
         for task, task_raw in sorted(task_map.items()):
@@ -2981,14 +3588,15 @@ def main():
 
     # --- Step 3: Language sections (French, English, Others) ---
     plot_language_sections(entries, collector, include_violin=args.violin,
-                           table_aggregates=args.table_aggregates)
+                           table_aggregates=args.table_aggregates,
+                           violin_entries=plot_entries)
 
     if not collector:
         print("No figures generated.")
         return
 
     output_path = os.path.join(args.output_folder, "report.html")
-    build_html_report(collector, output_path)
+    build_html_report(collector, output_path, default_off_datasets=default_off)
 
 
 if __name__ == "__main__":
