@@ -699,6 +699,36 @@ def _agg_columns_html(table_aggregates, sorted_models, aggregate_values):
     return agg_render
 
 
+def _agg_payload_html(tbl_id, table_aggregates, item_model_score, item_ascending,
+                      item_model_rank_score=None):
+    """Embed the per-item display scores behind a table's aggregate columns.
+
+    The experiment filter reads this JSON to recompute Avg Rank / Min-Max /
+    Z-Score (and re-sort rows) over the currently visible models only.
+    *item_model_rank_score* optionally gives the (unclamped) scores the Avg
+    Rank is computed on, when they differ from the display scores.
+    """
+    payload = {
+        "aggs": [
+            {"name": a,
+             "digits": int(_AGG_META[a]["fmt"].strip(".f")),
+             "hib": _AGG_META[a]["higher_is_better"]}
+            for a in table_aggregates
+        ],
+        "items": [],
+    }
+    for item, scores in item_model_score.items():
+        entry = {"asc": bool(item_ascending[item]),
+                 "s": {m: float(v) for m, v in scores.items()}}
+        if item_model_rank_score is not None:
+            entry["r"] = {m: float(v)
+                          for m, v in item_model_rank_score[item].items()}
+        payload["items"].append(entry)
+    blob = json.dumps(payload, separators=(",", ":")).replace("</", "<\\/")
+    return (f'<script type="application/json" class="agg-data" '
+            f'data-table="{tbl_id}">{blob}</script>')
+
+
 def _sort_models_by_aggregate(models, aggregate_values, agg_name):
     """Sort *models* by the aggregate named *agg_name* (best first).
 
@@ -1489,10 +1519,12 @@ def plot_overview_table(entries, collector, *, title="Overview",
         for agg_name in table_aggregates:
             ar = agg_render[agg_name]
             v = ar["values"][m]
+            agg_attr = f' data-agg="{agg_name}"'
             if v != ar["sentinel"]:
-                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri)))
+                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri),
+                                 extra_attrs=agg_attr))
             else:
-                lines.append(_td("-", is_missing=True))
+                lines.append(_td("-", is_missing=True, extra_attrs=agg_attr))
 
         for task in column_tasks:
             task_slug = _slug(task)
@@ -1558,6 +1590,9 @@ def plot_overview_table(entries, collector, *, title="Overview",
         lines.append("</tr>")
 
     lines.append("</tbody></table>")
+    lines.append(_agg_payload_html(table_id, table_aggregates,
+                                   {t: task_disp_score.get(t, {}) for t in column_tasks},
+                                   {t: task_ascending.get(t, False) for t in column_tasks}))
 
     # JavaScript toggle
     lines.append("""\
@@ -1813,10 +1848,12 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
         for agg_name in table_aggregates:
             ar = agg_render[agg_name]
             v = ar["values"][m]
+            agg_attr = f' data-agg="{agg_name}"'
             if v != ar["sentinel"]:
-                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri)))
+                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri),
+                                 extra_attrs=agg_attr))
             else:
-                lines.append(_td("-", is_missing=True))
+                lines.append(_td("-", is_missing=True, extra_attrs=agg_attr))
 
         # Average
         if model_avg[m] is not None:
@@ -1878,6 +1915,10 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
         lines.append("</tr>")
 
     lines.append("</tbody></table>")
+    lines.append(_agg_payload_html(
+        tbl_id, table_aggregates, lang_disp_scores,
+        {lang: ascending for lang in languages},
+        {lang: {m: v[0] for m, v in lang_model_score[lang].items()} for lang in languages}))
 
     # JS — generic toggle (harmless if redefined by other tables)
     lines.append(_TOGGLE_COLS_JS)
@@ -2181,10 +2222,12 @@ def _build_language_summary_table(entries, lang_group, category, collector,
         for agg_name in table_aggregates:
             ar = agg_render[agg_name]
             v = ar["values"][m]
+            agg_attr = f' data-agg="{agg_name}"'
             if v != ar["sentinel"]:
-                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri)))
+                lines.append(_td(f"{v:{ar['fmt']}}", rank_key=ar["ranks"].get(ri),
+                                 extra_attrs=agg_attr))
             else:
-                lines.append(_td("-", is_missing=True))
+                lines.append(_td("-", is_missing=True, extra_attrs=agg_attr))
 
         for task in tasks:
             metric = task_metric[task]
@@ -2225,6 +2268,9 @@ def _build_language_summary_table(entries, lang_group, category, collector,
         lines.append("</tr>")
 
     lines.append("</tbody></table>")
+    lines.append(_agg_payload_html(
+        tbl_id, table_aggregates, task_disp_scores, ascending_map,
+        {t: {m: v[0] for m, v in task_model_score[t].items()} for t in tasks}))
 
     # JS toggle (harmless if redefined)
     lines.append(_TOGGLE_COLS_JS)
@@ -2581,11 +2627,113 @@ __SECTIONS__
     });
   }
 
+  // -------------------------------------------------------------------
+  // Recompute the aggregate columns (Avg Rank / Min-Max / Z-Score) of every
+  // table over the visible models only, recolor them and re-sort the rows
+  // by the first aggregate -- mirrors _compute_normalized_scores().
+  // -------------------------------------------------------------------
+  var AGG_COLORS = __AGG_COLORS__;
+  var aggTables = [];
+  document.querySelectorAll('script.agg-data').forEach(function (el) {
+    var tbl = document.getElementById(el.getAttribute('data-table'));
+    if (!tbl || !tbl.tBodies.length) return;
+    aggTables.push({ tbl: tbl, data: JSON.parse(el.textContent) });
+  });
+
+  function computeAggs(data) {
+    var rank = {}, mm = {}, zs = {};
+    data.items.forEach(function (item) {
+      var ms = Object.keys(item.s).filter(function (m) { return checked[m]; });
+      if (!ms.length) return;
+      var hib = ms.map(function (m) { return item.asc ? 100 - item.s[m] : item.s[m]; });
+      var lo = Math.min.apply(null, hib), hi = Math.max.apply(null, hib);
+      var mean = hib.reduce(function (a, b) { return a + b; }, 0) / hib.length;
+      var std = Math.sqrt(hib.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / hib.length);
+      // Avg Rank uses the unclamped scores when provided ("r").
+      var rs = item.r || item.s;
+      ms.slice().sort(function (a, b) { return item.asc ? rs[a] - rs[b] : rs[b] - rs[a]; })
+        .forEach(function (m, r) { (rank[m] = rank[m] || []).push(r + 1); });
+      ms.forEach(function (m, i) {
+        var v = hib[i];
+        (mm[m] = mm[m] || []).push(hi > lo ? (v - lo) / (hi - lo) : 1);
+        (zs[m] = zs[m] || []).push(std > 0 ? (v - mean) / std : 0);
+      });
+    });
+    function avg(obj) {
+      var out = {};
+      Object.keys(obj).forEach(function (m) {
+        out[m] = obj[m].reduce(function (a, b) { return a + b; }, 0) / obj[m].length;
+      });
+      return out;
+    }
+    return { avg_rank: avg(rank), minmax: avg(mm), zscore: avg(zs) };
+  }
+
+  // Match Python's f"{v:.nf}" (round-half-even on exact ties, e.g. 17.25 -> 17.2).
+  function fmt(v, digits) {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: digits, maximumFractionDigits: digits,
+        roundingMode: 'halfEven', useGrouping: false }).format(v);
+    } catch (e) { return v.toFixed(digits); }
+  }
+
+  function updateAggTables() {
+    aggTables.forEach(function (t) {
+      var vals = computeAggs(t.data);
+      var body = t.tbl.tBodies[0];
+      var trs = Array.prototype.slice.call(body.querySelectorAll('tr[data-model]'));
+      var visible = trs.filter(function (tr) { return checked[tr.getAttribute('data-model')]; });
+
+      t.data.aggs.forEach(function (agg) {
+        var v = vals[agg.name];
+        var ranked = visible.filter(function (tr) { return tr.getAttribute('data-model') in v; })
+          .sort(function (a, b) {
+            var d = v[a.getAttribute('data-model')] - v[b.getAttribute('data-model')];
+            return agg.hib ? -d : d;
+          });
+        var color = new Map();
+        var n = ranked.length;
+        if (n >= 1) color.set(ranked[0], AGG_COLORS.first);
+        if (n >= 2) color.set(ranked[1], AGG_COLORS.second);
+        if (n >= 3) color.set(ranked[n - 1], AGG_COLORS.last);
+        if (n >= 4) color.set(ranked[n - 2], AGG_COLORS.before_last);
+        trs.forEach(function (tr) {
+          var td = tr.querySelector('td[data-agg="' + agg.name + '"]');
+          if (!td) return;
+          var m = tr.getAttribute('data-model');
+          if (m in v) {
+            td.textContent = fmt(v[m], agg.digits);
+            td.style.background = color.get(tr) || '';
+          } else {
+            td.textContent = '-';
+            td.style.background = AGG_COLORS.missing;
+          }
+        });
+      });
+
+      // Re-sort rows by the first aggregate (models without a value last).
+      var first = t.data.aggs[0];
+      if (!first) return;
+      var fv = vals[first.name];
+      trs.sort(function (a, b) {
+        var ma = a.getAttribute('data-model'), mb = b.getAttribute('data-model');
+        var ha = ma in fv, hb = mb in fv;
+        if (ha !== hb) return ha ? -1 : 1;
+        if (!ha) return 0;
+        var d = fv[ma] - fv[mb];
+        return first.hib ? -d : d;
+      });
+      trs.forEach(function (tr) { body.appendChild(tr); });
+    });
+  }
+
   function applyFilter() {
     rows.forEach(function (tr) {
       var m = tr.getAttribute('data-model');
       tr.classList.toggle('xp-hidden', !checked[m]);
     });
+    updateAggTables();
     var allChecked = models.every(function (m) { return checked[m]; });
     toggleBtn.textContent = allChecked ? 'Tout décocher' : 'Tout cocher';
   }
@@ -2701,6 +2849,7 @@ def build_html_report(collected_figures, output_path):
 
     html = _HTML_TEMPLATE.replace('__NAV_ITEMS__', '\n'.join(nav_lines))
     html = html.replace('__SECTIONS__', '\n'.join(section_blocks))
+    html = html.replace('__AGG_COLORS__', json.dumps({**RANK_COLORS, "missing": MISSING_COLOR}))
 
     os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
     Path(output_path).write_text(html, encoding='utf-8')
