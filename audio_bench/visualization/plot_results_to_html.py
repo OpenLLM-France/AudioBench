@@ -2497,6 +2497,7 @@ _HTML_TEMPLATE = """\
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AudioBench Results</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -2552,6 +2553,11 @@ _HTML_TEMPLATE = """\
   .flt-tree .xp-rename:hover { color: #e2e8f0; }
   .flt-tree .xp-alias { color: #93c5fd; }
   td.mname { cursor: text; }
+  .tbl-tools { display: flex; justify-content: flex-start; margin: 4px 0 -4px; }
+  .tbl-tools button { font-size: 11px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;
+                      border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+  .tbl-tools button:hover { background: #e2e8f0; }
+  .tbl-tools button:disabled { opacity: .5; cursor: wait; }
   tr.ds-empty, .ds-hidden { display: none !important; }
 
   /* Main content */
@@ -3450,6 +3456,52 @@ __SECTIONS__
   });
 
   update();
+})();
+</script>
+<script>
+(function () {
+  // "PNG" button above each table: exports the table as currently shown
+  // (filters, renames, hidden rows/columns), without the +/- column toggles.
+  function slug(s) {
+    return (s || '').trim().replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+  }
+
+  function fileName(tbl) {
+    var sec = tbl.closest('section.category');
+    var h = sec && sec.querySelector('h2');
+    return [slug(h && h.textContent), slug(tbl.id)].filter(Boolean).join('_') + '.png';
+  }
+
+  document.querySelectorAll('table.ov-tbl').forEach(function (tbl) {
+    var bar = document.createElement('div');
+    bar.className = 'tbl-tools';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'PNG';
+    btn.title = 'Télécharger cette table en PNG';
+    bar.appendChild(btn);
+    tbl.parentNode.insertBefore(bar, tbl);
+
+    btn.addEventListener('click', function () {
+      if (!window.htmlToImage) { window.alert('html-to-image non chargé (pas de connexion au CDN ?)'); return; }
+      btn.disabled = true;
+      window.htmlToImage.toPng(tbl, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+        style: { margin: '0' },
+        filter: function (node) { return !(node.classList && node.classList.contains('toggle-btn')); }
+      }).then(function (url) {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = fileName(tbl);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }).catch(function (err) {
+        window.alert('Export PNG impossible : ' + err);
+      }).then(function () { btn.disabled = false; });
+    });
+  });
 })();
 </script>
 </body>
