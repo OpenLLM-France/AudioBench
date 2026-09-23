@@ -116,11 +116,16 @@ _MODEL_SIZE_OVERRIDES = [
     (rf"^{CONSORTIUM_NAME}/Canary[-_]Qwen3[-_]1\.7B", "2.5B"),
     (rf"^{CONSORTIUM_NAME}/Canary[-_]Qwen3[-_]4B", "4.8B"),
     (rf"^{CONSORTIUM_NAME}/Canary_Luciole-1B", "2.1B"),
+    (r"^LINAGORA/luciole_v\d+_stage1_canary", "2.1B"),
+    (r"^LINAGORA/luciole_v\d+", "1.9B"),
+    (r"^LINAGORA/luciole8b_", "8.8B"),
+    (r"^LINAGORA/luciole23b_", "24.1B"),
     (r"^microsoft/Phi-4-multimodal-instruct$", "5.6B"),
     (r"^nvidia/audio-flamingo-3-hf$", "8.2B"),
     (r"^Qwen/Qwen2-Audio-7B-Instruct$", "8.4B"),
     (r"^Qwen/Qwen2\.5-Omni-7B$", "11B"),
     (r"^Qwen/Qwen2\.5-Omni-3B$", "5.9B"),
+    (r"^Qwen/Qwen3-Omni-30B-A3B-Instruct$", "35.3B"),
     (r"^mistralai/Voxtral-Mini-3B-2507$", "4.68B"),
 ]
 _MODEL_SIZE_OVERRIDES = [(re.compile(p), s) for p, s in _MODEL_SIZE_OVERRIDES]
