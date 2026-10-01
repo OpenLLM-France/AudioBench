@@ -57,13 +57,12 @@ from audio_bench.visualization.build_leaderboard import (
     LOWER_IS_BETTER,
     ZERO_TO_ONE_RANGE,
     _SUPER_CATEGORY_ORDER,
-    _TASK_METRIC_OVERRIDE,
     _display_score,
     _lang_sort_key,
     _model_color_map,
-    _most_common_metric,
     _super_category,
     _task_display_name,
+    _task_metric,
     load_all_scores,
 )
 
@@ -143,13 +142,7 @@ def _select_task_metrics(entries):
     by_task = defaultdict(list)
     for e in entries:
         by_task[(e.get("task") or "").upper()].append(e)
-    chosen = {}
-    for task, ents in by_task.items():
-        override = _TASK_METRIC_OVERRIDE.get(task)
-        if override and any(x["metric_name"] == override for x in ents):
-            chosen[task] = override
-        else:
-            chosen[task] = _most_common_metric(ents)
+    chosen = {task: _task_metric(task, ents) for task, ents in by_task.items()}
     return [e for e in entries
             if e["metric_name"] == chosen[(e.get("task") or "").upper()]]
 

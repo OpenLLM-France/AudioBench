@@ -221,9 +221,24 @@
     var on = {};
     trs.forEach(function (tr) { if (rowOn(tr)) on[tr.getAttribute('data-model')] = true; });
 
-    // 1. Aggregates + row order (by the first aggregate).
+    // 1. Aggregates + row order (by the first aggregate). Rows are sorted
+    // first, so that ties in the other aggregates are coloured in row order.
     if (t.agg) {
       var vals = computeAggs(t.agg, on);
+      var first = t.agg.aggs[0];
+      if (first) {
+        var fv = vals[first.name];
+        trs.sort(function (a, b) {
+          var ma = a.getAttribute('data-model'), mb = b.getAttribute('data-model');
+          var ha = ma in fv, hb = mb in fv;
+          if (ha !== hb) return ha ? -1 : 1;
+          if (!ha) return 0;
+          var d = fv[ma] - fv[mb];
+          return first.hib ? -d : d;
+        });
+        var same = trs.every(function (tr, i) { return body.rows[i] === tr; });
+        if (!same) trs.forEach(function (tr) { body.appendChild(tr); });
+      }
       t.agg.aggs.forEach(function (agg) {
         var v = vals[agg.name];
         var ranked = trs.filter(function (tr) { return on[tr.getAttribute('data-model')] && tr.getAttribute('data-model') in v; })
@@ -240,20 +255,6 @@
           else setCell(td, '-', COLORS.missing);
         });
       });
-      var first = t.agg.aggs[0];
-      if (first) {
-        var fv = vals[first.name];
-        trs.sort(function (a, b) {
-          var ma = a.getAttribute('data-model'), mb = b.getAttribute('data-model');
-          var ha = ma in fv, hb = mb in fv;
-          if (ha !== hb) return ha ? -1 : 1;
-          if (!ha) return 0;
-          var d = fv[ma] - fv[mb];
-          return first.hib ? -d : d;
-        });
-        var same = trs.every(function (tr, i) { return body.rows[i] === tr; });
-        if (!same) trs.forEach(function (tr) { body.appendChild(tr); });
-      }
     }
 
     // 2. Per-column values, ranks and colours over the visible rows.
