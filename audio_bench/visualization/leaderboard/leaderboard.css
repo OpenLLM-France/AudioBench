@@ -1,0 +1,113 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+       display: flex; min-height: 100vh; background: #ffffff; color: #222; }
+
+/* Sidebar */
+nav.sidebar { position: fixed; top: 0; left: 0; width: 360px; height: 100vh;
+              overflow-y: auto; background: #1e293b; color: #cbd5e1; padding: 20px 0;
+              z-index: 100; }
+nav.sidebar ul { list-style: none; }
+nav.sidebar li a { display: block; padding: 7px 16px; font-size: 13px; color: #94a3b8;
+                   text-decoration: none; transition: background .15s, color .15s; }
+nav.sidebar li a:hover, nav.sidebar li a.active { background: #334155; color: #e2e8f0; }
+nav.sidebar li.nav-group { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                            color: #64748b; padding: 14px 16px 4px; letter-spacing: .05em; }
+
+/* Filter panels (experiments, datasets) */
+.flt-panel { border-top: 1px solid #334155; margin-top: 8px; padding-top: 10px; }
+.flt-panel .xp-filter-head { display: flex; align-items: center; justify-content: space-between;
+                              padding: 0 16px 8px; }
+.flt-panel .xp-filter-head span { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                                   color: #64748b; letter-spacing: .05em; }
+.flt-panel .xp-filter-head button { font-size: 11px; background: #334155; color: #e2e8f0;
+                                   border: 1px solid #475569; border-radius: 4px; padding: 3px 8px;
+                                   cursor: pointer; }
+.flt-panel .xp-filter-head button:hover { background: #475569; }
+.flt-tree { max-height: 60vh; overflow-y: auto; padding: 0 10px 10px; }
+.flt-tree ul { list-style: none; margin: 0; padding-left: 16px; }
+.flt-tree > ul { padding-left: 0; }
+.flt-tree li { padding: 0; }
+.flt-tree label { display: flex; align-items: center; gap: 6px; padding: 3px 6px;
+                         font-size: 12px; color: #cbd5e1; cursor: pointer; border-radius: 4px;
+                         white-space: normal; word-break: break-word; line-height: 1.3; }
+.flt-tree label:hover { background: #334155; color: #e2e8f0; }
+.flt-tree input[type="checkbox"] { flex: none; accent-color: #3b82f6; margin-top: 1px; }
+.flt-tree .xp-group { font-weight: 600; color: #e2e8f0; }
+.flt-tree details { margin: 1px 0; }
+.flt-tree summary { list-style: none; cursor: pointer; display: flex; align-items: center;
+                           gap: 6px; padding: 3px 6px; border-radius: 4px; }
+.flt-tree summary::-webkit-details-marker { display: none; }
+.flt-tree summary:hover { background: #334155; }
+.flt-tree summary .xp-caret { flex: none; width: 16px; text-align: center;
+                                     font-size: 16px; font-weight: 700; color: #e2e8f0;
+                                     transition: transform .1s; }
+.flt-tree details[open] > summary .xp-caret { transform: rotate(90deg); }
+.flt-tree summary .xp-count { flex: none; font-size: 10px; color: #64748b; font-weight: 400; }
+.flt-panel .xp-filter-head .flt-btns { display: flex; gap: 4px; }
+tr.xp-hidden { display: none !important; }
+.flt-tree .xp-rename { flex: none; margin-left: auto; background: none; border: none;
+                       color: #64748b; cursor: pointer; font-size: 12px; padding: 0 2px; }
+.flt-tree .xp-rename:hover { color: #e2e8f0; }
+.flt-tree .xp-alias { color: #93c5fd; }
+td.mname { cursor: text; }
+.tbl-tools { display: flex; justify-content: flex-start; margin: 4px 0 -4px; }
+.tbl-tools button { font-size: 11px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;
+                    border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+.tbl-tools button:hover { background: #e2e8f0; }
+.tbl-tools button:disabled { opacity: .5; cursor: wait; }
+tr.ds-empty, .ds-hidden { display: none !important; }
+
+/* Main content */
+main { margin-left: 360px; padding: 28px 32px; flex: 1; max-width: calc(100vw - 360px); }
+
+/* Page header */
+.page-header { margin-bottom: 32px; }
+.page-header h1 { font-size: 26px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+.page-header .subtitle { font-size: 14px; line-height: 1.5; color: #475569; max-width: 900px; }
+
+/* Sections */
+section.category { margin-bottom: 36px; }
+section.category > h2 { font-size: 20px; color: #1e293b; border-bottom: 2px solid #3b82f6;
+                         padding-bottom: 6px; margin-bottom: 16px; }
+details { margin-bottom: 20px; }
+details > summary { cursor: pointer; font-size: 15px; font-weight: 600; color: #475569;
+                     padding: 6px 0; user-select: none; }
+details > summary:hover { color: #1e40af; }
+.figure-wrapper { margin: 12px 0; overflow-x: auto; }
+
+/* Custom aligned cell tooltip (replaces the native title="" tooltip so that
+   sub-task scores line up in columns regardless of task-name length). */
+#celltip { position: fixed; z-index: 9999; pointer-events: none; display: none;
+           background: #0f172a; color: #e2e8f0; border: 1px solid #334155;
+           border-radius: 6px; padding: 8px 10px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
+           font-size: 12px; line-height: 1.5; max-width: 460px; }
+#celltip.show { display: block; }
+#celltip .ct-head { font-weight: 700; color: #f8fafc; white-space: nowrap; }
+#celltip .ct-head + .ct-head { font-weight: 400; color: #cbd5e1; }
+#celltip .ct-grid { display: grid; grid-template-columns: auto max-content max-content;
+                    column-gap: 12px; row-gap: 1px; margin-top: 3px; }
+#celltip .ct-k { color: #94a3b8; white-space: nowrap; }
+#celltip .ct-v { text-align: right; white-space: nowrap;
+                 font-variant-numeric: tabular-nums; }
+#celltip .ct-r { color: #64748b; white-space: nowrap; }
+
+/* Score tables */
+.ov-tbl { border-collapse: collapse; font-family: inherit; font-size: 11px; margin: 8px 0; }
+.ov-tbl th, .ov-tbl td { padding: 7px 10px; border: 1px solid #e2e8f0; text-align: center; white-space: nowrap; }
+.ov-tbl thead th { background: #3a5a8c; color: white; font-weight: 600; }
+.ov-tbl tbody td:first-child { text-align: left; font-weight: 500; }
+.ov-tbl .lang-col { display: none; }
+.ov-tbl thead th a { color: white; text-decoration: none; border-bottom: 1px dashed rgba(255,255,255,.45); }
+.ov-tbl thead th a:hover { border-bottom-style: solid; }
+.ov-tbl .toggle-btn { cursor: pointer; margin-left: 4px; font-size: 9px;
+  background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.4);
+  color: white; border-radius: 3px; padding: 1px 5px; vertical-align: middle; }
+.ov-tbl .toggle-btn:hover { background: rgba(255,255,255,.45); }
+.ci { font-size: 0.75em; color: #64748b; }
+
+/* Language / Sub-task switch of the task summaries */
+.toggle-bar { display: inline-flex; gap: 0; margin: 8px 0; border-radius: 4px; overflow: hidden;
+  border: 1px solid #3a5a8c; }
+.toggle-bar button { padding: 4px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+  border: none; background: #e2e8f0; color: #475569; transition: background .15s, color .15s; }
+.toggle-bar button.active { background: #3a5a8c; color: white; }

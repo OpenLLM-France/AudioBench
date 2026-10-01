@@ -5,12 +5,12 @@ Generates one HTML file with an Overview table (all tasks × models ranked)
 and per-task Summary sections (language-column tables with expandable
 per-dataset sub-columns, and optionally violin plots).
 
-Output: {output_folder}/report.html
+Output: {output_folder}/index.html
 
 Usage examples:
-    python -m audio_bench.visualization.plot_results_to_html results/
-    python -m audio_bench.visualization.plot_results_to_html results/ --violin
-    python -m audio_bench.visualization.plot_results_to_html results/ --output_folder my_plots/
+    python -m audio_bench.visualization.build_leaderboard results/
+    python -m audio_bench.visualization.build_leaderboard results/ --violin
+    python -m audio_bench.visualization.build_leaderboard results/ --output_folder my_plots/
 """
 
 import argparse
@@ -23,27 +23,52 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-import plotly.graph_objects as go
 import plotly.express.colors as pxcolors
+import plotly.graph_objects as go
+import yaml
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-_IGNORED_DATASETS = {
-    "StressTest_SSR",
-    "VoxCeleb-accent",
-    "VoxCeleb",  # Speaker identification — only run on some models
-    "MuChoMusic",
-    "SLUE-SQA5_format_json_answer", # Format following
-    "SLUE-SQA5_time2sentence", "SLUE-SQA5_time2word", "SLUE-SQA5_word2sentence", "SLUE-SQA5_word2time", # Information Extraction
-    "SLUE-SQA5_format_timestamped_transcription", # Timestamped transcription
-}
+# What the report shows (datasets, models, display names and sizes) is set in
+# configs/leaderboard.yaml.
+_LEADERBOARD_CONFIG = Path(__file__).resolve().parents[2] / "configs" / "leaderboard.yaml"
 
-# (task, language) pairs excluded from a task's AVERAGE (still shown individually
-# as their own sub-column/row — just not folded into the super-category mean).
-# Arabic ASR is dropped from the ASR average but stays visible as its own AR column.
-_AVG_EXCLUDED_TASK_LANGS = {("ASR", "AR")}
+
+def _load_leaderboard_config(path):
+    cfg = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    consortium = cfg.get("consortium_name", "")
+
+    def fill(text):
+        return str(text).replace("{consortium}", consortium)
+
+    def name_map(key):
+        return {str(k): fill(v) for k, v in (cfg.get(key) or {}).items()}
+
+    return {
+        "consortium_name": consortium,
+        "ignored_datasets": set(cfg.get("ignored_datasets") or []),
+        "avg_excluded_task_langs": {(str(t).upper(), str(l).upper())
+                                    for t, l in cfg.get("avg_excluded_task_langs") or []},
+        "consortium_models": name_map("consortium_models"),
+        "ignored_model_patterns": [re.compile(fill(p))
+                                   for p in cfg.get("ignored_model_patterns") or []],
+        "model_renames": name_map("model_renames"),
+        "model_sizes": [(re.compile(fill(p)), str(size))
+                        for p, size in cfg.get("model_sizes") or []],
+    }
+
+
+_CFG = _load_leaderboard_config(_LEADERBOARD_CONFIG)
+
+_IGNORED_DATASETS = _CFG["ignored_datasets"]
+_AVG_EXCLUDED_TASK_LANGS = _CFG["avg_excluded_task_langs"]
+CONSORTIUM_NAME = _CFG["consortium_name"]
+ONLY_SHOW_CONSORTIUM_MODELS = _CFG["consortium_models"]
+_IGNORED_MODEL_PATTERNS = _CFG["ignored_model_patterns"]
+_MODEL_NAME_CORRECTIONS = _CFG["model_renames"] | ONLY_SHOW_CONSORTIUM_MODELS
+_MODEL_SIZE_OVERRIDES = _CFG["model_sizes"]
 
 
 def _excluded_from_task_avg(entry):
@@ -52,36 +77,12 @@ def _excluded_from_task_avg(entry):
     lang = str(entry.get("language") or "").upper()
     return (task, lang) in _AVG_EXCLUDED_TASK_LANGS
 
-# CONSORTIUM_NAME = "LINAGORA"
-CONSORTIUM_NAME = "OpenLLM-France"
-
-ONLY_SHOW_CONSORTIUM_MODELS = {
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829": f"{CONSORTIUM_NAME}/Canary_Luciole-1B",
-    "LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803": f"{CONSORTIUM_NAME}/Canary_Qwen3-1.7B",
-}
-
-_IGNORED_MODEL_PATTERNS = [re.compile(p) for p in [
-    r"^LINAGORA/Canary_Qwen3-1\.7B_v1.*",
-    r".*xp_timestamp.*",
-    # r"^.*/(?!.*data-v1).*",
-]]
 
 def _is_model_ignored(model_name):
     if ONLY_SHOW_CONSORTIUM_MODELS and CONSORTIUM_NAME in model_name:
         return model_name not in ONLY_SHOW_CONSORTIUM_MODELS.values()
     return any(p.search(model_name) for p in _IGNORED_MODEL_PATTERNS)
 
-_MODEL_NAME_CORRECTIONS = {
-    "LINAGORA/Canary-Qwen3-5B-Thinking": f"{CONSORTIUM_NAME}/Canary-Qwen3-4B_data-v1_8h",
-    "LINAGORA/Canary-Qwen3-1.7B-v2": f"{CONSORTIUM_NAME}/Canary-Qwen3-1.7B_data-v1_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s010000": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_LLM-LoRA_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_LLM-LoRA_40h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v2_s027458": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_LLM-LoRA-no_bucket_8h",
-    "LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803": f"{CONSORTIUM_NAME}/Canary_Qwen3-1.7B_LLM-LoRA_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_adapter_s005000": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Adapter_2h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s020000": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Encoder_8h",
-    "LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s217983": f"{CONSORTIUM_NAME}/Canary_Luciole-1B_Step-Encoder_80h",
-} | ONLY_SHOW_CONSORTIUM_MODELS
 
 # Maps the (possibly shortened) display model name -> the model id (the
 # results folder name). Populated by load_all_scores and used to show the
@@ -108,27 +109,6 @@ _TASK_DISPLAY = {
     "ASR": "ASR",
     "AST": "AST",
 }
-
-
-# Patterns are tried in order; first regex match wins. Exact strings work too
-# since they are compiled as regexes.
-_MODEL_SIZE_OVERRIDES = [
-    (rf"^{CONSORTIUM_NAME}/Canary[-_]Qwen3[-_]1\.7B", "2.5B"),
-    (rf"^{CONSORTIUM_NAME}/Canary[-_]Qwen3[-_]4B", "4.8B"),
-    (rf"^{CONSORTIUM_NAME}/Canary_Luciole-1B", "2.1B"),
-    (r"^LINAGORA/luciole_v\d+_stage1_canary", "2.1B"),
-    (r"^LINAGORA/luciole_v\d+", "1.9B"),
-    (r"^LINAGORA/luciole8b_", "8.8B"),
-    (r"^LINAGORA/luciole23b_", "24.1B"),
-    (r"^microsoft/Phi-4-multimodal-instruct$", "5.6B"),
-    (r"^nvidia/audio-flamingo-3-hf$", "8.2B"),
-    (r"^Qwen/Qwen2-Audio-7B-Instruct$", "8.4B"),
-    (r"^Qwen/Qwen2\.5-Omni-7B$", "11B"),
-    (r"^Qwen/Qwen2\.5-Omni-3B$", "5.9B"),
-    (r"^Qwen/Qwen3-Omni-30B-A3B-Instruct$", "35.3B"),
-    (r"^mistralai/Voxtral-Mini-3B-2507$", "4.68B"),
-]
-_MODEL_SIZE_OVERRIDES = [(re.compile(p), s) for p, s in _MODEL_SIZE_OVERRIDES]
 
 
 def _task_display_name(raw_task: str) -> str:
@@ -954,20 +934,6 @@ def _sort_models_by_avg(models, score_fn, ascending):
     return sorted_models, model_avg
 
 
-_TOGGLE_COLS_JS = """\
-<script>
-function toggleCols(btn, tblId, group) {
-  var tbl = document.getElementById(tblId);
-  var cells = tbl.querySelectorAll('[data-group="' + group + '"]');
-  if (!cells.length) return;
-  var show = cells[0].style.display !== 'table-cell';
-  for (var i = 0; i < cells.length; i++)
-    cells[i].style.display = show ? 'table-cell' : 'none';
-  btn.textContent = show ? '\\u2212' : '+';
-}
-</script>"""
-
-
 def _effective_subtask(entry):
     """Grouping key for sub-task expansion.
 
@@ -1636,23 +1602,6 @@ def plot_overview_table(entries, collector, *, title="Overview",
     # --- Build HTML ---
     lines = []
 
-    # Scoped CSS
-    lines.append(f"""\
-<style>
-.ov-tbl {{ border-collapse: collapse; font-family: inherit; font-size: 11px; margin: 8px 0; }}
-.ov-tbl th, .ov-tbl td {{ padding: 7px 10px; border: 1px solid #e2e8f0; text-align: center; white-space: nowrap; }}
-.ov-tbl thead th {{ background: #3a5a8c; color: white; font-weight: 600; }}
-.ov-tbl tbody td:first-child {{ text-align: left; font-weight: 500; }}
-.ov-tbl .lang-col {{ display: none; }}
-.ov-tbl thead th a {{ color: white; text-decoration: none; border-bottom: 1px dashed rgba(255,255,255,.45); }}
-.ov-tbl thead th a:hover {{ border-bottom-style: solid; }}
-.ov-tbl .toggle-btn {{ cursor: pointer; margin-left: 4px; font-size: 9px;
-  background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.4);
-  color: white; border-radius: 3px; padding: 1px 5px; vertical-align: middle; }}
-.ov-tbl .toggle-btn:hover {{ background: rgba(255,255,255,.45); }}
-.ci {{ font-size: 0.75em; color: #64748b; }}
-</style>""")
-
     # Color legend
     lines.append(
         '<div style="display:flex;gap:16px;align-items:center;font-size:12px;margin:8px 0;">'
@@ -1791,20 +1740,6 @@ def plot_overview_table(entries, collector, *, title="Overview",
     lines.append(_agg_payload_html(table_id, table_aggregates,
                                    {t: task_disp_score.get(t, {}) for t in column_tasks},
                                    {t: task_ascending.get(t, False) for t in column_tasks}))
-
-    # JavaScript toggle
-    lines.append("""\
-<script>
-function toggleOvTask(btn, task) {
-  var tbl = btn.closest('table');
-  var cells = tbl.querySelectorAll('[data-task="' + task + '"]');
-  if (!cells.length) return;
-  var show = cells[0].style.display !== 'table-cell';
-  for (var i = 0; i < cells.length; i++)
-    cells[i].style.display = show ? 'table-cell' : 'none';
-  btn.textContent = show ? '\\u2212' : '+';
-}
-</script>""")
 
     collector.append({
         "category": title,
@@ -2118,9 +2053,6 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
         {lang: ascending for lang in languages},
         {lang: {m: v[0] for m, v in lang_model_score[lang].items()} for lang in languages}))
 
-    # JS — generic toggle (harmless if redefined by other tables)
-    lines.append(_TOGGLE_COLS_JS)
-
     collector.append({
         "category": cat_name,
         "chart_type": "table",
@@ -2151,16 +2083,6 @@ def _build_dual_summary_tables(task, metric, task_raw, agg_lang, agg_sub,
     toggle_id = _slug(task) + "-" + _slug(metric)
     lines = []
 
-    # Toggle bar CSS (only emitted once; harmless if repeated)
-    lines.append("""\
-<style>
-.toggle-bar { display: inline-flex; gap: 0; margin: 8px 0; border-radius: 4px; overflow: hidden;
-  border: 1px solid #3a5a8c; }
-.toggle-bar button { padding: 4px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
-  border: none; background: #e2e8f0; color: #475569; transition: background .15s, color .15s; }
-.toggle-bar button.active { background: #3a5a8c; color: white; }
-</style>""")
-
     lines.append(f'<div class="toggle-bar" id="tbar-{toggle_id}">')
     lines.append(
         f'<button class="active" onclick="toggleSumView(\'{toggle_id}\',\'lang\')">Language</button>'
@@ -2177,29 +2099,6 @@ def _build_dual_summary_tables(task, metric, task_raw, agg_lang, agg_sub,
     # Sub-task view (hidden by default)
     sub_html = sub_collector[0]["raw_html"] if sub_collector else ""
     lines.append(f'<div id="sv-sub-{toggle_id}" style="display:none">{sub_html}</div>')
-
-    # JS toggle
-    lines.append("""\
-<script>
-function toggleSumView(id, view) {
-  var langDiv = document.getElementById('sv-lang-' + id);
-  var subDiv = document.getElementById('sv-sub-' + id);
-  var bar = document.getElementById('tbar-' + id);
-  if (!langDiv || !subDiv || !bar) return;
-  var btns = bar.querySelectorAll('button');
-  if (view === 'lang') {
-    langDiv.style.display = '';
-    subDiv.style.display = 'none';
-    btns[0].classList.add('active');
-    btns[1].classList.remove('active');
-  } else {
-    langDiv.style.display = 'none';
-    subDiv.style.display = '';
-    btns[0].classList.remove('active');
-    btns[1].classList.add('active');
-  }
-}
-</script>""")
 
     cat_name = category_override or ("Tasks \u00b7 " + task)
     collector.append({
@@ -2474,9 +2373,6 @@ def _build_language_summary_table(entries, lang_group, category, collector,
         tbl_id, table_aggregates, task_disp_scores, ascending_map,
         {t: {m: v[0] for m, v in task_model_score[t].items()} for t in tasks}))
 
-    # JS toggle (harmless if redefined)
-    lines.append(_TOGGLE_COLS_JS)
-
     collector.append({
         "category": category,
         "chart_type": "table",
@@ -2489,1024 +2385,21 @@ def _build_language_summary_table(entries, lang_group, category, collector,
 # HTML Report Builder
 # ---------------------------------------------------------------------------
 
-_HTML_TEMPLATE = """\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AudioBench Results</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-         display: flex; min-height: 100vh; background: #ffffff; color: #222; }
-
-  /* Sidebar */
-  nav.sidebar { position: fixed; top: 0; left: 0; width: 360px; height: 100vh;
-                overflow-y: auto; background: #1e293b; color: #cbd5e1; padding: 20px 0;
-                z-index: 100; }
-  nav.sidebar h2 { font-size: 15px; font-weight: 700; padding: 0 16px 14px; color: #f1f5f9;
-                    border-bottom: 1px solid #334155; margin-bottom: 8px; }
-  nav.sidebar ul { list-style: none; }
-  nav.sidebar li a { display: block; padding: 7px 16px; font-size: 13px; color: #94a3b8;
-                     text-decoration: none; transition: background .15s, color .15s; }
-  nav.sidebar li a:hover, nav.sidebar li a.active { background: #334155; color: #e2e8f0; }
-  nav.sidebar li.nav-group { font-size: 11px; font-weight: 700; text-transform: uppercase;
-                              color: #64748b; padding: 14px 16px 4px; letter-spacing: .05em; }
-
-  /* Filter panels (experiments, datasets) */
-  .flt-panel { border-top: 1px solid #334155; margin-top: 8px; padding-top: 10px; }
-  .flt-panel .xp-filter-head { display: flex; align-items: center; justify-content: space-between;
-                                padding: 0 16px 8px; }
-  .flt-panel .xp-filter-head span { font-size: 11px; font-weight: 700; text-transform: uppercase;
-                                     color: #64748b; letter-spacing: .05em; }
-  .flt-panel .xp-filter-head button { font-size: 11px; background: #334155; color: #e2e8f0;
-                                     border: 1px solid #475569; border-radius: 4px; padding: 3px 8px;
-                                     cursor: pointer; }
-  .flt-panel .xp-filter-head button:hover { background: #475569; }
-  .flt-tree { max-height: 60vh; overflow-y: auto; padding: 0 10px 10px; }
-  .flt-tree ul { list-style: none; margin: 0; padding-left: 16px; }
-  .flt-tree > ul { padding-left: 0; }
-  .flt-tree li { padding: 0; }
-  .flt-tree label { display: flex; align-items: center; gap: 6px; padding: 3px 6px;
-                           font-size: 12px; color: #cbd5e1; cursor: pointer; border-radius: 4px;
-                           white-space: normal; word-break: break-word; line-height: 1.3; }
-  .flt-tree label:hover { background: #334155; color: #e2e8f0; }
-  .flt-tree input[type="checkbox"] { flex: none; accent-color: #3b82f6; margin-top: 1px; }
-  .flt-tree .xp-group { font-weight: 600; color: #e2e8f0; }
-  .flt-tree details { margin: 1px 0; }
-  .flt-tree summary { list-style: none; cursor: pointer; display: flex; align-items: center;
-                             gap: 6px; padding: 3px 6px; border-radius: 4px; }
-  .flt-tree summary::-webkit-details-marker { display: none; }
-  .flt-tree summary:hover { background: #334155; }
-  .flt-tree summary .xp-caret { flex: none; width: 16px; text-align: center;
-                                       font-size: 16px; font-weight: 700; color: #e2e8f0;
-                                       transition: transform .1s; }
-  .flt-tree details[open] > summary .xp-caret { transform: rotate(90deg); }
-  .flt-tree summary .xp-count { flex: none; font-size: 10px; color: #64748b; font-weight: 400; }
-  .flt-panel .xp-filter-head .flt-btns { display: flex; gap: 4px; }
-  tr.xp-hidden { display: none !important; }
-  .flt-tree .xp-rename { flex: none; margin-left: auto; background: none; border: none;
-                         color: #64748b; cursor: pointer; font-size: 12px; padding: 0 2px; }
-  .flt-tree .xp-rename:hover { color: #e2e8f0; }
-  .flt-tree .xp-alias { color: #93c5fd; }
-  td.mname { cursor: text; }
-  .tbl-tools { display: flex; justify-content: flex-start; margin: 4px 0 -4px; }
-  .tbl-tools button { font-size: 11px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;
-                      border-radius: 4px; padding: 2px 8px; cursor: pointer; }
-  .tbl-tools button:hover { background: #e2e8f0; }
-  .tbl-tools button:disabled { opacity: .5; cursor: wait; }
-  tr.ds-empty, .ds-hidden { display: none !important; }
-
-  /* Main content */
-  main { margin-left: 360px; padding: 28px 32px; flex: 1; max-width: calc(100vw - 360px); }
-
-  /* Sections */
-  section.category { margin-bottom: 36px; }
-  section.category > h2 { font-size: 20px; color: #1e293b; border-bottom: 2px solid #3b82f6;
-                           padding-bottom: 6px; margin-bottom: 16px; }
-  details { margin-bottom: 20px; }
-  details > summary { cursor: pointer; font-size: 15px; font-weight: 600; color: #475569;
-                       padding: 6px 0; user-select: none; }
-  details > summary:hover { color: #1e40af; }
-  .figure-wrapper { margin: 12px 0; overflow-x: auto; }
-
-  /* Custom aligned cell tooltip (replaces the native title="" tooltip so that
-     sub-task scores line up in columns regardless of task-name length). */
-  #celltip { position: fixed; z-index: 9999; pointer-events: none; display: none;
-             background: #0f172a; color: #e2e8f0; border: 1px solid #334155;
-             border-radius: 6px; padding: 8px 10px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
-             font-size: 12px; line-height: 1.5; max-width: 460px; }
-  #celltip.show { display: block; }
-  #celltip .ct-head { font-weight: 700; color: #f8fafc; white-space: nowrap; }
-  #celltip .ct-head + .ct-head { font-weight: 400; color: #cbd5e1; }
-  #celltip .ct-grid { display: grid; grid-template-columns: auto max-content max-content;
-                      column-gap: 12px; row-gap: 1px; margin-top: 3px; }
-  #celltip .ct-k { color: #94a3b8; white-space: nowrap; }
-  #celltip .ct-v { text-align: right; white-space: nowrap;
-                   font-variant-numeric: tabular-nums; }
-  #celltip .ct-r { color: #64748b; white-space: nowrap; }
-</style>
-</head>
-<body>
-<nav class="sidebar">
-  <h2>AudioBench Results</h2>
-  <ul>
-__NAV_ITEMS__
-  </ul>
-  <div id="xp-filter" class="flt-panel">
-    <div class="xp-filter-head">
-      <span>Experiments</span>
-      <div class="flt-btns">
-        <button id="xp-rename-reset" type="button" title="Annuler tous les renommages">Noms d'origine</button>
-        <button id="xp-toggle-all" type="button">Tout décocher</button>
-      </div>
-    </div>
-    <div id="xp-filter-tree" class="flt-tree"></div>
-  </div>
-  <div id="ds-filter" class="flt-panel">
-    <div class="xp-filter-head">
-      <span>Datasets</span>
-      <div class="flt-btns">
-        <button id="ds-reset" type="button" title="Sélection par défaut">Défaut</button>
-        <button id="ds-core" type="button" title="Sélection par défaut, limitée aux tâches ASR, AST et QA">ASR/AST/QA</button>
-        <button id="ds-toggle-all" type="button">Tout cocher</button>
-      </div>
-    </div>
-    <div id="ds-filter-tree" class="flt-tree"></div>
-  </div>
-</nav>
-<main>
-__SECTIONS__
-</main>
-<div id="celltip"></div>
-<script type="application/json" id="report-data">__REPORT_DATA__</script>
-<script>
-(function () {
-  var tip = document.getElementById('celltip');
-  var NL = String.fromCharCode(10);
-
-  function stripEnd(str) {
-    while (str.length && str.charAt(str.length - 1) === ' ') str = str.slice(0, -1);
-    return str;
-  }
-
-  function render(text) {
-    if (window.xpRenameText) text = window.xpRenameText(text);
-    tip.textContent = '';
-    var grid = null;
-    text.split(NL).forEach(function (line) {
-      if (line === '') return;
-      var idx = line.indexOf(': ');
-      if (idx === -1) {                       // header / summary line -> full width
-        grid = null;
-        var h = document.createElement('div');
-        h.className = 'ct-head';
-        h.textContent = line;
-        tip.appendChild(h);
-        return;
-      }
-      if (!grid) {                            // start a fresh aligned block
-        grid = document.createElement('div');
-        grid.className = 'ct-grid';
-        tip.appendChild(grid);
-      }
-      var k = line.slice(0, idx), v = line.slice(idx + 2), r = '';
-      if (v.charAt(v.length - 1) === ')') {   // peel a trailing "(3e)" rank marker
-        var op = v.lastIndexOf('(');
-        if (op !== -1) { r = v.slice(op + 1, v.length - 1); v = stripEnd(v.slice(0, op)); }
-      }
-      var ke = document.createElement('span'); ke.className = 'ct-k'; ke.textContent = k;
-      var ve = document.createElement('span'); ve.className = 'ct-v'; ve.textContent = v;
-      var re = document.createElement('span'); re.className = 'ct-r'; re.textContent = r;
-      grid.appendChild(ke); grid.appendChild(ve); grid.appendChild(re);
-    });
-  }
-
-  function position(e) {
-    var pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
-    var x = e.clientX + pad, y = e.clientY + pad;
-    if (x + w > window.innerWidth - 8)  x = e.clientX - w - pad;
-    if (y + h > window.innerHeight - 8) y = e.clientY - h - pad;
-    tip.style.left = Math.max(4, x) + 'px';
-    tip.style.top  = Math.max(4, y) + 'px';
-  }
-
-  // Move native title="" onto data-tip so the browser tooltip does not compete.
-  document.querySelectorAll('td[title], th[title]').forEach(function (el) {
-    el.setAttribute('data-tip', el.getAttribute('title'));
-    el.removeAttribute('title');
-  });
-
-  document.addEventListener('mouseover', function (e) {
-    var el = e.target.closest('[data-tip]');
-    if (!el) return;
-    render(el.getAttribute('data-tip'));
-    tip.classList.add('show');
-    position(e);
-  });
-  document.addEventListener('mousemove', function (e) {
-    if (tip.classList.contains('show')) position(e);
-  });
-  document.addEventListener('mouseout', function (e) {
-    var el = e.target.closest('[data-tip]');
-    if (!el) return;
-    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
-    tip.classList.remove('show');
-  });
-})();
-</script>
-<script>
-(function () {
-  var rows = Array.prototype.slice.call(document.querySelectorAll('tr[data-model]'));
-  var models = [];
-  rows.forEach(function (tr) {
-    var m = tr.getAttribute('data-model');
-    if (models.indexOf(m) === -1) models.push(m);
-  });
-  models.sort();
-  if (!models.length) return;
-
-  var treeEl = document.getElementById('xp-filter-tree');
-  var toggleBtn = document.getElementById('xp-toggle-all');
-  var checked = {};
-  models.forEach(function (m) { checked[m] = true; });
-
-  // -------------------------------------------------------------------
-  // Build a trie of models, tokenized on "/" and "_" (keeping the
-  // delimiter that preceded each token), so experiments that share a
-  // path/name prefix ("LINAGORA/Canary_Luciole-1B_..._v3_buckets_...")
-  // group and nest automatically -- no hardcoded naming knowledge needed.
-  // -------------------------------------------------------------------
-  function tokenize(name) {
-    var parts = name.split(/([/_])/);
-    var tokens = [], delims = [];
-    for (var i = 0; i < parts.length; i += 2) tokens.push(parts[i]);
-    for (var j = 1; j < parts.length; j += 2) delims.push(parts[j]);
-    return { tokens: tokens, delims: delims };
-  }
-
-  function newNode() { return { children: new Map(), models: [] }; }
-  var root = newNode();
-  models.forEach(function (m) {
-    var t = tokenize(m);
-    var cur = root;
-    for (var i = 0; i < t.tokens.length; i++) {
-      var tok = t.tokens[i];
-      var delim = i === 0 ? null : t.delims[i - 1];
-      if (!cur.children.has(tok)) cur.children.set(tok, { delim: delim, node: newNode() });
-      cur = cur.children.get(tok).node;
-    }
-    cur.models.push(m);
-  });
-
-  // Compress chains of single, model-less children into one label so the
-  // tree only branches where models actually diverge.
-  function compressChildren(node) {
-    var out = [];
-    node.children.forEach(function (edge, tok) {
-      var label = (edge.delim || '') + tok;
-      var child = edge.node;
-      while (child.models.length === 0 && child.children.size === 1) {
-        var onlyTok, onlyEdge;
-        child.children.forEach(function (e, t) { onlyTok = t; onlyEdge = e; });
-        label += (onlyEdge.delim || '') + onlyTok;
-        child = onlyEdge.node;
-      }
-      out.push({ label: label, node: child });
-    });
-    return out;
-  }
-
-  // -------------------------------------------------------------------
-  // Render. Returns the list of leaf model names under the rendered node,
-  // and registers group checkboxes so their tri-state can be refreshed.
-  // -------------------------------------------------------------------
-  var groupBoxes = []; // { cb, leaves: [model,...] }
-  var leafBoxes = {};  // model -> checkbox element
-  var leafAliases = {}; // model -> span showing its display name when renamed
-
-  // -------------------------------------------------------------------
-  // Display-only renaming (for clean screenshots, e.g. model cards).
-  // data-model and the filter tree keep the real name; only the visible
-  // name cells, tooltips and Plotly labels change. Saved per browser.
-  // -------------------------------------------------------------------
-  var RENAME_KEY = 'audiobench-xp-renames';
-  var renames = {};
-  try { renames = JSON.parse(localStorage.getItem(RENAME_KEY) || '{}') || {}; } catch (e) { renames = {}; }
-
-  function displayName(m) { return renames[m] || m; }
-
-  function saveRenames() {
-    try { localStorage.setItem(RENAME_KEY, JSON.stringify(renames)); } catch (e) {}
-  }
-
-  function askRename(m) {
-    var v = window.prompt('Nouveau nom pour ' + m + ' (vide = nom d\\'origine) :', displayName(m));
-    if (v === null) return;
-    v = v.trim();
-    if (v && v !== m) renames[m] = v; else delete renames[m];
-    saveRenames();
-    applyRenames();
-  }
-
-  // Longest names first so a name that prefixes another is not replaced inside it.
-  window.xpRenameText = function (text) {
-    Object.keys(renames).sort(function (a, b) { return b.length - a.length; }).forEach(function (m) {
-      text = text.split(m).join(renames[m]);
-    });
-    return text;
-  };
-
-  var isModel = {};
-  models.forEach(function (m) { isModel[m] = true; });
-
-  function hasModel(v) {
-    if (typeof v === 'string') return isModel[v] === true;
-    return Array.isArray(v) && v.some(function (x) { return typeof x === 'string' && isModel[x] === true; });
-  }
-
-  function renameValue(v) {
-    if (typeof v === 'string') return isModel[v] === true ? displayName(v) : v;
-    if (Array.isArray(v)) return v.map(renameValue);
-    return v;
-  }
-
-  // Each figure remembers, once, the original value of every trace field that
-  // holds a model name; renaming rewrites those fields in place and redraws
-  // only the figures that reference a model (one redraw per figure).
-  var PLOT_FIELDS = ['name', 'x', 'y', 'text', 'hovertext', 'legendgroup', 'labels', 'theta'];
-  function renamePlots() {
-    if (!window.Plotly) return;
-    document.querySelectorAll('.js-plotly-plot').forEach(function (gd) {
-      if (!gd.data) return;
-      if (!gd._xpOrig) {
-        if (!Object.keys(renames).length) return;
-        gd._xpOrig = [];
-        gd.data.forEach(function (tr, i) {
-          PLOT_FIELDS.forEach(function (f) {
-            if (hasModel(tr[f])) gd._xpOrig.push({ i: i, f: f, v: tr[f] });
-          });
-        });
-      }
-      if (!gd._xpOrig.length) return;
-      gd._xpOrig.forEach(function (o) { gd.data[o.i][o.f] = renameValue(o.v); });
-      window.Plotly.redraw(gd);
-    });
-  }
-
-  function applyRenames() {
-    rows.forEach(function (tr) {
-      var td = tr.querySelector('td.mname');
-      if (td) td.textContent = displayName(tr.getAttribute('data-model'));
-    });
-    models.forEach(function (m) {
-      var a = leafAliases[m];
-      if (a) a.textContent = renames[m] ? ' → ' + renames[m] : '';
-    });
-    renamePlots();
-  }
-
-  document.addEventListener('dblclick', function (e) {
-    var td = e.target.closest('td.mname');
-    if (!td || !td.parentNode.hasAttribute('data-model')) return;
-    askRename(td.parentNode.getAttribute('data-model'));
-  });
-
-  document.getElementById('xp-rename-reset').addEventListener('click', function () {
-    if (!Object.keys(renames).length) return;
-    if (!window.confirm('Revenir aux noms d\\'origine pour toutes les expériences ?')) return;
-    renames = {};
-    saveRenames();
-    applyRenames();
-  });
-
-  function renderLeaf(container, modelName) {
-    var li = document.createElement('li');
-    var label = document.createElement('label');
-    var cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = true;
-    cb.addEventListener('change', function () {
-      checked[modelName] = cb.checked;
-      refreshGroups();
-      applyFilter();
-    });
-    leafBoxes[modelName] = cb;
-    label.appendChild(cb);
-    var name = document.createElement('span');
-    name.textContent = modelName;
-    label.appendChild(name);
-    var alias = document.createElement('span');
-    alias.className = 'xp-alias';
-    label.appendChild(alias);
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'xp-rename';
-    btn.title = 'Renommer (affichage uniquement)';
-    btn.textContent = '✎';
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      askRename(modelName);
-    });
-    label.appendChild(btn);
-    leafAliases[modelName] = alias;
-    li.appendChild(label);
-    container.appendChild(li);
-  }
-
-  function renderNode(container, label, node, depth) {
-    var childEntries = compressChildren(node);
-    var isPureLeaf = node.models.length > 0 && childEntries.length === 0;
-
-    if (isPureLeaf) {
-      node.models.forEach(function (m) { renderLeaf(container, m); });
-      return node.models.slice();
-    }
-
-    var li = document.createElement('li');
-    var details = document.createElement('details');
-    details.open = depth < 1;
-    var summary = document.createElement('summary');
-    var caret = document.createElement('span');
-    caret.className = 'xp-caret';
-    caret.textContent = '▸';
-    var cb = document.createElement('input');
-    cb.type = 'checkbox';
-    var text = document.createElement('span');
-    text.className = 'xp-group';
-    text.textContent = label;
-    summary.appendChild(caret);
-    summary.appendChild(cb);
-    summary.appendChild(text);
-    var count = document.createElement('span');
-    count.className = 'xp-count';
-    summary.appendChild(count);
-    details.appendChild(summary);
-
-    var ul = document.createElement('ul');
-    var leaves = [];
-    // A model that terminates exactly at this group node (rare: its name
-    // is itself a prefix of a sibling's name) is shown as its own leaf too.
-    node.models.forEach(function (m) {
-      renderLeaf(ul, m);
-      leaves.push(m);
-    });
-    childEntries.forEach(function (entry) {
-      leaves = leaves.concat(renderNode(ul, entry.label, entry.node, depth + 1));
-    });
-    details.appendChild(ul);
-    li.appendChild(details);
-    container.appendChild(li);
-
-    count.textContent = '(' + leaves.length + ')';
-    cb.addEventListener('click', function (e) { e.stopPropagation(); });
-    cb.addEventListener('change', function () {
-      leaves.forEach(function (m) {
-        checked[m] = cb.checked;
-        var lb = leafBoxes[m];
-        if (lb) lb.checked = cb.checked;
-      });
-      refreshGroups();
-      applyFilter();
-    });
-    groupBoxes.push({ cb: cb, leaves: leaves });
-    return leaves;
-  }
-
-  var rootUl = document.createElement('ul');
-  compressChildren(root).forEach(function (entry) {
-    renderNode(rootUl, entry.label, entry.node, 0);
-  });
-  treeEl.appendChild(rootUl);
-
-  function refreshGroups() {
-    groupBoxes.forEach(function (g) {
-      var n = g.leaves.filter(function (m) { return checked[m]; }).length;
-      g.cb.checked = n === g.leaves.length;
-      g.cb.indeterminate = n > 0 && n < g.leaves.length;
-    });
-  }
-
-  function applyFilter() {
-    rows.forEach(function (tr) {
-      var m = tr.getAttribute('data-model');
-      tr.classList.toggle('xp-hidden', !checked[m]);
-    });
-    if (window.refreshReportTables) window.refreshReportTables();
-    var allChecked = models.every(function (m) { return checked[m]; });
-    toggleBtn.textContent = allChecked ? 'Tout décocher' : 'Tout cocher';
-  }
-
-  toggleBtn.addEventListener('click', function () {
-    var allChecked = models.every(function (m) { return checked[m]; });
-    var next = !allChecked;
-    models.forEach(function (m) { checked[m] = next; });
-    Object.keys(leafBoxes).forEach(function (m) { leafBoxes[m].checked = next; });
-    refreshGroups();
-    applyFilter();
-  });
-
-  refreshGroups();
-  applyRenames();
-})();
-</script>
-<script>
-(function () {
-  // ===================================================================
-  // Table engine: every score cell carries data-f = the id of the node
-  // (in the score graph emitted by the Python side) it displays. Leaves are
-  // (model, dataset) scores; means and display scaling are inner nodes. When
-  // datasets or models are toggled, every cell, CI, rank colour, tooltip,
-  // aggregate column and row order is recomputed from that graph.
-  // ===================================================================
-  var DATA = JSON.parse(document.getElementById('report-data').textContent);
-  var NODES = DATA.nodes;
-  var COLORS = __AGG_COLORS__;
-  var NL = String.fromCharCode(10);
-  var dsOn = DATA.datasets.map(function () { return true; });
-  DATA.off.forEach(function (i) { dsOn[i] = false; });
-
-  // --- Graph evaluation (memoized per refresh) ---
-  var memo = new Array(NODES.length);
-  var ascMemo = new Array(NODES.length);
-
-  // sum() as CPython >= 3.12 computes it for floats (Neumaier compensation),
-  // so means tie exactly where they tie on the Python side.
-  function pysum(xs) {
-    var s = 0, c = 0;
-    for (var i = 0; i < xs.length; i++) {
-      var x = xs[i], t = s + x;
-      if (Math.abs(s) >= Math.abs(x)) c += (s - t) + x; else c += (x - t) + s;
-      s = t;
-    }
-    return c && isFinite(c) ? s + c : s;
-  }
-
-  function value(id) {
-    if (memo[id] !== undefined) return memo[id];
-    var n = NODES[id], v = null;
-    if (n[0] === 'L') {
-      v = dsOn[n[1]] ? n[2] : null;
-    } else if (n[0] === 'M') {
-      var xs = [];
-      n[1].forEach(function (c) {
-        var cv = value(c);
-        if (cv !== null) xs.push(cv);
-      });
-      v = xs.length ? pysum(xs) / xs.length : null;
-    } else {  // 'D'
-      var x = value(n[1]);
-      v = x === null ? null : Math.min(n[2] ? x * 100 : x, 100);
-    }
-    memo[id] = v;
-    return v;
-  }
-
-  function isAsc(id) {  // lower is better (mirrors task_ascending)
-    if (ascMemo[id] !== undefined) return ascMemo[id];
-    var n = NODES[id], a;
-    if (n[0] === 'L') a = n[3];
-    else if (n[0] === 'D') a = isAsc(n[1]);
-    else a = n[1].every(isAsc);
-    ascMemo[id] = a;
-    return a;
-  }
-
-  // CI half-width in display units, or null. A leaf uses its own std; a mean
-  // pools the per-sample scores of its enabled leaves (like np.std(pooled)).
-  function ciOf(id, pct) {
-    var n = NODES[id];
-    if (n[0] === 'D') n = NODES[id = n[1]];
-    var std, cnt;
-    if (n[0] === 'L') {
-      if (!dsOn[n[1]] || n[4][3] === null || !n[4][0]) return null;
-      std = n[4][3]; cnt = n[4][0];
-    } else {
-      var acc = { n: 0, s: 0, ss: 0 };
-      (function gather(i) {
-        var x = NODES[i];
-        if (x[0] === 'L') {
-          if (dsOn[x[1]] && x[4][0]) { acc.n += x[4][0]; acc.s += x[4][1]; acc.ss += x[4][2]; }
-        } else if (x[0] === 'D') gather(x[1]);
-        else x[1].forEach(gather);
-      })(id);
-      if (!acc.n) return null;
-      var mean = acc.s / acc.n;
-      std = Math.sqrt(Math.max(0, acc.ss / acc.n - mean * mean));
-      cnt = acc.n;
-    }
-    var ci = 1.96 * std / Math.sqrt(cnt);
-    return { ci: pct ? ci * 100 : ci, n: cnt };
-  }
-
-  // Match Python's f"{v:.nf}" (round-half-even on exact ties).
-  var formatters = {};
-  function fmt(v, digits) {
-    var f = formatters[digits];
-    if (f === undefined) {
-      try {
-        f = new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: digits, maximumFractionDigits: digits,
-          roundingMode: 'halfEven', useGrouping: false });
-      } catch (e) { f = null; }
-      formatters[digits] = f;
-    }
-    return f ? f.format(v) : v.toFixed(digits);
-  }
-
-  function aggVal(x) {  // aggregate payload value: inline float or {n: node id}
-    return typeof x === 'number' ? x : value(x.n);
-  }
-
-  // --- Tables ---
-  var tables = Array.prototype.slice.call(document.querySelectorAll('table.ov-tbl'))
-    .filter(function (t) { return t.tBodies.length && t.querySelector('td[data-f]'); })
-    .map(function (tbl) {
-      var payload = document.querySelector('script.agg-data[data-table="' + tbl.id + '"]');
-      // Column index -> header cell (data columns span both header rows).
-      var headers = {};
-      if (tbl.tHead && tbl.tHead.rows.length) {
-        var c = 0;
-        Array.prototype.forEach.call(tbl.tHead.rows[0].cells, function (th) {
-          if (th.rowSpan === 2) headers[c] = th;
-          c += th.colSpan;
-        });
-      }
-      var cols = {};
-      Array.prototype.forEach.call(tbl.querySelectorAll('td[data-f]'), function (td) {
-        (cols[td.cellIndex] = cols[td.cellIndex] || []).push(td);
-      });
-      return { tbl: tbl, headers: headers, cols: cols,
-               agg: payload ? JSON.parse(payload.textContent) : null };
-    });
-
-  function rowOn(tr) { return !tr.classList.contains('xp-hidden'); }
-
-  function computeAggs(data, on) {
-    var rank = {}, mm = {}, zs = {};
-    data.items.forEach(function (item) {
-      var ms = [], hib = [], raw = {};
-      Object.keys(item.s).forEach(function (m) {
-        if (!on[m]) return;
-        var v = aggVal(item.s[m]);
-        if (v === null) return;
-        ms.push(m); hib.push(item.asc ? 100 - v : v);
-        raw[m] = item.r ? aggVal(item.r[m]) : v;
-      });
-      if (!ms.length) return;
-      var lo = Math.min.apply(null, hib), hi = Math.max.apply(null, hib);
-      var mean = hib.reduce(function (a, b) { return a + b; }, 0) / hib.length;
-      var std = Math.sqrt(hib.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / hib.length);
-      // Avg Rank uses the unclamped scores when provided ("r").
-      ms.slice().sort(function (a, b) { return item.asc ? raw[a] - raw[b] : raw[b] - raw[a]; })
-        .forEach(function (m, r) { (rank[m] = rank[m] || []).push(r + 1); });
-      ms.forEach(function (m, i) {
-        var v = hib[i];
-        (mm[m] = mm[m] || []).push(hi > lo ? (v - lo) / (hi - lo) : 1);
-        (zs[m] = zs[m] || []).push(std > 0 ? (v - mean) / std : 0);
-      });
-    });
-    function avg(obj) {
-      var out = {};
-      Object.keys(obj).forEach(function (m) {
-        out[m] = pysum(obj[m]) / obj[m].length;
-      });
-      return out;
-    }
-    return { avg_rank: avg(rank), minmax: avg(mm), zscore: avg(zs) };
-  }
-
-  // Colour 1st / 2nd / before-last / last among *ranked* rows (best first).
-  function rankColors(ranked) {
-    var color = new Map(), n = ranked.length;
-    if (n >= 1) color.set(ranked[0], COLORS.first);
-    if (n >= 2) color.set(ranked[1], COLORS.second);
-    if (n >= 3) color.set(ranked[n - 1], COLORS.last);
-    if (n >= 4) color.set(ranked[n - 2], COLORS.before_last);
-    return color;
-  }
-
-  // Only touch the DOM when a cell actually changes (keeps toggling fast).
-  function setCell(td, html, bg) {
-    if (td._html !== html) { td.innerHTML = html; td._html = html; }
-    if (td._bg !== bg) { td.style.background = bg; td._bg = bg; }
-  }
-
-  function setMissing(td) {
-    setCell(td, '-', COLORS.missing);
-    td.removeAttribute('data-tip');
-    td._tip = undefined;
-  }
-
-  function fillTooltip(template, ranks) {
-    var out = [];
-    template.split(NL).forEach(function (line) {
-      var dropped = false;
-      var text = line.replace(/\\[\\[([^\\]]*)\\]\\]/g, function (_, tok) {
-        var p = tok.split(':'), id = +p[1];
-        if (p[0] === 'V') {
-          var v = value(id);
-          if (v === null) { dropped = true; return ''; }
-          return fmt(v, 2);
-        }
-        if (p[0] === 'R') {
-          var r = ranks[id];
-          if (!r) return '';
-          return p[2] === 'p' ? r + 'e — ' : ' (' + r + 'e)';
-        }
-        if (p[0] === 'C') {
-          var ci = value(id) === null ? null : ciOf(id, p[2] === '1');
-          if (!ci) return '';
-          if (p[3] === 's') return '±' + fmt(ci.ci, 2);
-          var v0 = value(id);
-          return ' [' + fmt(v0 - ci.ci, 2) + ', ' + fmt(v0 + ci.ci, 2) + '], n=' + ci.n;
-        }
-        return '';
-      });
-      if (!dropped) out.push(text);
-    });
-    return out.join(NL);
-  }
-
-  function refreshTable(t) {
-    var body = t.tbl.tBodies[0];
-    var trs = Array.prototype.slice.call(body.rows).filter(function (tr) { return tr.hasAttribute('data-model'); });
-    var on = {};
-    trs.forEach(function (tr) { if (rowOn(tr)) on[tr.getAttribute('data-model')] = true; });
-
-    // 1. Aggregates + row order (by the first aggregate).
-    if (t.agg) {
-      var vals = computeAggs(t.agg, on);
-      t.agg.aggs.forEach(function (agg) {
-        var v = vals[agg.name];
-        var ranked = trs.filter(function (tr) { return on[tr.getAttribute('data-model')] && tr.getAttribute('data-model') in v; })
-          .sort(function (a, b) {
-            var d = v[a.getAttribute('data-model')] - v[b.getAttribute('data-model')];
-            return agg.hib ? -d : d;
-          });
-        var color = rankColors(ranked);
-        trs.forEach(function (tr) {
-          var td = tr.querySelector('td[data-agg="' + agg.name + '"]');
-          if (!td) return;
-          var m = tr.getAttribute('data-model');
-          if (m in v) setCell(td, fmt(v[m], agg.digits), color.get(tr) || '');
-          else setCell(td, '-', COLORS.missing);
-        });
-      });
-      var first = t.agg.aggs[0];
-      if (first) {
-        var fv = vals[first.name];
-        trs.sort(function (a, b) {
-          var ma = a.getAttribute('data-model'), mb = b.getAttribute('data-model');
-          var ha = ma in fv, hb = mb in fv;
-          if (ha !== hb) return ha ? -1 : 1;
-          if (!ha) return 0;
-          var d = fv[ma] - fv[mb];
-          return first.hib ? -d : d;
-        });
-        var same = trs.every(function (tr, i) { return body.rows[i] === tr; });
-        if (!same) trs.forEach(function (tr) { body.appendChild(tr); });
-      }
-    }
-
-    // 2. Per-column values, ranks and colours over the visible rows.
-    var ranks = {};       // node id -> rank within its column
-    var rowHasData = new Map();
-    Object.keys(t.cols).forEach(function (ci) {
-      var cells = t.cols[ci];
-      var asc = isAsc(+cells[0].getAttribute('data-f'));
-      var present = cells.filter(function (td) {
-        var ok = value(+td.getAttribute('data-f')) !== null;
-        if (ok) rowHasData.set(td.parentNode, true);
-        return ok && rowOn(td.parentNode);
-      });
-      // Stable sort in (current) row order, as Python's _full_ranks.
-      present.sort(function (a, b) { return a.parentNode.rowIndex - b.parentNode.rowIndex; });
-      var ranked = present.slice().sort(function (a, b) {
-        var d = value(+a.getAttribute('data-f')) - value(+b.getAttribute('data-f'));
-        return asc ? d : -d;
-      });
-      ranked.forEach(function (td, i) { ranks[+td.getAttribute('data-f')] = i + 1; });
-      var color = rankColors(ranked);
-      cells.forEach(function (td) {
-        var id = +td.getAttribute('data-f');
-        var v = value(id);
-        if (v === null) { setMissing(td); return; }
-        var html = fmt(v, 2);
-        if (td.hasAttribute('data-ci')) {
-          var c = ciOf(id, td.getAttribute('data-ci') === '1');
-          if (c) html += ' <span class="ci">±' + fmt(c.ci, 2) + '</span>';
-        }
-        setCell(td, html, color.get(td) || '');
-      });
-      // Hide a column with no value for any visible model.
-      var hide = !present.length;
-      trs.forEach(function (tr) {  // includes the "-" cells of models without data
-        if (tr.cells[ci]) tr.cells[ci].classList.toggle('ds-hidden', hide);
-      });
-      if (t.headers[ci]) t.headers[ci].classList.toggle('ds-hidden', hide);
-    });
-
-    // 3. Tooltips (need the ranks of every column).
-    Object.keys(t.cols).forEach(function (ci) {
-      t.cols[ci].forEach(function (td) {
-        var tt = td.getAttribute('data-tt');
-        if (!tt || value(+td.getAttribute('data-f')) === null) return;
-        var tip = fillTooltip(tt, ranks);
-        if (td._tip !== tip) { td.setAttribute('data-tip', tip); td._tip = tip; }
-        td.removeAttribute('title');
-      });
-    });
-
-    // 4. Rows without any value left (all their datasets unchecked).
-    trs.forEach(function (tr) { tr.classList.toggle('ds-empty', !rowHasData.get(tr)); });
-    var anyCol = Object.keys(t.cols).some(function (ci) {
-      return !t.cols[ci][0].classList.contains('ds-hidden');
-    });
-    t.tbl.classList.toggle('ds-empty-tbl', !anyCol);
-  }
-
-  // Hide figure wrappers whose tables are all empty, then empty sections.
-  function refreshSections() {
-    document.querySelectorAll('.figure-wrapper').forEach(function (w) {
-      var tbls = w.querySelectorAll('table.ov-tbl');
-      var empty = tbls.length > 0 && Array.prototype.every.call(tbls, function (tb) {
-        return tb.classList.contains('ds-empty-tbl');
-      });
-      w.classList.toggle('ds-hidden', empty);
-    });
-    document.querySelectorAll('section.category').forEach(function (sec) {
-      var ws = sec.querySelectorAll('.figure-wrapper');
-      var empty = ws.length > 0 && Array.prototype.every.call(ws, function (w) {
-        return w.classList.contains('ds-hidden');
-      });
-      sec.classList.toggle('ds-hidden', empty);
-      var link = document.querySelector('nav.sidebar a[href="#' + sec.id + '"]');
-      if (link) link.parentNode.classList.toggle('ds-hidden', empty);
-    });
-  }
-
-  function refresh() {
-    memo = new Array(NODES.length);
-    tables.forEach(refreshTable);
-    refreshSections();
-  }
-  window.refreshReportTables = refresh;
-
-  // ===================================================================
-  // Dataset filter panel: Task -> "LANG · dataset" checkboxes.
-  // ===================================================================
-  var treeEl = document.getElementById('ds-filter-tree');
-  var toggleBtn = document.getElementById('ds-toggle-all');
-  var resetBtn = document.getElementById('ds-reset');
-  var leafBoxes = [];   // dataset idx -> checkbox
-  var groupBoxes = [];  // { cb, leaves: [idx] }
-
-  // Task -> language -> dataset. Tasks with a single language skip the
-  // language level (their leaves read "LANG · dataset").
-  function langKey(l) {  // FR, EN first, like the tables
-    var i = ['FR', 'EN'].indexOf(l.split('-')[0]);
-    return (i === -1 ? '2' : '' + i) + l;
-  }
-
-  function groupNode(container, label, idxs) {  // returns the <ul> for children
-    var li = document.createElement('li');
-    var details = document.createElement('details');
-    var summary = document.createElement('summary');
-    var caret = document.createElement('span');
-    caret.className = 'xp-caret';
-    caret.textContent = '▸';
-    var gcb = document.createElement('input');
-    gcb.type = 'checkbox';
-    var text = document.createElement('span');
-    text.className = 'xp-group';
-    text.textContent = label;
-    var count = document.createElement('span');
-    count.className = 'xp-count';
-    summary.appendChild(caret); summary.appendChild(gcb);
-    summary.appendChild(text); summary.appendChild(count);
-    details.appendChild(summary);
-    var ul = document.createElement('ul');
-    details.appendChild(ul);
-    li.appendChild(details);
-    container.appendChild(li);
-    gcb.addEventListener('click', function (e) { e.stopPropagation(); });
-    gcb.addEventListener('change', function () {
-      idxs.forEach(function (i) { dsOn[i] = gcb.checked; });
-      update();
-    });
-    groupBoxes.push({ cb: gcb, leaves: idxs, count: count });
-    return ul;
-  }
-
-  function leafNode(container, i, label) {
-    var li = document.createElement('li');
-    var lab = document.createElement('label');
-    var cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.addEventListener('change', function () { dsOn[i] = cb.checked; update(); });
-    leafBoxes[i] = cb;
-    lab.appendChild(cb);
-    lab.appendChild(document.createTextNode(label));
-    li.appendChild(lab);
-    container.appendChild(li);
-  }
-
-  var byTask = {};
-  DATA.datasets.forEach(function (d, i) {
-    var langs = byTask[d[0]] = byTask[d[0]] || {};
-    (langs[d[1]] = langs[d[1]] || []).push(i);
-  });
-  var rootUl = document.createElement('ul');
-  Object.keys(byTask).sort().forEach(function (task) {
-    var langs = Object.keys(byTask[task]).sort(function (a, b) {
-      return langKey(a) < langKey(b) ? -1 : langKey(a) > langKey(b) ? 1 : 0;
-    });
-    var byName = function (a, b) {
-      var x = DATA.datasets[a][2], y = DATA.datasets[b][2];
-      return x < y ? -1 : x > y ? 1 : 0;
-    };
-    var all = [];
-    langs.forEach(function (l) { all = all.concat(byTask[task][l].sort(byName)); });
-    var taskUl = groupNode(rootUl, task, all);
-    if (langs.length === 1) {
-      all.forEach(function (i) {
-        leafNode(taskUl, i, DATA.datasets[i][1] + ' · ' + DATA.datasets[i][2]);
-      });
-      return;
-    }
-    langs.forEach(function (l) {
-      var idxs = byTask[task][l];
-      var langUl = groupNode(taskUl, l, idxs);
-      idxs.forEach(function (i) { leafNode(langUl, i, DATA.datasets[i][2]); });
-    });
-  });
-  treeEl.appendChild(rootUl);
-
-  function syncBoxes() {
-    leafBoxes.forEach(function (cb, i) { if (cb) cb.checked = dsOn[i]; });
-    groupBoxes.forEach(function (g) {
-      var n = g.leaves.filter(function (i) { return dsOn[i]; }).length;
-      g.cb.checked = n === g.leaves.length;
-      g.cb.indeterminate = n > 0 && n < g.leaves.length;
-      g.count.textContent = '(' + n + '/' + g.leaves.length + ')';
-    });
-    toggleBtn.textContent = dsOn.every(Boolean) ? 'Tout décocher' : 'Tout cocher';
-  }
-
-  function update() { syncBoxes(); refresh(); }
-
-  toggleBtn.addEventListener('click', function () {
-    var next = !dsOn.every(Boolean);
-    dsOn = dsOn.map(function () { return next; });
-    update();
-  });
-  function selectDefault(superCats) {
-    dsOn = DATA.super_cats.map(function (sc) { return !superCats || superCats.indexOf(sc) !== -1; });
-    DATA.off.forEach(function (i) { dsOn[i] = false; });
-    update();
-  }
-  resetBtn.addEventListener('click', function () { selectDefault(null); });
-  document.getElementById('ds-core').addEventListener('click', function () {
-    selectDefault(['ASR', 'AST', 'QA']);
-  });
-
-  update();
-})();
-</script>
-<script>
-(function () {
-  // "PNG" button above each table: exports the table as currently shown
-  // (filters, renames, hidden rows/columns), without the +/- column toggles.
-  function slug(s) {
-    return (s || '').trim().replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
-  }
-
-  function fileName(tbl) {
-    var sec = tbl.closest('section.category');
-    var h = sec && sec.querySelector('h2');
-    return [slug(h && h.textContent), slug(tbl.id)].filter(Boolean).join('_') + '.png';
-  }
-
-  document.querySelectorAll('table.ov-tbl').forEach(function (tbl) {
-    var bar = document.createElement('div');
-    bar.className = 'tbl-tools';
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = 'PNG';
-    btn.title = 'Télécharger cette table en PNG';
-    bar.appendChild(btn);
-    tbl.parentNode.insertBefore(bar, tbl);
-
-    btn.addEventListener('click', function () {
-      if (!window.htmlToImage) { window.alert('html-to-image non chargé (pas de connexion au CDN ?)'); return; }
-      btn.disabled = true;
-      window.htmlToImage.toPng(tbl, {
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        style: { margin: '0' },
-        filter: function (node) { return !(node.classList && node.classList.contains('toggle-btn')); }
-      }).then(function (url) {
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = fileName(tbl);
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }).catch(function (err) {
-        window.alert('Export PNG impossible : ' + err);
-      }).then(function () { btn.disabled = false; });
-    });
-  });
-})();
-</script>
-</body>
-</html>
-"""
+# The page skeleton, its stylesheet and its scripts live in leaderboard/ as plain
+# files; build_html_report() inlines them so the report stays a single file.
+_LEADERBOARD_DIR = Path(__file__).parent / "leaderboard"
+_REPORT_SCRIPTS = ["toggles.js", "tooltip.js", "experiment_filter.js", "table_engine.js", "png_export.js"]
+
+
+def _render_template():
+    """Return the page skeleton with the stylesheet and scripts inlined."""
+    template = (_LEADERBOARD_DIR / "template.html").read_text(encoding="utf-8")
+    css = (_LEADERBOARD_DIR / "leaderboard.css").read_text(encoding="utf-8")
+    scripts = [(_LEADERBOARD_DIR / "js" / name).read_text(encoding="utf-8")
+               for name in _REPORT_SCRIPTS]
+    template = template.replace("__STYLES__", f"<style>\n{css}</style>")
+    return template.replace(
+        "__SCRIPTS__", "\n".join(f"<script>\n{js}</script>" for js in scripts))
 
 
 def _slug(text):
@@ -3606,16 +2499,16 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
         section_html += '</section>'
         section_blocks.append(section_html)
 
-    html = _HTML_TEMPLATE.replace('__NAV_ITEMS__', '\n'.join(nav_lines))
+    html = _render_template().replace('__NAV_ITEMS__', '\n'.join(nav_lines))
     html = html.replace('__SECTIONS__', '\n'.join(section_blocks))
     report_data = json.dumps({
         "nodes": _SYM_NODES,
         "datasets": [list(k) for k in _SYM_DATASETS],
         "super_cats": [_super_category(k[0]) for k in _SYM_DATASETS],
         "off": list(default_off_datasets),
+        "colors": {**RANK_COLORS, "missing": MISSING_COLOR},
     }, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace('__REPORT_DATA__', report_data)
-    html = html.replace('__AGG_COLORS__', json.dumps({**RANK_COLORS, "missing": MISSING_COLOR}))
 
     os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
     Path(output_path).write_text(html, encoding='utf-8')
@@ -3775,7 +2668,7 @@ def main():
         print("No figures generated.")
         return
 
-    output_path = os.path.join(args.output_folder, "report.html")
+    output_path = os.path.join(args.output_folder, "index.html")
     build_html_report(collector, output_path, default_off_datasets=default_off)
 
 

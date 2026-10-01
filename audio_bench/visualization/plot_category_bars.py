@@ -1,6 +1,6 @@
 """Per-super-category grouped-bar PNGs + an overview-table PNG from a results/ folder.
 
-Companion to ``plot_radar.py`` / ``plot_results_to_html.py``, used by the
+Companion to ``plot_radar.py`` / ``build_leaderboard.py``, used by the
 ``evaluate_on_dgx`` Airflow DAG's ``generate_html`` step. It writes, into
 ``--output_folder``:
 
@@ -33,7 +33,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-from audio_bench.visualization.plot_results_to_html import (  # noqa: E402
+from audio_bench.visualization.build_leaderboard import (  # noqa: E402
     AGGREGATE_MEASURES,
     LOWER_IS_BETTER,
     _compute_overview_ranks,
@@ -296,7 +296,7 @@ def main():
                     help="Where to write the PNGs (default: plots/)")
     ap.add_argument("--show-all", "--show_all", dest="show_all", action="store_true",
                     help="Bypass BOTH curated filters (datasets + models), "
-                         "matching plot_results_to_html --show-all.")
+                         "matching build_leaderboard --show-all.")
     ap.add_argument("--show_all_models", "--show-all-models", dest="show_all_models",
                     action="store_true",
                     help="Bypass the model allowlist/ignore patterns (show all "

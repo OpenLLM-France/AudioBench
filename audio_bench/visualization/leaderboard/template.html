@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>French &amp; English Audio LLM Leaderboard</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+__STYLES__
+</head>
+<body>
+<nav class="sidebar">
+  <ul>
+__NAV_ITEMS__
+  </ul>
+  <div id="xp-filter" class="flt-panel">
+    <div class="xp-filter-head">
+      <span>Experiments</span>
+      <div class="flt-btns">
+        <button id="xp-rename-reset" type="button" title="Annuler tous les renommages">Noms d'origine</button>
+        <button id="xp-toggle-all" type="button">Tout décocher</button>
+      </div>
+    </div>
+    <div id="xp-filter-tree" class="flt-tree"></div>
+  </div>
+  <div id="ds-filter" class="flt-panel">
+    <div class="xp-filter-head">
+      <span>Datasets</span>
+      <div class="flt-btns">
+        <button id="ds-reset" type="button" title="Sélection par défaut">Défaut</button>
+        <button id="ds-core" type="button" title="Sélection par défaut, limitée aux tâches ASR, AST et QA">ASR/AST/QA</button>
+        <button id="ds-toggle-all" type="button">Tout cocher</button>
+      </div>
+    </div>
+    <div id="ds-filter-tree" class="flt-tree"></div>
+  </div>
+</nav>
+<main>
+<header class="page-header">
+  <h1>French &amp; English Audio LLM Leaderboard</h1>
+  <p class="subtitle">Multi-task benchmark of audio language models (ASR, translation, QA…), focused on French and English, with additional results in German, Spanish, Italian, Dutch, Portuguese and Arabic</p>
+</header>
+__SECTIONS__
+</main>
+<div id="celltip"></div>
+<script type="application/json" id="report-data">__REPORT_DATA__</script>
+__SCRIPTS__
+</body>
+</html>

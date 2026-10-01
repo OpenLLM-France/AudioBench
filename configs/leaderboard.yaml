@@ -1,0 +1,72 @@
+# What the results report / leaderboard shows: which datasets and models, under
+# which name and size. Read by audio_bench/visualization/build_leaderboard.py
+# (and the plot_radar / plot_category_bars figures, which reuse its loader).
+#
+# "{consortium}" in a model name or pattern is replaced by consortium_name.
+
+consortium_name: OpenLLM-France
+
+# Datasets unchecked by default in the report's dataset filter (they can still
+# be ticked back in the browser), and left out of the static figures.
+# --show_all_datasets bypasses this list.
+ignored_datasets:
+  - StressTest_SSR
+  - VoxCeleb-accent
+  - VoxCeleb  # Speaker identification — only run on some models
+  - MuChoMusic
+  - SLUE-SQA5_format_json_answer  # Format following
+  # Information Extraction
+  - SLUE-SQA5_time2sentence
+  - SLUE-SQA5_time2word
+  - SLUE-SQA5_word2sentence
+  - SLUE-SQA5_word2time
+  - SLUE-SQA5_format_timestamped_transcription  # Timestamped transcription
+
+# (task, language) pairs excluded from a task's AVERAGE (still shown individually
+# as their own sub-column/row — just not folded into the super-category mean).
+# Arabic ASR is dropped from the ASR average but stays visible as its own AR column.
+avg_excluded_task_langs:
+  - [ASR, AR]
+
+# Consortium models to show (model_name in the score files -> display name).
+# When non-empty, every other model named after the consortium is hidden.
+consortium_models:
+  LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829: "{consortium}/Canary_Luciole-1B"
+  LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803: "{consortium}/Canary_Qwen3-1.7B"
+
+# Models hidden from the report (regexes searched in the display name).
+# --show_all_models bypasses both this list and consortium_models.
+ignored_model_patterns:
+  - '^LINAGORA/Canary_Qwen3-1\.7B_v1.*'
+  - '.*xp_timestamp.*'
+  # - '^.*/(?!.*data-v1).*'
+
+# Display names (model_name in the score files -> display name).
+# consortium_models takes precedence for the models it lists.
+model_renames:
+  LINAGORA/Canary-Qwen3-5B-Thinking: "{consortium}/Canary-Qwen3-4B_data-v1_8h"
+  LINAGORA/Canary-Qwen3-1.7B-v2: "{consortium}/Canary-Qwen3-1.7B_data-v1_8h"
+  LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s010000: "{consortium}/Canary_Luciole-1B_LLM-LoRA_8h"
+  LINAGORA/Canary_Luciole-1B-SFT-1.1_v2_s027458: "{consortium}/Canary_Luciole-1B_LLM-LoRA-no_bucket_8h"
+  LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_adapter_s005000: "{consortium}/Canary_Luciole-1B_Step-Adapter_2h"
+  LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s020000: "{consortium}/Canary_Luciole-1B_Step-Encoder_8h"
+  LINAGORA/Canary_Luciole-1B-SFT-1.1_v4_encoder_s217983: "{consortium}/Canary_Luciole-1B_Step-Encoder_80h"
+
+# Model size shown in the tables (regex on the display name -> size). Tried in
+# order, first match wins. Unmatched models fall back to a "_7b"-like suffix of
+# their name.
+model_sizes:
+  - ['^{consortium}/Canary[-_]Qwen3[-_]1\.7B', 2.5B]
+  - ['^{consortium}/Canary[-_]Qwen3[-_]4B', 4.8B]
+  - ['^{consortium}/Canary_Luciole-1B', 2.1B]
+  - ['^LINAGORA/luciole_v\d+_stage1_canary', 2.1B]
+  - ['^LINAGORA/luciole_v\d+', 1.9B]
+  - ['^LINAGORA/luciole8b_', 8.8B]
+  - ['^LINAGORA/luciole23b_', 24.1B]
+  - ['^microsoft/Phi-4-multimodal-instruct$', 5.6B]
+  - ['^nvidia/audio-flamingo-3-hf$', 8.2B]
+  - ['^Qwen/Qwen2-Audio-7B-Instruct$', 8.4B]
+  - ['^Qwen/Qwen2\.5-Omni-7B$', 11B]
+  - ['^Qwen/Qwen2\.5-Omni-3B$', 5.9B]
+  - ['^Qwen/Qwen3-Omni-30B-A3B-Instruct$', 35.3B]
+  - ['^mistralai/Voxtral-Mini-3B-2507$', 4.68B]

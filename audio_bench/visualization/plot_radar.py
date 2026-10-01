@@ -53,7 +53,7 @@ import numpy as np
 
 # Reuse the score-loading / classification conventions from the HTML reporter so
 # both tools agree on what a "score" is and which way is better.
-from audio_bench.visualization.plot_results_to_html import (
+from audio_bench.visualization.build_leaderboard import (
     LOWER_IS_BETTER,
     ZERO_TO_ONE_RANGE,
     _SUPER_CATEGORY_ORDER,
@@ -132,7 +132,7 @@ def _axis_sort_key(axis, by):
 
 
 def _select_task_metrics(entries):
-    """Keep a single metric per task, as report.html does.
+    """Keep a single metric per task, as index.html does.
 
     A dataset may be scored with several metrics (e.g. AST's Multilingual_TEDx
     has both ``bleu`` and ``meteor``). Counting both would double-weight that
@@ -395,10 +395,10 @@ def main(argv=None):
                         "[0,1] (exaggerates ties when comparing 2-3 models); "
                         "raw: plot oriented raw scores (use with a single metric)")
     p.add_argument("--show-all", action="store_true",
-                   help="bypass the curated dataset/model filters in plot_results_to_html")
+                   help="bypass the curated dataset/model filters in build_leaderboard")
     p.add_argument("--output_folder", default="plots/",
                    help="where to write radar.png / radar.html (default: plots/, "
-                        "same folder as plot_results_to_html's report.html)")
+                        "same folder as build_leaderboard's index.html)")
     p.add_argument("--title", default="AudioBench model comparison")
     p.add_argument("--no-html", action="store_true", help="skip the interactive HTML output")
     args = p.parse_args(argv)

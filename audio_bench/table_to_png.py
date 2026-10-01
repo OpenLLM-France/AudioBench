@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Screenshot a single table (or section) from a generated ``report.html``.
+"""Screenshot a single table (or section) from a generated ``index.html``.
 
 Renders the HTML in headless Chromium (Playwright) so the output PNG matches
 the browser rendering exactly: CSS styling, colored rank cells, aggregate
@@ -10,9 +10,9 @@ Prerequisites (run once):
     playwright install chromium
 
 Usage:
-    python -m audio_bench.table_to_png plots/report.html overview-tbl \\
+    python -m audio_bench.table_to_png plots/index.html overview-tbl \\
         --output plots/overview.png
-    python -m audio_bench.table_to_png plots/report.html cat-Overview \\
+    python -m audio_bench.table_to_png plots/index.html cat-Overview \\
         --output plots/overview_section.png --full_section
 """
 
@@ -73,10 +73,10 @@ def screenshot_element(html_path, element_id, output_path, *,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Screenshot a table or section from a generated report.html.",
+        description="Screenshot a table or section from a generated index.html.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--html_path", default="plots/report.html", help="Path to report.html (e.g. plots/report.html)")
+    parser.add_argument("--html_path", default="plots/index.html", help="Path to index.html (e.g. plots/index.html)")
     parser.add_argument("--element_id", default="overview-tbl",
                         help="DOM id of the table or section (e.g. overview-tbl)")
     parser.add_argument("--output", default=None,
