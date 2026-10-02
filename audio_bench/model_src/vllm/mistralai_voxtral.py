@@ -21,11 +21,17 @@ _VOXTRAL_TRANSCRIPTION_LANGS = {"en", "fr", "de", "es", "it", "pt", "nl", "hi"}
 
 
 class Voxtral(VLLMModel):
+    """Mistral Voxtral audio LLMs via vLLM. Same interface for the whole family -- the
+    3B (Voxtral-Mini-3B-2507, default) and the 24B (Voxtral-Small-24B-2507) share the
+    VoxtralForConditionalGeneration architecture, the mistral tokenizer mode, and the native
+    transcription protocol; only the checkpoint (and its VRAM footprint) differ.
+    """
 
     name = "mistralai/Voxtral-Mini-3B-2507"
 
     def __init__(self, model_path="mistralai/Voxtral-Mini-3B-2507", gpu_memory_utilization=0.4, device=None):
         super().__init__(model_path=model_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
+        self.name = model_path  # display name tracks the actual checkpoint (Mini-3B vs Small-24B)
         self._mistral_tokenizer = None
 
     # --- vLLM engine ---
