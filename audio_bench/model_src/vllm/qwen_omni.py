@@ -49,3 +49,12 @@ class Qwen2Omni(VLLMModel):
 
     def _postprocess_asr_text(self, text):
         return self._asr_text_processor(text)
+
+    def _rewrite_instruction(self, instruction, task_type):
+        # Neutralize "file" framing (WAV/MP3/fichier/Datei/...) in ASR/AST prompts: it makes
+        # Qwen2.5-Omni refuse ("Je ne peux pas transcrire un fichier WAV") instead of
+        # transcribing/translating. Other tasks are left untouched.
+        if task_type in ("ASR", "AST"):
+            from audio_bench.model_src.asr_instruction import neutralize_file_references
+            return neutralize_file_references(instruction)
+        return instruction

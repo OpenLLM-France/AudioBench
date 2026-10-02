@@ -50,7 +50,7 @@ class VLLMModel(BaseModel):
         chunk_buffers = {}
 
         for i, inp in enumerate(inputs):
-            instruction = inp["instruction"]
+            instruction = self._rewrite_instruction(inp["instruction"], inp['task_type'])
             is_asr = inp['task_type'] == 'ASR'
 
             segments, sampling_rate, mode = self._prepare_audio_segments(inp["audio"], inp['task_type'])
@@ -85,6 +85,14 @@ class VLLMModel(BaseModel):
         return results
 
     # --- Hooks (override in subclasses) ---
+
+    def _rewrite_instruction(self, instruction, task_type):
+        """Optional per-model rewrite of the instruction before prompt building.
+
+        Default: identity. Overridden by chatty models (Qwen2.5-Omni, Qwen3-Omni) to neutralize
+        "file" framing in ASR instructions, which otherwise triggers refusals.
+        """
+        return instruction
 
     def _build_vllm_messages(self, audio_array, sampling_rate, instruction):
         """Build the chat messages list for a single audio. Must be overridden."""
