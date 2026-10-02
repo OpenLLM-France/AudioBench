@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pairwise statistical comparison of two AudioBench systems.
 
-Unlike ``plot_results_to_html.py`` (which prints raw scores for every system on
+Unlike ``build_leaderboard.py`` (which prints raw scores for every system on
 every dataset), this script compares exactly **two** systems sample-by-sample
 and runs paired statistical tests to decide whether one is significantly better
 than the other.
@@ -53,7 +53,7 @@ from scipy import stats
 # Reuse the metric conventions (direction + %-scaling) from the plotting script
 # so the two tools never disagree about how a metric is interpreted.
 try:
-    from visualization.plot_results_to_html import (  # when run as a script from audio_bench/
+    from visualization.build_leaderboard import (  # when run as a script from audio_bench/
         LOWER_IS_BETTER,
         ZERO_TO_ONE_RANGE,
         _TASK_METRIC_OVERRIDE,
@@ -61,7 +61,7 @@ try:
         _task_display_name,
     )
 except ImportError:  # when run as a module: python -m audio_bench.compare_two_systems
-    from audio_bench.visualization.plot_results_to_html import (
+    from audio_bench.visualization.build_leaderboard import (
         LOWER_IS_BETTER,
         ZERO_TO_ONE_RANGE,
         _TASK_METRIC_OVERRIDE,
