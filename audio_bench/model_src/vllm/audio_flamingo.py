@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import tempfile
 from pathlib import Path
 
@@ -9,18 +8,6 @@ from audio_bench.model_src.vllm_model import VLLMModel
 
 logger = logging.getLogger(__name__)
 
-def _post_process_flamingo_asr(model_output):
-    # Try \boxed{"..."}
-    m = re.search(r'\\boxed\{"(.*?)"\}', model_output, re.DOTALL)
-    if m and m.group(1).strip():
-        return m.group(1).strip()
-
-    # Try \boxed{...}
-    m = re.search(r"\\boxed\{(.+?)\}", model_output)
-    if m and m.group(1).strip():
-        return m.group(1).strip()
-
-    return model_output
 
 class AudioFlamingo(VLLMModel):
 
@@ -58,3 +45,9 @@ class AudioFlamingo(VLLMModel):
                 {"type": "audio_url", "audio_url": {"url": audio_url}},
             ]},
         ]
+
+    def _postprocess_asr_text(self, text):
+        # Audio-Flamingo prefixes transcripts with descriptions ("The spoken content of the
+        # audio is ...", "The audio contains ..."). Strip the preamble and unwrap any quotes.
+        from audio_bench.asr_postprocess import strip_audio_description_preamble
+        return strip_audio_description_preamble(text)

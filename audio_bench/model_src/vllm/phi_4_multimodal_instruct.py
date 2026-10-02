@@ -78,3 +78,17 @@ class Phi4MultimodalInstruct(VLLMModel):
 
     def _vllm_chat_kwargs(self):
         return {"lora_request": self.lora_request}
+
+    def _rewrite_instruction(self, instruction, task_type):
+        # Neutralize "file" framing (Audiodatei / traccia audio / clip audio / ...) in ASR/AST
+        # prompts: it makes Phi-4 refuse ("ich kann die Audiodatei nicht verarbeiten"). ~37% of
+        # its ASR refusals are triggered this way. Other tasks are left untouched.
+        if task_type in ("ASR", "AST"):
+            from audio_bench.model_src.asr_instruction import neutralize_file_references
+            return neutralize_file_references(instruction)
+        return instruction
+
+    def _postprocess_asr_text(self, text):
+        # Phi-4 sometimes labels the transcript ("Spoken text: ...", "Transcription: ...").
+        from audio_bench.asr_postprocess import strip_label_prefix
+        return strip_label_prefix(text)

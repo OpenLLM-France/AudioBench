@@ -101,3 +101,45 @@ def postprocess_asr_prediction(text):
 
     # 3) plain transcript (or an unsalvageable description) -> leave as-is.
     return t
+
+
+# --- Phi-4 -----------------------------------------------------------------------------------
+# Phi-4 sometimes labels its ASR output ("Spoken text: ...", "Transcription: ..."). Strip only a
+# single leading label; a plain transcript (no label) is returned unchanged.
+_LABEL_PREFIX = re.compile(r"^\s*(?:spoken\s+text|spoken\s+words|transcription|transcript)\s*:\s*", re.I)
+
+
+def strip_label_prefix(text):
+    """Remove a leading 'Spoken text:' / 'Transcription:' label from an ASR prediction."""
+    if not text:
+        return text
+    return _LABEL_PREFIX.sub("", text, count=1).strip()
+
+
+# --- Audio-Flamingo --------------------------------------------------------------------------
+# Audio-Flamingo prefixes transcripts with a description ("The spoken content of the audio is ...",
+# "The audio contains ...", "The literal translation of the audio is: ..."). Strip the preamble and
+# unwrap a quoted transcript. A plain transcript (no such preamble) is returned unchanged. Note:
+# this only cleans the framing -- it cannot fix Audio-Flamingo translating instead of transcribing.
+_AF_PREAMBLE = re.compile(
+    r"^\s*(?:the spoken content of the audio is|the spoken content is|the audio contains|"
+    r"the transcription of the audio is|the literal translation of the audio is|the audio says)"
+    r"\s*:?\s*",
+    re.I,
+)
+_WRAPPING_QUOTES = re.compile(r"^[\"“‘']\s*(.*?)\s*[\"”’']\s*$", re.S)
+
+
+def strip_audio_description_preamble(text):
+    """Recover the transcript from an Audio-Flamingo description-style ASR prediction."""
+    if not text:
+        return text
+    t = text.strip()
+    m = _AF_PREAMBLE.match(t)
+    if not m:
+        return t
+    rest = t[m.end():].strip()
+    q = _WRAPPING_QUOTES.match(rest)
+    if q and q.group(1).strip():
+        rest = q.group(1).strip()
+    return rest if rest else t
