@@ -84,3 +84,11 @@ class Qwen3Omni(VLLMModel):
         # in quotes). Recover the transcript; a plain transcript is left unchanged.
         from audio_bench.asr_postprocess import postprocess_asr_prediction
         return postprocess_asr_prediction(text)
+
+    def _rewrite_instruction(self, instruction, task_type):
+        # Neutralize "file" framing (WAV/MP3/fichier/Datei/...) in ASR/AST prompts, which can
+        # make the model refuse instead of transcribing/translating. Other tasks untouched.
+        if task_type in ("ASR", "AST"):
+            from audio_bench.model_src.asr_instruction import neutralize_file_references
+            return neutralize_file_references(instruction)
+        return instruction
