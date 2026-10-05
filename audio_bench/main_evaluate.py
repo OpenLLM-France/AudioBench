@@ -185,7 +185,7 @@ def run_evaluation(
 
         # Load model
         if model is None:
-            model = load_model(model_id, model_path=model_config.get("path"), batch_size=model_config["batch_size"], device=model_config.get("device"))
+            model = load_model(model_id, model_path=model_config.get("path"), batch_size=model_config["batch_size"], gpu_memory_utilization=model_config.get("gpu_memory_utilization", 0.4), device=model_config.get("device"))
             if model_display_name:
                 model.name = model_display_name
             if model_config.get("audio_locator_tag") is not None:

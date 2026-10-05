@@ -40,23 +40,34 @@ def get_predictions_and_references_lists(data_with_model_predictions):
     return predictions, references
 
 def compute_wer(references, predictions, compute_each_samples=True):
-    total_wer = compute_measures(references, predictions)
+    """Corpus WER where each sample's errors are capped at its reference length (100% WER
+    per sample), so that one hallucination loop does not dominate the dataset score
+    (same rule as linagora-labs/asr_benchmark). Only insertions can exceed the reference
+    length. The uncapped corpus WER is kept as "wer_uncapped"."""
     sample_wer = []
     per_sample_wers = []
-    if compute_each_samples:
-        for prediction, reference in zip(predictions, references):
+    total_errors = total_capped_errors = total_ref_words = 0
+    for prediction, reference in zip(predictions, references):
+        measures = compute_measures(reference, prediction)
+        errors = measures["substitutions"] + measures["deletions"] + measures["insertions"]
+        ref_words = measures["substitutions"] + measures["deletions"] + measures["hits"]
+        capped_errors = min(errors, max(ref_words, 1))
+        total_errors += errors
+        total_capped_errors += capped_errors
+        total_ref_words += ref_words
 
-            wer_score = wer(reference, prediction)
+        if compute_each_samples:
+            wer_score = capped_errors / max(ref_words, 1)
             per_sample_wers.append(wer_score)
-
-            sample_wer_score = {
+            sample_wer.append({
                 "reference" : reference,
                 "prediction": prediction,
                 "wer"       : wer_score,
-            }
-
-            sample_wer.append(sample_wer_score)
-    return {"wer": build_metric_stats(per_sample_wers, total_wer["wer"]), "details": sample_wer}
+                "wer_uncapped": errors / max(ref_words, 1),
+            })
+    stats = build_metric_stats(per_sample_wers or [0.0], total_capped_errors / max(total_ref_words, 1))
+    stats["wer_uncapped"] = total_errors / max(total_ref_words, 1)
+    return {"wer": stats, "details": sample_wer}
 
 _TASK_GUIDANCE = {
     "DIALOGUE SUMMARIZATION": (
