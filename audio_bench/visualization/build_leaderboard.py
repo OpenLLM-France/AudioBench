@@ -143,7 +143,7 @@ def _super_category(raw_task: str) -> str:
     return _SUPER_CATEGORY.get(raw_task.upper(), "Others")
 
 
-# Task display order for per-language summary tables.
+# Task display order for the overview table columns.
 # Tasks not listed here are appended alphabetically after the listed ones.
 _LANG_TABLE_TASK_ORDER = [
     "ASR",
@@ -206,13 +206,6 @@ RANK_COLORS = {
     "second": "#82e0aa",       # green
     "last": "#e74c3c",         # bold red
     "before_last": "#fdcb6e",  # amber
-}
-
-# Language grouping for the Languages navigation section
-LANGUAGE_GROUPS = {
-    "French":  {"FR", "FR-EN", "FR-ES"},
-    "English": {"EN"},
-    "Others":  None,  # catch-all
 }
 
 # ---------------------------------------------------------------------------
@@ -654,15 +647,6 @@ def _sub_columns(parts):
     """The ``(header, cells)`` sub-columns of the ``(label, scores, metric)`` parts."""
     return [(label, {m: _score_cell(v, metric, m) for m, v in scores.items()})
             for label, scores, metric in parts]
-
-
-def _classify_language(lang_str):
-    """Classify a language string into a LANGUAGE_GROUPS key."""
-    lang = (lang_str or "UNKNOWN").upper()
-    for group_name, lang_set in LANGUAGE_GROUPS.items():
-        if lang_set is not None and lang in lang_set:
-            return group_name
-    return "Others"
 
 
 def _sort_ascending(metric):
@@ -1662,116 +1646,6 @@ def _build_dual_summary_tables(task, metric, task_raw, agg_lang, agg_sub,
 
 
 # ---------------------------------------------------------------------------
-# Plotting — Language Sections
-# ---------------------------------------------------------------------------
-
-def plot_language_sections(entries, collector, include_violin=False,
-                           table_aggregates=None, violin_entries=None):
-    """Build per-language-group sections (French, English, Others).
-
-    Each group gets violin plots per task (when *include_violin* is True)
-    and a summary table (Models × Tasks) with expandable per-dataset
-    sub-columns.  *violin_entries*, when given, replaces *entries* for the
-    violin plots (plain float scores).
-    """
-    # Classify entries by language group
-    group_entries = defaultdict(list)
-    for e in entries:
-        grp = _classify_language(e.get("language"))
-        group_entries[grp].append(e)
-
-    for group_name in ["French", "English", "Others"]:
-        grp_ents = group_entries.get(group_name, [])
-        if not grp_ents:
-            continue
-
-        category = f"Languages \u00b7 {group_name}"
-
-        # Violin plots per task
-        if include_violin:
-            violin_map = defaultdict(list)
-            for e in (violin_entries if violin_entries is not None else grp_ents):
-                if e.get("task") and _classify_language(e.get("language")) == group_name:
-                    violin_map[e["task"]].append(e)
-            for task in sorted(violin_map.keys()):
-                plot_violin_charts(violin_map[task], category, collector)
-
-        # Summary table: Models × Tasks
-        _build_language_summary_table(grp_ents, group_name, category, collector,
-                                       table_aggregates=table_aggregates)
-
-
-def _build_language_summary_table(entries, lang_group, category, collector,
-                                   table_aggregates=None):
-    """Build a summary table for a language group: Models × Tasks with expandable datasets."""
-    # Group entries by task
-    task_entries_map = defaultdict(list)
-    for e in entries:
-        task = e.get("task")
-        if task:
-            task_entries_map[task].append(e)
-
-    if not task_entries_map:
-        return
-
-    tasks = sorted(task_entries_map.keys(), key=_lang_table_task_sort_key)
-    all_models = sorted({e["model_name"] for e in entries})
-    task_metric = {task: _task_metric(task, ents) for task, ents in task_entries_map.items()}
-
-    task_model_score = {}                                # task -> model -> mean score
-    task_ds_model = defaultdict(lambda: defaultdict(dict))  # task -> dataset -> model -> score
-    task_datasets = defaultdict(set)
-    for task in tasks:
-        metric = task_metric[task]
-        model_scores = {}
-        for m in all_models:
-            matching = [
-                e for e in task_entries_map[task]
-                if e["model_name"] == m and e["metric_name"] == metric
-            ]
-            if matching:
-                model_scores[m] = _mean_score(matching)
-            for e in matching:
-                ds_display = _dataset_display_name(e)
-                task_ds_model[task][ds_display][m] = e["score"]
-                task_datasets[task].add(ds_display)
-        task_model_score[task] = model_scores
-    task_datasets = {t: sorted(ds) for t, ds in task_datasets.items()}
-
-    columns = []
-    for task in tasks:
-        metric = task_metric[task]
-        ds_list = task_datasets.get(task, [])
-        parts = [(ds, task_ds_model[task][ds], metric) for ds in ds_list] if len(ds_list) >= 2 else []
-        header = _two_line_label(f"{task} ({_metric_label(metric)})")
-        cells = {m: _score_cell(v, metric, m, _breakdown(m, parts))
-                 for m, v in task_model_score[task].items()}
-        columns.append((task, header, cells, _sub_columns(parts)))
-
-    tbl_id = "lang-" + _slug(lang_group)
-    lines = [
-        f'<div style="font-size:15px;font-weight:600;color:#475569;margin:8px 0">'
-        f'{lang_group} — Models \u00d7 Tasks</div>'
-    ]
-    # Models without data in this group get no row
-    models = [m for m in all_models if any(m in task_model_score[t] for t in tasks)]
-    lines += _render_table(tbl_id, models, table_aggregates, columns)
-    lines.append(_agg_payload_html(
-        tbl_id, table_aggregates,
-        {t: {m: _display_score(v, task_metric[t]) for m, v in task_model_score[t].items()}
-         for t in tasks},
-        {t: _sort_ascending(task_metric[t]) for t in tasks},
-        {t: dict(task_model_score[t]) for t in tasks}))
-
-    collector.append({
-        "category": category,
-        "chart_type": "table",
-        "metric": "overview",
-        "raw_html": "\n".join(lines),
-    })
-
-
-# ---------------------------------------------------------------------------
 # HTML Report Builder
 # ---------------------------------------------------------------------------
 
@@ -1801,8 +1675,8 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
     """Assemble a single HTML report from collected Plotly figures.
 
     Figures are grouped by category, with violin plots shown before tables
-    within each group.  The sidebar is split into **Overview**, **Tasks**,
-    and **Languages** groups.
+    within each group.  The sidebar is split into **Overview** and **Tasks**
+    groups.
 
     Symbolic table cells are resolved into data-* attributes and the score
     graph is embedded for the dataset filter; *default_off_datasets* lists the
@@ -1814,12 +1688,10 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
         cat = item["category"]
         categories.setdefault(cat, []).append(item)
 
-    # --- Classify categories into overview, tasks, languages ---
+    # --- Classify categories into overview and tasks ---
     _TASKS_PREFIX = "Tasks \u00b7 "
-    _LANG_PREFIX = "Languages \u00b7 "
     overview_cats = []          # category_name
     tasks_cats = []             # (task_label, category_name)
-    lang_cats = []              # (lang_label, category_name)
 
     for cat in categories:
         if cat.startswith("Overview"):
@@ -1827,9 +1699,6 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
         elif cat.startswith(_TASKS_PREFIX):
             task = cat[len(_TASKS_PREFIX):]
             tasks_cats.append((task, cat))
-        elif cat.startswith(_LANG_PREFIX):
-            lang = cat[len(_LANG_PREFIX):]
-            lang_cats.append((lang, cat))
 
     # --- Build nav HTML ---
     nav_lines = []
@@ -1846,12 +1715,6 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
         for task, cat in tasks_cats:
             slug = _slug(cat)
             nav_lines.append(f'    <li><a href="#cat-{slug}">{task}</a></li>')
-
-    if lang_cats:
-        nav_lines.append('    <li class="nav-group">Languages</li>')
-        for lang, cat in lang_cats:
-            slug = _slug(cat)
-            nav_lines.append(f'    <li><a href="#cat-{slug}">{lang}</a></li>')
 
     # --- Build section HTML ---
     section_blocks = []
@@ -2046,11 +1909,6 @@ def main():
                                 category_override=cat_label,
                                 subtitle=subtitle,
                                 table_aggregates=args.table_aggregates)
-
-    # --- Step 3: Language sections (French, English, Others) ---
-    plot_language_sections(entries, collector, include_violin=args.violin,
-                           table_aggregates=args.table_aggregates,
-                           violin_entries=plot_entries)
 
     if not collector:
         print("No figures generated.")

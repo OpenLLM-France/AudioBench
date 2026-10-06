@@ -216,14 +216,16 @@ global:
           language: fr
           datasets:
             - name: MELD_Emotion
-              path: <DATA_FOLDER>/nemo/misc/fr/context/MELD/EmotionDS/test.jsonl
+              # 49 utterances per emotion (all >= 1s), same ids in EN and FR
+              path: <DATA_FOLDER>/nemo/misc/fr/context/MELD/EmotionDS/test_balanced.jsonl
 
         - group: emotion_recognition_en
           language: en
           datasets:
             - name: iemocap_emotion_test
             - name: MELD_Emotion
-              path: <DATA_FOLDER>/nemo/misc/en/context/MELD/EmotionDS/test.jsonl
+              # 49 utterances per emotion (all >= 1s), same ids in EN and FR
+              path: <DATA_FOLDER>/nemo/misc/en/context/MELD/EmotionDS/test_balanced.jsonl
 
     # Gender Recognition
     - group: gender_recognition

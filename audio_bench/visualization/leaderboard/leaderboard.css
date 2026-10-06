@@ -49,6 +49,7 @@ tr.xp-hidden { display: none !important; }
                        color: #64748b; cursor: pointer; font-size: 12px; padding: 0 2px; }
 .flt-tree .xp-rename:hover { color: #e2e8f0; }
 .flt-tree .xp-alias { color: #93c5fd; }
+.flt-tree li.flt-masked > label { opacity: .4; }
 td.mname { cursor: text; }
 .tbl-tools { display: flex; justify-content: flex-start; margin: 4px 0 -4px; }
 .tbl-tools button { font-size: 11px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;

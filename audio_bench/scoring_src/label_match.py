@@ -76,7 +76,7 @@ def _language(text):
 _EMO = [
     ("frustration", r"frustrat"),
     ("surprise", r"surpris|surprise|etonn|stupefa|ebaubi|abasourdi|ahuri"),
-    ("fear", r"\bfear|afraid|peur|craint|effray|apprehens|anxie|terrifi"),
+    ("fear", r"\bfear|afraid|peur|craint|effray|effroi|apprehens|anxie|terrifi"),
     ("disgust", r"disgust|degout|mepris|ecoeur|repuls|aversion"),
     ("anger", r"\banger|angry|coler|fache|furieu|agress|irrit|rage|enerv"),
     ("sad", r"\bsad\b|sadness|triste|tristesse|melancol|chagrin|deprim|abattu|morose"),

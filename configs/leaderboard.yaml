@@ -31,8 +31,8 @@ avg_excluded_task_langs:
 # Consortium models to show (model_name in the score files -> display name).
 # When non-empty, every other model named after the consortium is hidden.
 consortium_models:
-  LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829: "{consortium}/Canary_Luciole-1B"
-  LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803: "{consortium}/Canary_Qwen3-1.7B"
+  LINAGORA/Canary_Luciole-1B-SFT-1.1_v2: "{consortium}/Canary_Luciole-1B"
+  LINAGORA/Canary_Qwen3-1.7B_v1: "{consortium}/Canary_Qwen3-1.7B"
   OpenLLM-France/Luciole-8B-Audio-1.0: "{consortium}/Luciole-8B-Audio-1.0"
   OpenLLM-France/Luciole-1B-Audio-1.0: "{consortium}/Luciole-1B-Audio-1.0"
 

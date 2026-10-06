@@ -12,6 +12,13 @@
   var NL = String.fromCharCode(10);
   var dsOn = DATA.datasets.map(function () { return true; });
   DATA.off.forEach(function (i) { dsOn[i] = false; });
+  // Language mask, independent of the dataset selection: a dataset counts
+  // when it is checked and one of its languages ("FR-EN" -> FR, EN) is on.
+  var dsLangs = DATA.datasets.map(function (d) { return d[1].split('-'); });
+  var langOn = {};
+  dsLangs.forEach(function (ls) { ls.forEach(function (l) { langOn[l] = true; }); });
+  function langOk(i) { return dsLangs[i].some(function (l) { return langOn[l]; }); }
+  function active(i) { return dsOn[i] && langOk(i); }
 
   // --- Graph evaluation (memoized per refresh) ---
   var memo = new Array(NODES.length);
@@ -33,7 +40,7 @@
     if (memo[id] !== undefined) return memo[id];
     var n = NODES[id], v = null;
     if (n[0] === 'L') {
-      v = dsOn[n[1]] ? n[2] : null;
+      v = active(n[1]) ? n[2] : null;
     } else if (n[0] === 'M') {
       var xs = [];
       n[1].forEach(function (c) {
@@ -66,14 +73,14 @@
     if (n[0] === 'D') n = NODES[id = n[1]];
     var std, cnt;
     if (n[0] === 'L') {
-      if (!dsOn[n[1]] || n[4][3] === null || !n[4][0]) return null;
+      if (!active(n[1]) || n[4][3] === null || !n[4][0]) return null;
       std = n[4][3]; cnt = n[4][0];
     } else {
       var acc = { n: 0, s: 0, ss: 0 };
       (function gather(i) {
         var x = NODES[i];
         if (x[0] === 'L') {
-          if (dsOn[x[1]] && x[4][0]) { acc.n += x[4][0]; acc.s += x[4][1]; acc.ss += x[4][2]; }
+          if (active(x[1]) && x[4][0]) { acc.n += x[4][0]; acc.s += x[4][1]; acc.ss += x[4][2]; }
         } else if (x[0] === 'D') gather(x[1]);
         else x[1].forEach(gather);
       })(id);
@@ -348,6 +355,7 @@
   var toggleBtn = document.getElementById('ds-toggle-all');
   var resetBtn = document.getElementById('ds-reset');
   var leafBoxes = [];   // dataset idx -> checkbox
+  var leafItems = [];   // dataset idx -> <li> (dimmed when its languages are off)
   var groupBoxes = [];  // { cb, leaves: [idx] }
 
   // Task -> language -> dataset. Tasks with a single language skip the
@@ -394,6 +402,7 @@
     cb.type = 'checkbox';
     cb.addEventListener('change', function () { dsOn[i] = cb.checked; update(); });
     leafBoxes[i] = cb;
+    leafItems[i] = li;
     lab.appendChild(cb);
     lab.appendChild(document.createTextNode(label));
     li.appendChild(lab);
@@ -433,6 +442,7 @@
 
   function syncBoxes() {
     leafBoxes.forEach(function (cb, i) { if (cb) cb.checked = dsOn[i]; });
+    leafItems.forEach(function (li, i) { if (li) li.classList.toggle('flt-masked', !langOk(i)); });
     groupBoxes.forEach(function (g) {
       var n = g.leaves.filter(function (i) { return dsOn[i]; }).length;
       g.cb.checked = n === g.leaves.length;
@@ -459,5 +469,55 @@
     selectDefault(['ASR', 'AST', 'QA']);
   });
 
-  update();
+  // ===================================================================
+  // Language filter panel: one checkbox per language.
+  // ===================================================================
+  var langTreeEl = document.getElementById('lang-filter-tree');
+  var langToggleBtn = document.getElementById('lang-toggle-all');
+  var langs = Object.keys(langOn).sort(function (a, b) {
+    return langKey(a) < langKey(b) ? -1 : langKey(a) > langKey(b) ? 1 : 0;
+  });
+  var langBoxes = {};
+  var langUl = document.createElement('ul');
+  langs.forEach(function (l) {
+    var n = dsLangs.filter(function (ls) { return ls.indexOf(l) !== -1; }).length;
+    var li = document.createElement('li');
+    var lab = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.addEventListener('change', function () { langOn[l] = cb.checked; updateLangs(); });
+    langBoxes[l] = cb;
+    var count = document.createElement('span');
+    count.className = 'xp-count';
+    count.textContent = '(' + n + ')';
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(l));
+    lab.appendChild(count);
+    li.appendChild(lab);
+    langUl.appendChild(li);
+  });
+  langTreeEl.appendChild(langUl);
+
+  function allLangsOn() { return langs.every(function (l) { return langOn[l]; }); }
+
+  function updateLangs() {
+    langs.forEach(function (l) { langBoxes[l].checked = langOn[l]; });
+    langToggleBtn.textContent = allLangsOn() ? 'Tout décocher' : 'Tout cocher';
+    update();
+  }
+
+  function selectLangs(only) {
+    langs.forEach(function (l) { langOn[l] = !only || only.indexOf(l) !== -1; });
+    updateLangs();
+  }
+  langToggleBtn.addEventListener('click', function () {
+    var next = !allLangsOn();
+    langs.forEach(function (l) { langOn[l] = next; });
+    updateLangs();
+  });
+  document.getElementById('lang-fren').addEventListener('click', function () {
+    selectLangs(['FR', 'EN']);
+  });
+
+  updateLangs();
 })();
