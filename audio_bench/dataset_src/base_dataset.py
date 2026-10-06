@@ -209,12 +209,12 @@ class BaseDatasetProcessor:
 
     def _compute_wer(self, data_with_model_predictions):
         from audio_bench.scoring_src.metrics import compute_wer, get_predictions_and_references_lists
-        predictions, references = get_predictions_and_references_lists(data_with_model_predictions)
+        predictions, references = get_predictions_and_references_lists(data_with_model_predictions, self.language)
         return compute_wer(references, predictions)
 
     def _compute_bleu(self, data_with_model_predictions):
         from audio_bench.scoring_src.metrics import compute_bleu, get_predictions_and_references_lists
-        predictions, references = get_predictions_and_references_lists(data_with_model_predictions)
+        predictions, references = get_predictions_and_references_lists(data_with_model_predictions, self.language)
         return compute_bleu(references, predictions)
 
     def _compute_judge(self, data_with_model_predictions, metrics):

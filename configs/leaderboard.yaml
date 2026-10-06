@@ -33,6 +33,8 @@ avg_excluded_task_langs:
 consortium_models:
   LINAGORA/Canary_Luciole-1B-SFT-1.1_v3_buckets_s082829: "{consortium}/Canary_Luciole-1B"
   LINAGORA/Canary_Qwen3-1.7B_v2_buckets_s011803: "{consortium}/Canary_Qwen3-1.7B"
+  OpenLLM-France/Luciole-8B-Audio-1.0: "{consortium}/Luciole-8B-Audio-1.0"
+  OpenLLM-France/Luciole-1B-Audio-1.0: "{consortium}/Luciole-1B-Audio-1.0"
 
 # Models hidden from the report (regexes searched in the display name).
 # --show_all_models bypasses both this list and consortium_models.
@@ -59,6 +61,8 @@ model_sizes:
   - ['^{consortium}/Canary[-_]Qwen3[-_]1\.7B', 2.5B]
   - ['^{consortium}/Canary[-_]Qwen3[-_]4B', 4.8B]
   - ['^{consortium}/Canary_Luciole-1B', 2.1B]
+  - ['^{consortium}/Luciole-8B-Audio', 8.8B]
+  - ['^{consortium}/Luciole-1B-Audio', 1.9B]
   - ['^LINAGORA/luciole_v\d+_stage1_canary', 2.1B]
   - ['^LINAGORA/luciole_v\d+', 1.9B]
   - ['^LINAGORA/luciole8b_', 8.8B]
@@ -70,3 +74,6 @@ model_sizes:
   - ['^Qwen/Qwen2\.5-Omni-3B$', 5.9B]
   - ['^Qwen/Qwen3-Omni-30B-A3B-Instruct$', 35.3B]
   - ['^mistralai/Voxtral-Mini-3B-2507$', 4.68B]
+  - ['^mistralai/Voxtral-Small-24B-2507$', 24.3B]
+  - ['^google/gemma-4-E2B-it$', 5.1B]
+  - ['^ibm-granite/granite-speech-4\.1-2b$', 2.3B]

@@ -108,6 +108,15 @@ def load_model(model_id, model_path=None, gpu_memory_utilization=0.4, batch_size
                         else "mistralai/Voxtral-Mini-3B-2507")
         model = Voxtral(model_path=voxtral_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
 
+    elif model_id.startswith('gemma_4'):
+        from audio_bench.model_src.vllm.gemma_4 import Gemma4
+        gemma_path = "google/gemma-4-E4B-it" if "e4b" in model_id else "google/gemma-4-E2B-it"
+        model = Gemma4(model_path=gemma_path, gpu_memory_utilization=gpu_memory_utilization, device=device)
+
+    elif model_id.startswith('granite_speech'):
+        from audio_bench.model_src.vllm.granite_speech import GraniteSpeech
+        model = GraniteSpeech(gpu_memory_utilization=gpu_memory_utilization, device=device)
+
     elif model_id == 'kimi_audio_7b_instruct':
         from audio_bench.model_src.transformers.kimi_audio_7b_instruct import KimiAudio7BInstruct
         model = KimiAudio7BInstruct(model_path=model_path, device=device)
@@ -152,6 +161,9 @@ _MODEL_ID_TO_NAME = {
     "qwen3_omni_30b_instruct": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
     "voxtral_mini_3b_2507": "mistralai/Voxtral-Mini-3B-2507",
     "voxtral_small_24b_2507": "mistralai/Voxtral-Small-24B-2507",
+    "gemma_4_e2b_it": "google/gemma-4-E2B-it",
+    "gemma_4_e4b_it": "google/gemma-4-E4B-it",
+    "granite_speech_4_1_2b": "ibm-granite/granite-speech-4.1-2b",
 }
 
 # Prefix-based entries (checked when exact match fails)

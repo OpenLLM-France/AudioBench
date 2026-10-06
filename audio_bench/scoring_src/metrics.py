@@ -25,12 +25,12 @@ def build_metric_stats(all_scores, aggregate_score=None):
         "all_scores": [float(x) for x in all_scores],
     }
 
-def get_predictions_and_references_lists(data_with_model_predictions):
+def get_predictions_and_references_lists(data_with_model_predictions, language=None):
     predictions=[]
     references=[]
     for item in data_with_model_predictions:
-        model_prediction = preprocess_text_asr(item["model_prediction"])
-        answer           = preprocess_text_asr(item["reference"])
+        model_prediction = preprocess_text_asr(item["model_prediction"], language)
+        answer           = preprocess_text_asr(item["reference"], language)
 
         if len(model_prediction) == 0: model_prediction = "empty"
         if len(answer) == 0: answer = "empty"
@@ -153,12 +153,12 @@ def get_task_evaluation_context(task_type):
 
 
 def compute_bleu(references, predictions):
-    sacrebleu = evaluate.load("sacrebleu")
-    corpus_bleu = sacrebleu.compute(predictions=predictions, references=references, tokenize='flores101')['score']
+    # sacrebleu directly (same scores as evaluate's "sacrebleu" wrapper): going through
+    # evaluate.compute() once per sample costs ~0.1s each, i.e. ~30s per AST dataset.
+    from sacrebleu.metrics import BLEU
+    bleu = BLEU(tokenize='flores101')
+    corpus_bleu = bleu.corpus_score(predictions, [references]).score
 
-    per_sample_bleus = []
-    for p, r in zip(predictions, references):
-        s = sacrebleu.compute(predictions=[p], references=[r], tokenize='flores101')['score']
-        per_sample_bleus.append(s)
+    per_sample_bleus = [bleu.corpus_score([p], [[r]]).score for p, r in zip(predictions, references)]
 
     return {"bleu": build_metric_stats(per_sample_bleus, corpus_bleu)}

@@ -91,7 +91,53 @@ def remove_non_speech_elements(text):
 def remove_parentheses(text):
     return re.sub(r'(\[|\(|\{|\<)[^\(\)\\n\[\]]*(\]|\)|\}|\>)', "", text)
 
-def preprocess_text_asr(text):
+# Non-English number normalization. The English pipeline below already standardizes English
+# numbers, but on other languages it turns digits into English words ("12" -> "twelve"), so a
+# French "douze" never matches a "12". Spell digits out in the dataset language first instead.
+_DECIMAL_WORDS = {
+    "fr": "virgule", "de": "komma", "es": "coma", "it": "virgola", "pt": "vírgula",
+    "nl": "komma", "ar": "فاصلة",
+}
+# Thousands groups: "10 000" (fr, with plain / non-breaking / narrow spaces) or "10.000".
+_THOUSANDS_RE = re.compile(r"\b\d{1,3}(?:[ .  ]\d{3})+\b")
+_NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)?")
+
+
+def spell_out_numbers(text, language):
+    """Write the digits of `text` as words in `language` ("FR", or the target of "FR-EN").
+
+    English and unknown languages are returned unchanged.
+    """
+    lang = (language or "").lower().split("-")[-1]
+    if lang not in _DECIMAL_WORDS:
+        return text
+    from num2words import num2words
+
+    def spell_int(digits):
+        return num2words(int(digits), lang=lang)
+
+    def repl(m):
+        parts = re.split(r"[.,]", m.group(), maxsplit=1)
+        try:
+            words = spell_int(parts[0])
+            if len(parts) == 2:
+                # Keep leading zeros of the decimals: "0,05" -> "zéro virgule zéro cinq".
+                decimals = parts[1]
+                zeros = len(decimals) - len(decimals.lstrip("0"))
+                tail = [spell_int("0")] * zeros + ([spell_int(decimals)] if decimals.lstrip("0") else [])
+                words = " ".join([words, _DECIMAL_WORDS[lang]] + tail)
+        except (ValueError, NotImplementedError, OverflowError):
+            return m.group()
+        return f" {words} "
+
+    text = _THOUSANDS_RE.sub(lambda m: re.sub(r"\D", "", m.group()), text)
+    return re.sub(r"\s+", " ", _NUMBER_RE.sub(repl, text)).strip()
+
+
+def preprocess_text_asr(text, language=None):
+
+    # Spell non-English numbers out in their own language (see spell_out_numbers)
+    text = spell_out_numbers(text, language)
 
     # All Adapt to Lower Case
     text = text.lower()
