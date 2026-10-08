@@ -1,0 +1,531 @@
+{
+  "model_name": "OpenLLM-France/Luciole-8B-Audio-1.0",
+  "model_id": "luciole_8b_audio_1_0",
+  "dataset_name": "MELD_Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 342,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "FR",
+  "label_match": {
+    "score": 28.799999999999997,
+    "std": 0.45283109433871693,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    "n_skipped_no_ref_label": 0,
+    "macro_f1": 28.72361732527295,
+    "macro_recall": 28.93605428246442,
+    "majority_baseline": 17.2,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 7,
+    "excluded_rare_classes": [],
+    "per_class": {
+      "disgust": {
+        "n": 43,
+        "precision": 34.61538461538461,
+        "recall": 20.930232558139537,
+        "f1": 26.08695652173913
+      },
+      "neutral": {
+        "n": 37,
+        "precision": 31.57894736842105,
+        "recall": 32.432432432432435,
+        "f1": 32.0
+      },
+      "fear": {
+        "n": 36,
+        "precision": 35.483870967741936,
+        "recall": 30.555555555555557,
+        "f1": 32.83582089552239
+      },
+      "happy": {
+        "n": 36,
+        "precision": 29.166666666666668,
+        "recall": 38.88888888888889,
+        "f1": 33.33333333333333
+      },
+      "anger": {
+        "n": 34,
+        "precision": 21.428571428571427,
+        "recall": 26.47058823529412,
+        "f1": 23.68421052631579
+      },
+      "surprise": {
+        "n": 33,
+        "precision": 25.806451612903224,
+        "recall": 24.242424242424242,
+        "f1": 25.0
+      },
+      "sad": {
+        "n": 31,
+        "precision": 27.27272727272727,
+        "recall": 29.03225806451613,
+        "f1": 28.125
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "L'étiquette est : peur.",
+      "model_prediction": "L'étiquette est : peur.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "fear"
+      ],
+      "pred_label": "fear",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'émotion identifiée est la surprise.",
+      "model_prediction": "La joie est détectée dans la voix.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le sentiment est craintif.",
+      "model_prediction": "Tristesse.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "L'interlocuteur semble triste.",
+      "model_prediction": "Le locuteur paraît dégoûté.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "disgust"
+      ],
+      "pred_label": "disgust",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le locuteur exprime de la surprise.",
+      "model_prediction": "La colère constitue la prédominance.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le locuteur laisse paraître de la colère.",
+      "model_prediction": "Le locuteur exprime de la colère.",
+      "ref_label": "anger",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'étiquette est : neutre.",
+      "model_prediction": "Le ton est joyeux.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "L'orateur exprime de l'aversion.",
+      "model_prediction": "La personne qui parle semble ressentir de la joie.",
+      "ref_label": "disgust",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le locuteur exprime de la joie.",
+      "model_prediction": "Le locuteur exprime de la joie.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'orateur exprime de l'allégresse.",
+      "model_prediction": "Surprise.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "L'étiquette est : joie.",
+      "model_prediction": "L'étiquette est : joie.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Le profil est surpris.",
+      "model_prediction": "Le ton exprime le dégoût.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "disgust"
+      ],
+      "pred_label": "disgust",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le locuteur exprime de la surprise.",
+      "model_prediction": "La surprise prédomine.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'état semble ébaubi.",
+      "model_prediction": "Le locuteur semble neutre.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le message est empreint de surprise.",
+      "model_prediction": "Le message est empreint de peur.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "fear"
+      ],
+      "pred_label": "fear",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le timbre paraît effrayé.",
+      "model_prediction": "Le timbre paraît dégoûté.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "disgust"
+      ],
+      "pred_label": "disgust",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le message est empreint de surprise.",
+      "model_prediction": "Le message est neutre.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le locuteur affiche de la peur.",
+      "model_prediction": "La peur prédomine.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "fear"
+      ],
+      "pred_label": "fear",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Il instaure une atmosphère joyeuse.",
+      "model_prediction": "L'atmosphère est joyeuse.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Le profil est peureux.",
+      "model_prediction": "Le locuteur semble dégoûté.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "disgust"
+      ],
+      "pred_label": "disgust",
+      "rate_score": 0.0
+    }
+  ]
+}

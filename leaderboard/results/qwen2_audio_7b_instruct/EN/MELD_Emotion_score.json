@@ -1,0 +1,531 @@
+{
+  "model_name": "Qwen/Qwen2-Audio-7B-Instruct",
+  "model_id": "qwen2_audio_7b_instruct",
+  "dataset_name": "MELD_Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 342,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "EN",
+  "label_match": {
+    "score": 33.2,
+    "std": 0.47093099282166595,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    "n_skipped_no_ref_label": 0,
+    "macro_f1": 32.69546311308206,
+    "macro_recall": 33.417529256194804,
+    "majority_baseline": 17.2,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 7,
+    "excluded_rare_classes": [],
+    "per_class": {
+      "disgust": {
+        "n": 43,
+        "precision": 83.33333333333334,
+        "recall": 11.627906976744185,
+        "f1": 20.408163265306122
+      },
+      "neutral": {
+        "n": 37,
+        "precision": 21.296296296296298,
+        "recall": 62.16216216216216,
+        "f1": 31.72413793103448
+      },
+      "fear": {
+        "n": 36,
+        "precision": 42.5,
+        "recall": 47.22222222222222,
+        "f1": 44.73684210526316
+      },
+      "happy": {
+        "n": 36,
+        "precision": 60.0,
+        "recall": 25.0,
+        "f1": 35.294117647058826
+      },
+      "anger": {
+        "n": 34,
+        "precision": 28.30188679245283,
+        "recall": 44.11764705882353,
+        "f1": 34.48275862068966
+      },
+      "surprise": {
+        "n": 33,
+        "precision": 58.333333333333336,
+        "recall": 21.21212121212121,
+        "f1": 31.11111111111111
+      },
+      "sad": {
+        "n": 31,
+        "precision": 50.0,
+        "recall": 22.58064516129032,
+        "f1": 31.11111111111111
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The speaker sounds angry.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "The speaker sounds surprised.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "It evokes fear.",
+      "model_prediction": "Sadness",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The sentiment is sad.",
+      "model_prediction": "Angry",
+      "ref_label": "sad",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker sounds surprised.",
+      "model_prediction": "The speaker exhibits a neutral emotion.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker sounds angry.",
+      "model_prediction": "Sadness",
+      "ref_label": "anger",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It creates a neutral atmosphere.",
+      "model_prediction": "The speech creates a neutral emotional atmosphere.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "It sounds disgusted.",
+      "model_prediction": "Neutral",
+      "ref_label": "disgust",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "Neutral",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "The speaker conveys a neutral emotion.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The overall tone is happy.",
+      "model_prediction": "The prevailing emotional tone is neutral.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The label is surprised.",
+      "model_prediction": "Surprise",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The overall tone is surprised.",
+      "model_prediction": "The prevailing emotional tone is joy.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "A surprised feeling comes through.",
+      "model_prediction": "The sentiment expressed in the speech is one of surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The undertone is surprised.",
+      "model_prediction": "The speech conveys a sense of surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker is fearful.",
+      "model_prediction": "The speaker is surprised.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "Neutral",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The label is fearful.",
+      "model_prediction": "Fearful",
+      "ref_label": "fear",
+      "pred_labels": [
+        "fear"
+      ],
+      "pred_label": "fear",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "It evokes happiness.",
+      "model_prediction": "Angry",
+      "ref_label": "happy",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "neutral",
+      "ref_label": "fear",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    }
+  ]
+}

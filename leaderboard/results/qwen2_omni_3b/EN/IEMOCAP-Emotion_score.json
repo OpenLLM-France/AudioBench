@@ -1,0 +1,543 @@
+{
+  "model_name": "Qwen/Qwen2.5-Omni-3B",
+  "model_id": "qwen2_omni_3b",
+  "dataset_name": "IEMOCAP-Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 1004,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "EN",
+  "label_match": {
+    "score": 28.11244979919679,
+    "std": 0.44954812269737254,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "n_skipped_no_ref_label": 1,
+    "macro_f1": 25.257966258316543,
+    "macro_recall": 25.049278207172947,
+    "majority_baseline": 26.506024096385545,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 6,
+    "excluded_rare_classes": [
+      {
+        "label": "fear",
+        "n": 3
+      }
+    ],
+    "per_class": {
+      "frustration": {
+        "n": 66,
+        "precision": 42.64705882352941,
+        "recall": 43.93939393939394,
+        "f1": 43.28358208955223
+      },
+      "neutral": {
+        "n": 52,
+        "precision": 21.27659574468085,
+        "recall": 38.46153846153847,
+        "f1": 27.397260273972602
+      },
+      "excited": {
+        "n": 38,
+        "precision": 21.428571428571427,
+        "recall": 7.894736842105263,
+        "f1": 11.538461538461538
+      },
+      "anger": {
+        "n": 35,
+        "precision": 60.86956521739131,
+        "recall": 40.0,
+        "f1": 48.27586206896552
+      },
+      "sad": {
+        "n": 35,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "happy": {
+        "n": 20,
+        "precision": 22.22222222222222,
+        "recall": 20.0,
+        "f1": 21.05263157894737
+      },
+      "fear": {
+        "n": 3,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is happiness.",
+      "model_prediction": "Neutral. Well, that's just based on the short phrase \"Thank you.\" If you have more context or another speech to analyze, feel free to share.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+      "model_prediction": "The speaker's speech reflects a neutral emotional state. There's no indication of frustration, anger, excitement, happiness, surprise, or sadness in this short phrase. So, the answer is \\boxed{neutral}. If you have more examples of speech to analyze, feel free to share.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "neutral",
+        "frustration",
+        "anger",
+        "excited",
+        "happy",
+        "surprise",
+        "sad"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker's emotion seems sad.",
+      "model_prediction": "The emotion in the speaker's speech is frustration. So, it's \\boxed{frustration}. If you have any other speech samples you want me to analyze, feel free to share.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's emotion seems anger.",
+      "model_prediction": "\\boxed{Anger} This is a clear sign of anger. The speaker is expressing frustration and anger with the situation. If you have any other speech samples you want to analyze, feel free to share.",
+      "ref_label": "anger",
+      "pred_labels": [
+        "anger",
+        "frustration"
+      ],
+      "pred_label": "anger",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a excited state.",
+      "model_prediction": "The speaker's speech reflects a sense of surprise. The speaker is surprised by the sudden and unexpected behavior of the silverfish, which they didn't expect to be swimming in that direction or for that reason. So, the answer is \\boxed{surprise}. If you have any other thoughts or questions about this, feel free to let me know.",
+      "ref_label": "excited",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the speaker's speech patterns, it seems like they are feeling other.",
+      "model_prediction": "I'm not sure what you mean by \"and very much sillier.\" It doesn't seem to convey any of the emotions you listed. But if you could provide more context or a different part of the speech, I might be able to detect the emotion better. So, what else can you tell me about this speech?",
+      "ref_label": null,
+      "pred_labels": [],
+      "pred_label": null,
+      "rate_score": null
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a happiness state.",
+      "model_prediction": "Neutral. The speaker seems to be describing a view and expressing a positive opinion about it. So, it's neutral. If you have any other audio to analyze, feel free to share.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's tone sounds excited.",
+      "model_prediction": "Well, from what you've said, it seems like the speaker is excited. You know, when someone is excited, they might say things like \"Wait a minute\" and then \"I've got it\" in a sort of eager, energetic way. It's like they've found something they were looking for and they're really happy about it. So, I'd put it in the format like this:. \\boxed{excited}If you have any other examples or different situations, feel free to share and we can talk more about it.",
+      "ref_label": "excited",
+      "pred_labels": [
+        "excited",
+        "happy"
+      ],
+      "pred_label": "excited",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+      "model_prediction": "Well, if the speaker is frustrated, you might hear a lot of sighs, grumbles, or a tone that sounds like they're saying \"why me?\" or \"this is so unfair.\" Anger could be shown through raised voices, shouting, or a lot of back - and - forth in the conversation. Excitement would be indicated by fast - paced speech, lots of hand gestures, and a high - pitched voice. Neutral would be when the speaker just says things in a calm, even - paced way. Happiness would show up in a bright, upbeat tone, and surprise could be heard in a sudden, startled voice. Sadness would be in a low - pitched, slow - paced speech.If you've got a specific speech you want to analyze, you can tell me more about it.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "frustration",
+        "anger",
+        "excited",
+        "neutral",
+        "happy",
+        "surprise",
+        "sad"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a sad state.",
+      "model_prediction": "Well, from that speech, it seems like the speaker is feeling frustrated. You can tell because of the repeated use of \"really\" to emphasize their frustration. So, the answer would be \\boxed{frustration}.If you have any other speech samples or want to discuss this further, feel free to let me know.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone of the speaker's voice suggests that the speaker may be feeling frustration.",
+      "model_prediction": "\\boxed{Frustration} This shows a sense of being stuck or not being able to do something, which often comes with frustration. What do you think about this? Do you have any other examples of speech to analyze?",
+      "ref_label": "frustration",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Based on the auditory cues, it sounds like the speaker is neutral state.",
+      "model_prediction": "Well, without actually hearing the speech, it's really hard to say for sure. But if you can describe the speech in more detail, like the tone of voice, the choice of words, or any body language that might be associated with it, that would be really helpful. So, go ahead and give me some more information about the speech.",
+      "ref_label": "neutral",
+      "pred_labels": [],
+      "pred_label": null,
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's speech suggesting they might be feeling sad.",
+      "model_prediction": "Well, if the speaker says \"I'm cold, \" it's probably a neutral emotion. There's no strong positive or negative feeling there. So, I'd say \\boxed{neutral}. What do you think? Do you have any other examples?",
+      "ref_label": "sad",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's tone sounds neutral state.",
+      "model_prediction": "Well, from what you've said, it sounds like the speaker is feeling frustrated. So, the answer would be \\boxed{frustration}. If you have more of the speech or any other details, feel free to share and we can figure it out together.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the auditory cues, it sounds like the speaker is fear.",
+      "model_prediction": "Well, from that short phrase, it seems like the speaker is feeling frustrated. You know, when someone says they need to sit down, it often means they're tired or annoyed. So, I'd put it in the box as \\boxed{frustration}. What do you think? Do you have any other phrases you want to analyze?",
+      "ref_label": "fear",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's emotion seems frustration.",
+      "model_prediction": "The emotional tone of the speaker's speech is frustration. So, it's \\boxed{frustration}. If you have any other thoughts or questions about this, feel free to let me know.",
+      "ref_label": "frustration",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+      "model_prediction": "I can't really detect any specific emotions from just this short audio clip. It's just a statement about finding luggage. But if you have more of the audio, that might help. So, what do you think?",
+      "ref_label": "neutral",
+      "pred_labels": [],
+      "pred_label": null,
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is sad.",
+      "model_prediction": "Neutral. The speaker is just recounting a past event without showing any particular emotion. If you have more speech samples to analyze, feel free to share.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the speaker's speech patterns, it seems like they are feeling neutral state.",
+      "model_prediction": "I think the speaker is neutral. They're just stating a fact without any strong emotion. So, it's \\boxed{neutral}. What do you think?",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is happiness.",
+      "model_prediction": "The emotional tone of the speaker's speech is neutral. So, the answer is \\boxed{neutral}. If you have any other thoughts or questions about this, feel free to let me know.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    }
+  ]
+}

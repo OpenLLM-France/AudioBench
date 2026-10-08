@@ -4,6 +4,7 @@ fire
 evaluate
 datasets<4
 jiwer<4
+num2words
 more_itertools
 peft
 torchaudio

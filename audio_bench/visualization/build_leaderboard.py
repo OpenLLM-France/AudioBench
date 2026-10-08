@@ -11,6 +11,7 @@ Usage examples:
     python -m audio_bench.visualization.build_leaderboard results/
     python -m audio_bench.visualization.build_leaderboard results/ --violin
     python -m audio_bench.visualization.build_leaderboard results/ --output_folder my_plots/
+    python -m audio_bench.visualization.build_leaderboard leaderboard/results/ --output_folder leaderboard/
 """
 
 import argparse
@@ -31,8 +32,8 @@ import yaml
 # ---------------------------------------------------------------------------
 
 # What the report shows (datasets, models, display names and sizes) is set in
-# configs/leaderboard.yaml.
-_LEADERBOARD_CONFIG = Path(__file__).resolve().parents[2] / "configs" / "leaderboard.yaml"
+# leaderboard/config.yaml (override with --config).
+_LEADERBOARD_CONFIG = Path(__file__).resolve().parents[2] / "leaderboard" / "config.yaml"
 
 
 def _load_leaderboard_config(path):
@@ -60,16 +61,23 @@ def _load_leaderboard_config(path):
     }
 
 
-_CFG = _load_leaderboard_config(_LEADERBOARD_CONFIG)
+def use_leaderboard_config(path):
+    """(Re)load the leaderboard config into the module-level settings below."""
+    global _IGNORED_DATASETS, _AVG_EXCLUDED_TASK_LANGS, CONSORTIUM_NAME, \
+        ONLY_SHOW_CONSORTIUM_MODELS, _IGNORED_MODEL_PATTERNS, _MODEL_NAME_CORRECTIONS, \
+        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES
+    cfg = _load_leaderboard_config(path)
+    _IGNORED_DATASETS = cfg["ignored_datasets"]
+    _AVG_EXCLUDED_TASK_LANGS = cfg["avg_excluded_task_langs"]
+    CONSORTIUM_NAME = cfg["consortium_name"]
+    ONLY_SHOW_CONSORTIUM_MODELS = cfg["consortium_models"]
+    _IGNORED_MODEL_PATTERNS = cfg["ignored_model_patterns"]
+    _MODEL_NAME_CORRECTIONS = cfg["model_renames"] | ONLY_SHOW_CONSORTIUM_MODELS
+    _MODEL_SIZE_OVERRIDES = cfg["model_sizes"]
+    _ORGANIZATION_RENAMES = cfg["organization_renames"]
 
-_IGNORED_DATASETS = _CFG["ignored_datasets"]
-_AVG_EXCLUDED_TASK_LANGS = _CFG["avg_excluded_task_langs"]
-CONSORTIUM_NAME = _CFG["consortium_name"]
-ONLY_SHOW_CONSORTIUM_MODELS = _CFG["consortium_models"]
-_IGNORED_MODEL_PATTERNS = _CFG["ignored_model_patterns"]
-_MODEL_NAME_CORRECTIONS = _CFG["model_renames"] | ONLY_SHOW_CONSORTIUM_MODELS
-_MODEL_SIZE_OVERRIDES = _CFG["model_sizes"]
-_ORGANIZATION_RENAMES = _CFG["organization_renames"]
+
+use_leaderboard_config(_LEADERBOARD_CONFIG)
 
 
 def _excluded_from_task_avg(entry):
@@ -1808,6 +1816,8 @@ def main():
     )
     parser.add_argument("input_folder", help="Path to results folder (e.g. results/)")
     parser.add_argument("--output_folder", type=str, default="plots/", help="Where to save report")
+    parser.add_argument("--config", type=str, default=str(_LEADERBOARD_CONFIG),
+                        help="Leaderboard config (datasets, models, names, sizes)")
     parser.add_argument("--violin", action="store_true", help="Include violin plots in the report")
     parser.add_argument(
         "--show-all", "--show_all", dest="show_all", action="store_true",
@@ -1838,6 +1848,7 @@ def main():
         help="Aggregate measure(s) for the size-vs-performance figure(s)",
     )
     args = parser.parse_args()
+    use_leaderboard_config(args.config)
 
     # --show-all is a shorthand that enables both granular flags.
     show_all_models = args.show_all or args.show_all_models

@@ -1,0 +1,221 @@
+{
+    "model_name": "google/gemma-4-E2B-it",
+    "model_id": "gemma_4_e2b_it",
+    "dataset_name": "CohereLabs-Aya_collection",
+    "metrics": [
+        "flow_judge"
+    ],
+    "number_of_samples": 31,
+    "dataset_size": 31,
+    "task": "QUESTION ANSWERING",
+    "sub_task": "QA",
+    "language": "FR",
+    "flow_judge": {
+        "score": 36.12903225806451,
+        "std": 1.0601081758164506,
+        "quartiles": {
+            "min": 1.0,
+            "q1": 1.0,
+            "median": 1.0,
+            "q3": 2.0,
+            "max": 4.0
+        },
+        "n_errors": 0,
+        "all_scores": [
+            4.0,
+            4.0,
+            2.0,
+            2.0,
+            1.0,
+            1.0,
+            2.0,
+            2.0,
+            1.0,
+            1.0,
+            4.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            2.0,
+            1.0,
+            1.0,
+            4.0,
+            3.0,
+            2.0,
+            1.0,
+            1.0,
+            3.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            3.0,
+            2.0
+        ],
+        "success_rate": 1.0
+    },
+    "details": [
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "L'exploration spatiale à long terme, y compris la colonisation de la Lune et de Mars, fait face à des défis tels que la protection contre les radiations, la fourniture de ressources essentielles, et la santé des astronautes. Cependant, elle offre des opportunités de découvertes scientifiques, d'expansion humaine dans l'espace, et de développement technologique. Certains pensent que la colonisation de Mars et de la Lune est l’expression de la pensée coloniale occidentale et qu’elle devrait être immédiatement interrompue.",
+            "model_prediction": "Voici les défis et les opportunités de l'exploration spatiale à long terme, notamment la colonisation de la Lune et de Mars :\n\n**Défis :**\n\n* **Technologiques :** Développer des systèmes de support de vie autonomes, des technologies de propulsion avancées, des systèmes de protection contre les radiations et des technologies de communication fiables.\n* **Santé humaine :** Gérer les effets de la microgravité sur le corps humain, les risques liés aux radiations spatiales et les défis psychologiques de l'isolement.\n* **Financiers :** L'exploration spatiale à long terme est extrêmement coûteuse et nécessite des investissements massifs.\n* **Environnementaux :** Minimiser l'impact environnemental des missions spatiales et gérer les ressources sur place.\n* **Politiques et Légaux :** Établir des cadres juridiques pour l'exploitation des ressources spatiales et la gouvernance des colonies extraterrestres.\n\n**Opportunités :**\n\n* **Ressources :** Accéder à des ressources inestimables sur la Lune et Mars (eau glacée, minéraux, etc.) pour l'exploitation minière et la production d'énergie.\n* **Science :** Avancer notre compréhension de l'univers, de l'origine de la vie et de l'évolution planétaire.\n* **Innovation technologique :** Les défis de l'exploration spatiale stimulent l'innovation dans de nombreux domaines, bénéficiant à la société sur Terre.\n* **Sécurité de l'humanité :** Établir des bases hors de la Terre peut servir de plan de secours en cas de catastrophe planétaire.\n* **Expansion de l'humanité :** La colonisation de nouvelles planètes représente une nouvelle étape pour l'évolution de l'espèce humaine.\n\nEn résumé, l'exploration spatiale à long terme est un voyage complexe, rempli de défis techniques et financiers, mais offrant des opportunités extraordinaires pour l'humanité.",
+            "judge_response": "The system's response provides a comprehensive and detailed answer to the query about the challenges and opportunities of long-term space exploration, including lunar and Martian colonization. It covers a wide range of relevant topics such as technological, health, financial, environmental, and policy challenges, as well as opportunities in terms of resources, scientific advancement, technological innovation, human security, and human expansion.\n\nThe response aligns well with the reference answer in terms of content and structure, addressing both the challenges and opportunities mentioned in the reference. However, it provides more specific details and examples, which enhances the completeness and depth of the answer.\n\nWhile the response is accurate and thorough, it does not perfectly match the reference answer in terms of wording and phrasing. The system's response is more detailed and expansive, which is beneficial for comprehensively answering the query.\n\nOverall, the response is nearly complete and accurate, with only minor differences in phrasing and additional details that enhance the answer.",
+            "rate_score": 4,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Ndakaru mòy péeyu senegaal",
+            "model_prediction": "Fan moy peu Senegal.",
+            "judge_response": "The system's response, \"Fan moy peu Senegal,\" is a phonetic approximation of the reference answer \"Ndakaru mòy péeyu senegaal.\" This indicates that the system has captured the main components of the query and provided a relevant answer. However, there are some differences in pronunciation and spelling that prevent it from being a perfect match. The response is accurate and relevant to the query, but it does not perfectly match the reference answer in terms of spelling and phonetic representation. Therefore, it is not a perfect match but is reasonably accurate and relevant.\n\nGiven the evaluation criteria and scoring rubric, the response falls into the category of being accurate and relevant but with minor differences. This aligns with a score of 4, as it is nearly complete and only leaves out non-essential details compared to the reference.",
+            "rate_score": 4,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Actuellement, les devoirs représentent une méthode pédagogique attribuée par les enseignants dans le but d'assister les élèves. Mais sont-ils véritablement bénéfiques ? À mon avis, oui, les devoirs sont bénéfiques pour les élèves car ils favorisent l'approfondissement des connaissances, la pratique et la révision du contenu. De plus, les devoirs offrent à l'enseignant la possibilité d'évaluer la compréhension des élèves vis-à-vis du sujet.",
+            "model_prediction": "Voici la transcription de l'audio : \"A key introduction to a text of opinion on the importance of homework.\"",
+            "judge_response": "The system's response provides a transcription of the audio content, which is relevant to the query. However, it does not answer the question directly. The reference answer explains the benefits of homework, which is the core of the question. The system's response, while accurate in transcription, fails to address the question about the benefits of homework. Therefore, it is incomplete in answering the query.\n\nThe system's response is accurate in transcription but does not provide the requested explanation or answer to the question. It is missing key details about the benefits of homework, which is the main focus of the query.\n\nBased on the evaluation criteria and scoring rubric, the response is accurate but incomplete in answering the query. Therefore, it fits the description for a score of 2.",
+            "rate_score": 2,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Absolument, voici quelques idées innovantes pour aider les personnes ayant un handicap physique à lutter contre l’isolement et à s’aventurer dehors tout en se sentant mieux :\n\n1. **Expérience de voyage en réalité virtuelle :**\n    Offrez-leur la technologie de réalité virtuelle (VR) qui leur permet de « voyager » vers diverses destinations et de découvrir de nouveaux endroits dans le confort de leur foyer.\n\n2. **Événements Meetup en plein air accessibles :**\n    Organisez des événements en plein air dans des lieux accessibles où les personnes handicapées peuvent se rencontrer, socialiser et profiter de la compagnie des autres.\n\n3. **Sports et activités adaptés :**\n    Collaborer avec des organisations locales pour proposer des activités sportives et récréatives adaptées, facilitant ainsi la participation des personnes handicapées.\n\n4. **Kits de jardin domestique :**\n    Proposer des kits de jardinage adaptés à leurs capacités physiques, leur permettant de créer un petit jardin à l'intérieur ou sur un balcon, favorisant un sentiment d'accomplissement et de connexion avec la nature.\n\n5. **Ateliers d'art et d'artisanat à distance :**\n    Organisez des ateliers en ligne où les participants peuvent s'engager dans des projets d'art, d'artisanat ou de bricolage, encourageant la créativité et l'interaction avec les autres.\n\n6. **Ateliers de narration et de podcasting :**\n    Proposez-leur des ateliers pour les aider à créer leurs propres histoires, podcasts ou vidéos, leur permettant ainsi de partager leurs expériences et de se connecter avec un public plus large.\n\n7. **Pôle de technologie d'assistance :**\n    Créez un centre technologique où les individus peuvent accéder à des appareils et accessoires fonctionnels, apprendre à utiliser de nouveaux outils technologiques et se connecter avec d'autres personnes partageant les mêmes intérêts.\n\n8. **Pique-niques adaptés aux fauteuils roulants :**\n    Organisez des pique-niques dans des parcs accessibles dotés de sièges spécialisés, ce qui leur permet de socialiser facilement et de profiter d’activités de plein air.\n\n9. **Rencontres thérapeutiques avec des animaux :**\n    Collaborez avec des organisations d’animaux de thérapie pour proposer des interactions virtuelles ou en personne avec des animaux de thérapie, favorisant ainsi le bien-être émotionnel.\n\n10. **Services de bibliothèque mobile :**\n     Créez un service de bibliothèque mobile qui apporte des livres, des livres audio et du contenu interactif directement chez eux, favorisant ainsi l'amour de l'apprentissage et de l'exploration.\n\n11. **Groupes et ateliers de soutien en ligne :**\n     Proposez des groupes de soutien virtuels et des ateliers axés sur des intérêts communs, leur permettant de se connecter avec des pairs qui comprennent leurs expériences.\n\n12. **Installations d'art local et peintures murales :**\n     Collaborer avec des artistes pour créer des installations artistiques ou des peintures murales accessibles dans les espaces publics, encourageant ainsi l'engagement et l'appréciation de la communauté.\n\nN'oubliez pas que l'inclusivité, la créativité et l'empathie sont essentielles lors de la conception de ces initiatives. Les besoins et les préférences de chaque individu doivent être pris en considération pour garantir son confort et son plaisir.",
+            "model_prediction": "Voici les options :\n1. Utiliser un robot d'assistance pour les tâches ménagères.\n2. Développer des technologies d'assistance pour la mobilité.\n3. Créer des plateformes de connexion sociale en ligne.\n4. Mettre en place des programmes de soutien communautaire.",
+            "judge_response": "The system's response provides a list of four options, but it falls short in several key areas when compared to the reference answer. \n\n1. **Accuracy and Completeness**: The response lacks the depth and breadth of the reference answer. The reference answer provides 12 detailed suggestions, each with a brief explanation, while the system's response only offers four general options. This means the system's response is missing a significant amount of information that would be necessary to comprehensively answer the query.\n\n2. **Relevance and Specificity**: The options provided in the system's response are quite generic and do not specifically address the needs of people with physical disabilities. For example, \"Utilizing a robot for assistance with household tasks\" and \"Developing technologies for mobility\" are relevant but lack the specificity and creativity of the reference answer. The reference answer includes specific ideas like \"Expérience de voyage en réalité virtuelle\" and \"Ateliers de narration et de podcasting,\" which are much more detailed and tailored to the query.\n\n3. **Detail and Examples**: The reference answer provides specific examples and explanations for each suggestion, which helps to convey the practicality and benefits of the ideas. The system's response does not provide this level of detail or explanation, making it less informative and helpful.\n\nOverall, while the system's response does contain some relevant information, it is substantially incomplete and lacks the depth and specificity of the reference answer. Therefore, it aligns more closely with a score of 2 on the rubric.",
+            "rate_score": 2,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "D'accord, voici une blague :\n\nQuestion: Comment appelle-t-on un chien magique ?\n\nRéponse:  Un labracadabrador.",
+            "model_prediction": "Je suis désolé, mais je n'ai pas accès à l'audio que vous mentionnez. Pour que je puisse vous aider, pourriez-vous me fournir l'audio ou le texte ?",
+            "judge_response": "The system's response does not address the query at all. The query asked for an answer to a joke about a magical dog, specifically \"How do you call a magical dog?\" The reference answer provided a humorous response, \"Un labracadabrador,\" which is a play on words combining \"Labrador\" and \"abracadabra.\"\n\nThe system's response, however, acknowledges that it does not have access to the audio content and asks for the audio or text to be provided. This response is entirely irrelevant to the query and does not provide any information about magical dogs or the joke in question. It fails to address the main part of the query and does not attempt to answer or even acknowledge the joke.\n\nGiven that the response does not contain any relevant information about the query and does not attempt to answer the question, it is completely incorrect and irrelevant. There is no overlap in information with the reference answer, and the response fails to address any aspect of the query.\n\nTherefore, based on the evaluation criteria and scoring rubric, the response deserves the lowest score.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "1. Quel a été ton pire mauvais coup?\n2. Comment te décris-tu en couple?\n3. Une bonne action dont tu es fier?\n\n\n",
+            "model_prediction": "Je n'ai pas accès à l'audio que vous mentionnez. Pour que je puisse répondre à votre question, veuillez me fournir l'audio ou le texte.",
+            "judge_response": "The system's response indicates that it does not have access to the audio content referenced in the query. This means that it cannot provide any information or answer to the specific questions asked. The response is relevant to the task of answering a question based on audio content, but it fails to address the actual content of the query.\n\nComparing this to the reference answer, we can see that the system's response does not contain any information that matches or relates to the questions about the worst bad move, self-description in a couple, or a good action to be proud of. Therefore, it does not meet the criteria for accuracy or completeness in answering the query.\n\nGiven the evaluation criteria and scoring rubric, the response is completely incorrect and irrelevant to the query, as it does not provide any information about the questions asked. It fails to match the reference answer in terms of content and context.\n\nTherefore, the response should be rated as a 1, as it is completely incorrect and irrelevant to the query, with no overlap in information with the reference answer.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "C'était Rabelais qui a dit ça. Rabelais est né à la Devinière à Seuilly, près de Chinon (dans l'ancienne province de Touraine), en 1483 ou 1494 selon les sources, et mort à Paris le 9 avril 1553, est un écrivain français humaniste de la Renaissance. Ecclésiastique et anticlérical, chrétien considéré par certains comme libre-penseur, médecin et ayant l'image d'un bon vivant, les multiples facettes de sa personnalité semblent parfois contradictoires. Pris dans la tourmente religieuse et politique de la Réforme, Rabelais se montre à la fois sensible et critique vis-à-vis des grandes questions de son temps. Par la suite, les regards portés sur sa vie et son œuvre ont évolué selon les époques et les courants de pensée.",
+            "model_prediction": "Aquí tienes la transcripción del audio:\n\n\"De aquí es citación, 'Ser sin conciencia' de Karen Gillam.\"",
+            "judge_response": "The system's response provides a partial answer to the query, but it is significantly incomplete and contains inaccuracies compared to the reference answer. The response mentions a quote from Karen Gillam, which is not present in the reference answer. The reference answer provides detailed information about Rabelais, including his birthplace, dates of birth and death, and a brief overview of his life and work. The system's response lacks this comprehensive information and focuses only on a single quote, which is not relevant to the query about Rabelais. Therefore, the response does not meet the criteria for accuracy and completeness as outlined in the reference answer.",
+            "rate_score": 2,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Zacharias Kunuk est un cinéaste inuit connu pour son film révolutionnaire « Atanarjuat : The Fast Runner », qui a été le premier long métrage entièrement réalisé en inuktitut. Les films de Kunuk se concentrent souvent sur la culture, les histoires et les perspectives inuites. Il habite et travail dans le territoire canadien de Nunavut. ",
+            "model_prediction": "Le signaste Zacharias Kunuk est un artiste de la culture autochtone du peuple Inuit.",
+            "judge_response": "The system's response partially addresses the query but falls short in several key areas. While it correctly identifies Zacharias Kunuk as an Inuit artist, it fails to mention his significant achievement as a filmmaker and the groundbreaking nature of his film \"Atanarjuat: The Fast Runner.\" The response also omits important details about Kunuk's focus on Inuit culture and perspectives, as well as his residence in Nunavut. \n\nThe system's answer is relevant to the query but lacks the completeness and specificity of the reference answer. It provides some correct information but misses crucial details that fully answer the question. The response would be more accurate and comprehensive if it included information about Kunuk's filmmaking career, the cultural focus of his work, and his location in Nunavut.\n\nOverall, the response demonstrates a basic understanding of the subject but fails to provide a comprehensive answer to the query. It contains some relevant information but is substantially incomplete compared to the reference answer.",
+            "rate_score": 2,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "La déforestation a des conséquences graves, notamment la perte d'habitats pour la faune et la flore, la libération de dioxyde de carbone dans l'atmosphère, la diminution de la biodiversité, et l'augmentation des risques d'inondations et d'érosion. Elle contribue également au changement climatique en réduisant la capacité de la Terre à absorber le carbone.",
+            "model_prediction": "Je n'ai pas accès à l'audio que vous mentionnez. Pour que je puisse répondre à votre question, veuillez me fournir l'audio ou le texte.",
+            "judge_response": "The system's response does not address the query at all. It fails to provide any information about the topic of deforestation, which was the subject of the reference answer. Instead, the response incorrectly states that it does not have access to the audio mentioned in the query. This response is entirely irrelevant to the task of answering a question about deforestation based on audio content. There is no overlap in information with the reference answer, and the response does not attempt to answer the query in any way.\n\nGiven the evaluation criteria and scoring rubric, this response clearly falls into the category of being completely incorrect and irrelevant to the query. It does not contain any correct information relevant to the query and fails to address any aspect of the question.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Dans une étude menée en 1997, le psychologue américain Arthur Aron a proposé que si deux inconnus de se poser 36 questions bien précises et de se regarder en silence pendant quatre minutes,  l'amour naisse entre eux. En 2015, l'écrivain Mandy Len Catron a testé le concept avec réussite. L'idée principale du concept reposant sur le fait que partager sa vulnérabilité favoriserait l'intimité. Voici la liste des 36 questions, divisées en trois parties:\n\nPartie 1\n\n1) Si vous pouviez dîner avec n'importe qui à travers le monde, qui choisiriez-vous ?\n\n2) Aimeriez-vous être célèbre ? De quelle manière ?\n\n3) Avant un coup de téléphone, répétez-vous à chaque fois ce que vous allez dire ? Pourquoi ?\n\n4) Comment définiriez-vous une \"journée parfaite\" ?\n\n5) Quand avez-vous chanté pour vous-même pour la dernière fois ? Et pour quelqu'un ?\n\n6) Si vous pouviez vivre jusqu'à 90 ans et garder soit l'esprit soit le corps d'un trentenaire pour les soixante dernières années de votre vie, que choisiriez-vous ?\n\n7) Avez-vous un pressentiment concernant la façon dont vous allez mourir ?\n\n8) Citez trois choses que votre partenaire et vous semblez avoir en commun.\n\n9) Quelle est la chose pour laquelle vous êtes le plus reconnaissant dans la vie ?\n\n10) Si vous pouviez changer une chose dans la manière dont vous avez été éduqué, qu'est-ce que ce serait ?\n\n11) Prenez quatre minutes pour raconter votre vie à votre partenaire avec le plus de détails possibles.\n\n12) Si vous pouviez vous réveiller demain en ayant gagné une qualité ou une compétence, quelle serait-elle ?\n\nPartie 2\n\n13) Si une boule de cristal pouvait vous dire la vérité sur vous, votre vie, le futur ou quoi que ce soit, que voudriez-vous savoir ?\n\n14) Y a-t-il quelque chose dont vous rêvez depuis longtemps ? Pourquoi ne l'avez-vous pas réalisée ?\n\n15) Quel est le plus grand accomplissement de votre vie ?\n\n16) Quelle est la chose la plus importante en amitié ?\n\n17) Quel est votre souvenir le plus précieux ?\n\n18) Quel est votre plus terrible souvenir ?\n\n19) Si vous saviez que vous alliez mourir subitement dans un an, changeriez-vous quelque chose à votre style de vie ? Pourquoi ?\n\n20) Que signifie le mot \"amitié\" pour vous ?\n\n21) Quels rôles jouent l'amour et l'affection dans votre vie ?\n\n22) Échangez avec votre partenaire quelque chose que vous considérez comme une caractéristique positive chez lui. Partagez-en cinq au total.\n\n23) À quel point votre famille est-elle unie et chaleureuse ? Pensez-vous que votre enfance a été plus heureuse que celle de la plupart des gens ?\n\n24) Comment jugez-vous votre relation avec votre mère ?\n\nPartie 3\n\n25) Dites chacun trois vérités commençant par le mot \"nous\". Par exemple : \"Nous sommes tous les deux dans cette pièce…\"\n\n26) Complétez cette phrase : \"J'aimerais avoir quelqu'un pour partager...\"\n\n27) Si vous deviez devenir proche de votre partenaire, dites-lui ce qui serait important qu'il ou elle sache.\n\n28) Dites à votre partenaire ce que vous aimez chez lui. Soyez très honnête et ne dites que des choses que vous ne diriez pas à une personne que vous venez de rencontrer.\n\n29) Partagez avec votre partenaire un moment embarrassant de votre vie.\n\n30) Quand avez-vous pleuré devant une autre personne ? Et tout seul ?\n\n31) Dites à votre partenaire quelque chose que vous appréciez déjà chez lui.\n\n32) Quel sujet est trop sérieux pour en rire ?\n\n33) Si vous deviez mourir ce soir sans avoir l'opportunité de communiquer avec qui que ce soit, que regretteriez-vous le plus de ne pas avoir dit ? Pourquoi ne pas le leur avoir dit jusqu'à présent ?\n\n34) Votre maison, qui contient tout ce qui vous appartient, prend feu. Après avoir sauvé votre famille et vos animaux de compagnie, vous avez le temps de récupérer en toute sécurité une seule chose. Quelle serait-elle ? Pourquoi ?\n\n35) La mort de quel membre de votre famille vous toucherait le plus ? Pourquoi ?\n\n36) Partagez un problème personnel et demandez à votre partenaire comment il le gérerait. Demandez aussi à votre partenaire de vous dire comment il pense que vous vous sentez par rapport à ce problème.\n\n\n",
+            "model_prediction": "Je suis désolé, mais je n'ai pas accès à l'audio que vous mentionnez. Pour que je puisse répondre à votre question, veuillez me fournir l'audio ou le texte.",
+            "judge_response": "The system's response indicates that it does not have access to the audio content referenced in the query. As a result, it cannot provide an answer to the specific question asked. This response is entirely irrelevant to the query and does not contain any information related to the 36 questions mentioned in the reference answer. Therefore, it fails to meet any of the criteria for accuracy or completeness in answering the query.\n\nGiven the evaluation criteria and scoring rubric, the response is completely incorrect and irrelevant to the query, with no overlap in information with the reference answer.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Le cubisme était un mouvement artistique du début du XXe siècle, principalement associé à Pablo Picasso et Georges Braque. Il se caractérise par la représentation d'objets et de sujets sous forme de formes géométriques et de plans multiples. Le cubisme a rompu avec les conventions artistiques traditionnelles en favorisant la représentation simultanée de différents points de vue.",
+            "model_prediction": "Les principales caractéristiques du mouvement artistique du cubisme sont la fragmentation des formes, la représentation simultanée de plusieurs points de vue, et l'utilisation de couleurs et de formes géométriques.",
+            "judge_response": "The system's response provides a concise yet accurate description of the cubism movement, highlighting key aspects such as the fragmentation of forms, simultaneous representation of multiple perspectives, and the use of geometric shapes and colors. While it doesn't mention Pablo Picasso and Georges Braque, who are noted in the reference answer, the response still captures the essence of cubism and its defining characteristics.\n\nThe response is accurate and relevant to the query, focusing on the core elements of cubism. It is slightly less detailed than the reference answer, omitting specific historical context and the movement's association with Picasso and Braque. However, it effectively conveys the main ideas of cubism, making it a strong response to the question.\n\nOverall, the response is accurate and nearly complete, missing only minor details compared to the reference answer. It successfully addresses the query with relevant information, albeit with a more concise approach.",
+            "rate_score": 4,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Agnès Varda est une cinéaste, photographe et plasticienne française.\nElle est souvent surnommée la « grand-mère de la Nouvelle Vague française » pour son mélange unique de documentaire et de fiction dans des films comme « Cléo de 5 à 7 », « Vagabond » et « Les Glaneuses et moi ». Ses œuvres explorent les thèmes de l'identité, de la mémoire et des questions sociales.",
+            "model_prediction": "Die Ärztin Anastas Agnes Varda",
+            "judge_response": "The system's response is completely incorrect and irrelevant to the query. The reference answer describes Agnès Varda as a French filmmaker, photographer, and sculptor, highlighting her unique blend of documentary and fiction, her notable works, and the themes she explores. In contrast, the system's response incorrectly refers to \"Agnès Agnes Varda,\" which does not match any known individual or concept relevant to the query. There is no overlap in information with the reference answer, and the response fails to address the query about Agnès Varda.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Lasar Segall, né à Vilno (Lituanie) en 1891 et mort à São Paulo (Brésil) en 1957, est un artiste juif lituano-brésilien, célèbre pour ses œuvres expressives et émouvantes qui abordent souvent les thèmes de la souffrance humaine et de la condition humaine. Ses peintures, comme « La Mort », véhiculent une profonde empathie pour les individus marginalisés et opprimés, reflétant ses propres expériences en tant que réfugié.",
+            "model_prediction": "L'artiste Lazare Segal est un musicien.",
+            "judge_response": "The system's response is completely incorrect and irrelevant to the query. The reference answer provides detailed information about the artist Lazar Segall, including his birthplace, nationality, and notable works. In contrast, the system's response incorrectly identifies Lazar Segall as a musician, which is not only inaccurate but also unrelated to the query about the artist's background and works. There is no overlap in information between the system's response and the reference answer, indicating a complete failure to address the query.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Il y a beaucoup des bon romans Canadien, par exemple, Barney’s Version par Mordecai Richler, ou les romans de Margaret Atwood, come The Handmaid’s Tale et The Testaments. Il y a des bon romans aussi par Robertson Davies comme Fifth Business et The Cunning Man. En français on a L’enigme du retour par Dany Laferrière et Les grandes marées par Jacques Poulin. \n\n",
+            "model_prediction": "Je suis désolé, mais je n'ai pas accès à l'audio que vous mentionnez. Pour que je puisse répondre à votre question, veuillez me fournir l'audio ou le texte.",
+            "judge_response": "The system's response does not address the query at all. The query asked for an answer based on audio content, but the system's response indicates that it does not have access to the audio and cannot provide an answer. This response is completely irrelevant to the query and does not contain any information related to the reference answer. Therefore, it fails to meet any of the criteria for accuracy or completeness in answering the query.\n\nGiven the evaluation criteria and scoring rubric, the response is completely incorrect and irrelevant, with no overlap in information with the reference answer.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Bien que l'Australie ait produit en 1906 le tout premier long-métrage de l'histoire – The Story of the Kelly Gang (66 min), de Charles Tait –, le cinéma australien ne trouve une audience internationale que dans les années 1970. Peter Weir (né en 1944) commence sa carrière dans son pays (Pique-nique à Hanging Rock, 1975), avant de la poursuivre brillamment aux États-Unis (le Cercle des poètes disparus, 1989). Le succès pousse également Bruce Beresford ([né en 1940] Héros ou salopards, 1979), George Miller (né en 1945), auteur de la série des Mad Max (1980-1985), Peter Faiman (Crocodile Dundee, 1986) et Gillian Armstrong ([née en 1950] Starstruck, 1982) à partir pour Hollywood.\nEn Nouvelle-Zélande, c'est une réalisatrice, Jane Campion (née en 1955), qui signe un chef-d'œuvre avec la Leçon de piano (1993), Palme d'or au Festival de Cannes. Quant à Peter Jackson (né en 1961), spécialiste du cinéma fantastique, il s'est attaqué à la trilogie de Tolkien, le Seigneur des anneaux (2001-2003) [la Communauté de l'anneau, les Deux Tours, le Retour du roi].",
+            "model_prediction": "Je suis désolé, mais je n'ai pas accès à l'audio que vous mentionnez. Pour que je puisse répondre à votre question, veuillez me fournir l'audio ou le texte.",
+            "judge_response": "The system's response indicates that it does not have access to the audio content that was supposed to be listened to in order to answer the question. This response is entirely irrelevant to the query and does not provide any information related to the content of the audio. As a result, it fails to address the question at all and does not match any part of the reference answer in terms of content or context.\n\nGiven that the response does not attempt to answer the question or provide any relevant information, it is completely incorrect and irrelevant to the query. There is no overlap in information with the reference answer, as the system's response does not address any aspect of the query or attempt to provide information about Australian cinema history.\n\nTherefore, based on the evaluation criteria and scoring rubric, the response deserves the lowest score.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "L'économie du marché libre est basée sur des principes tels que la propriété privée, la libre concurrence, l'offre et la demande, et la recherche du profit. Dans ce système, les prix sont déterminés par le marché, les entreprises sont autonomes, et les consommateurs ont le choix. Il repose sur la notion d'autorégulation par le marché.",
+            "model_prediction": "Je suis désolé, mais je n'ai pas accès à l'audio que vous mentionnez. Pour que je puisse répondre à votre question, veuillez me fournir l'audio ou le texte.",
+            "judge_response": "The system's response does not address the query at all. Instead of providing information about the market economy as requested, it states that it cannot access the audio content. This response is entirely irrelevant to the task of answering the question based on the audio content. There is no overlap in information with the reference answer, which correctly explains the principles of a market economy. Therefore, the response fails to meet any of the criteria for accuracy or completeness.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Modest Moussorgski, compositeur russe, était membre de « The Five » (Mighty Handful), un groupe dédié à la promotion d'une identité musicale typiquement russe. Son opéra « Boris Godounov » et la suite pour piano « Tableaux d'une exposition » exposent ses harmonies innovantes et son utilisation évocatrice de mélodies folkloriques russes.",
+            "model_prediction": "O compositor Modest Mussorgsky.",
+            "judge_response": "The system's response, \"O compositor Modest Mussorgsky,\" provides a basic fact about Modest Moussorgski being a composer. However, it lacks the depth and specific details present in the reference answer. The reference answer mentions Moussorgski's association with \"The Five\" and his innovative harmonies, as well as his use of folkloric melodies in works like \"Boris Godounov\" and \"Tableaux d'une exposition.\" The system's response, while accurate, does not provide any of this additional context or information. Therefore, it is accurate but substantially incomplete compared to the reference answer.\n\nBased on the evaluation criteria and scoring rubric, the response fits the description for a score of 2. It contains some correct information relevant to the query but is missing key details and has a limited scope compared to the reference answer.",
+            "rate_score": 2,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Il y a trois signes de feu en astrologie : Bélier, Lion et Sagittaire",
+            "model_prediction": "Il y a deux signes de feu en astrologie.",
+            "judge_response": "The system's response states that there are two fire signs in astrology, which is incorrect. The reference answer correctly identifies three fire signs: Aries, Leo, and Sagittarius. Therefore, the response is substantially inaccurate and does not match the reference answer. It fails to provide the correct information and is missing key details.\n\nBased on the evaluation criteria and scoring rubric, the response is completely incorrect and irrelevant to the query, with no overlap in information with the reference answer.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Les requins n’ont pas d’os de la même manière que les mammifères ou autres vertébrés. Au lieu de cela, ils ont un squelette cartilagineux composé de cartilage flexible et léger plutôt que d’os rigides. Ce squelette cartilagineux est moins dense que les os, ce qui permet aux requins de flotter davantage dans l'eau.",
+            "model_prediction": "Combien d'os ont les requins ?",
+            "judge_response": "The system's response, \"Combien d'os ont les requins ?\" (How many bones do sharks have?), is completely irrelevant to the query and does not match the reference answer in terms of content or context. The reference answer explains that sharks have a cartilaginous skeleton instead of bones, which is the key information needed to answer the question about shark anatomy. The system's response fails to address this crucial aspect and instead asks an unrelated question about the number of bones, which is not applicable to cartilaginous fish like sharks. This response does not provide any relevant information about shark anatomy or their unique skeletal structure, and it does not convey any of the key details present in the reference answer.",
+            "rate_score": 1,
+            "success": 1
+        },
+        {
+            "question": "Listen to the audio and answer the question.",
+            "reference": "Réponse: a) Le bleu est la couleur associée au ciel par temps clair",
+            "model_prediction": "La couleur associée au ciel par temps clair est le bleu.",
+            "judge_response": "The system's response accurately answers the query about the color associated with the sky on clear days. It correctly identifies \"blue\" as the color and mentions its association with the sky on clear days, which aligns with the reference answer. The response is concise and directly addresses the question without including unnecessary details. However, it does not explicitly mention \"le ciel\" (the sky) as the reference answer does, which is a minor omission. Despite this, the response is nearly complete and accurately conveys the same meaning and information as the reference answer.\n\nTherefore, the response fits well within the criteria for a score of 4, as it is accurate and nearly complete, only leaving out the non-essential detail of explicitly mentioning \"le ciel.\"",
+            "rate_score": 4,
+            "success": 1
+        }
+    ]
+}

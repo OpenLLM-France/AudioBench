@@ -1,0 +1,527 @@
+{
+  "model_name": "microsoft/Phi-4-multimodal-instruct",
+  "model_id": "phi_4_multimodal_instruct",
+  "dataset_name": "MELD_Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 342,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "EN",
+  "label_match": {
+    "score": 32.0,
+    "std": 0.466476151587624,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0
+    ],
+    "n_skipped_no_ref_label": 0,
+    "macro_f1": 28.650604016961086,
+    "macro_recall": 32.423492635972224,
+    "majority_baseline": 17.2,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 7,
+    "excluded_rare_classes": [],
+    "per_class": {
+      "disgust": {
+        "n": 43,
+        "precision": 62.5,
+        "recall": 11.627906976744185,
+        "f1": 19.607843137254903
+      },
+      "neutral": {
+        "n": 37,
+        "precision": 29.72972972972973,
+        "recall": 59.45945945945946,
+        "f1": 39.63963963963965
+      },
+      "fear": {
+        "n": 36,
+        "precision": 50.0,
+        "recall": 5.555555555555555,
+        "f1": 10.0
+      },
+      "happy": {
+        "n": 36,
+        "precision": 37.77777777777778,
+        "recall": 47.22222222222222,
+        "f1": 41.97530864197531
+      },
+      "anger": {
+        "n": 34,
+        "precision": 34.78260869565217,
+        "recall": 23.52941176470588,
+        "f1": 28.070175438596483
+      },
+      "surprise": {
+        "n": 33,
+        "precision": 28.205128205128204,
+        "recall": 66.66666666666666,
+        "f1": 39.63963963963964
+      },
+      "sad": {
+        "n": 31,
+        "precision": 66.66666666666666,
+        "recall": 12.903225806451612,
+        "f1": 21.62162162162162
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The speaker's voice conveys surprise and urgency.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "The emotional tenor of the speaker's voice is not provided in the given information.",
+      "ref_label": "surprise",
+      "pred_labels": [],
+      "pred_label": null,
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It evokes fear.",
+      "model_prediction": "The speaker's language evokes a neutral emotion.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The sentiment is sad.",
+      "model_prediction": "The speaker's sentiments match the emotion of surprise.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker sounds surprised.",
+      "model_prediction": "The emotional nuance evident in the speaker's speech is surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker sounds angry.",
+      "model_prediction": "The emotional nuance evident in the speaker's speech is joy.",
+      "ref_label": "anger",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It creates a neutral atmosphere.",
+      "model_prediction": "The speech creates a joyful and surprised emotional atmosphere.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It sounds disgusted.",
+      "model_prediction": "The speaker's emotional timbre is joy.",
+      "ref_label": "disgust",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "The emotional vibe conveyed by the speaker's words is joy.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "The speaker's words convey surprise.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The overall tone is happy.",
+      "model_prediction": "The prevailing emotional tone of the speech is joy.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The label is surprised.",
+      "model_prediction": "The speech's tone is surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The overall tone is surprised.",
+      "model_prediction": "The prevailing emotional tone of the speech is surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "A surprised feeling comes through.",
+      "model_prediction": "The sentiment that comes through most clearly in the speech is neutral.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The undertone is surprised.",
+      "model_prediction": "The emotional undertone of the speech is surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker is fearful.",
+      "model_prediction": "The speaker's emotional state is surprise.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "The emotional tenor of the speaker's voice is surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The label is fearful.",
+      "model_prediction": "The tone of the speech is neutral.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It evokes happiness.",
+      "model_prediction": "The speaker's language does not evoke any specific emotion.",
+      "ref_label": "happy",
+      "pred_labels": [],
+      "pred_label": null,
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The tone of emotion in the speaker's message is neutral.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    }
+  ]
+}

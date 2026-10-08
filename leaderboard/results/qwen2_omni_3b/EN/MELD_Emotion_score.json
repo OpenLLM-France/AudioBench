@@ -1,0 +1,543 @@
+{
+  "model_name": "Qwen/Qwen2.5-Omni-3B",
+  "model_id": "qwen2_omni_3b",
+  "dataset_name": "MELD_Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 342,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "EN",
+  "label_match": {
+    "score": 32.4,
+    "std": 0.46799999999999997,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "n_skipped_no_ref_label": 0,
+    "macro_f1": 32.515535952055885,
+    "macro_recall": 32.6761217090417,
+    "majority_baseline": 17.2,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 7,
+    "excluded_rare_classes": [],
+    "per_class": {
+      "disgust": {
+        "n": 43,
+        "precision": 50.0,
+        "recall": 25.581395348837212,
+        "f1": 33.84615384615385
+      },
+      "neutral": {
+        "n": 37,
+        "precision": 32.72727272727273,
+        "recall": 48.64864864864865,
+        "f1": 39.130434782608695
+      },
+      "fear": {
+        "n": 36,
+        "precision": 80.0,
+        "recall": 11.11111111111111,
+        "f1": 19.51219512195122
+      },
+      "happy": {
+        "n": 36,
+        "precision": 56.25,
+        "recall": 25.0,
+        "f1": 34.61538461538461
+      },
+      "anger": {
+        "n": 34,
+        "precision": 22.413793103448278,
+        "recall": 38.23529411764706,
+        "f1": 28.260869565217394
+      },
+      "surprise": {
+        "n": 33,
+        "precision": 31.147540983606557,
+        "recall": 57.57575757575758,
+        "f1": 40.42553191489362
+      },
+      "sad": {
+        "n": 31,
+        "precision": 53.84615384615385,
+        "recall": 22.58064516129032,
+        "f1": 31.818181818181817
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "I'd say the emotional tenor is anger. The speaker is really upset about losing their grandmother's wedding ring. What do you think?",
+      "ref_label": "fear",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "I'm not sure what the speaker's voice sounds like. You haven't provided any information about it. You could describe the tone, like if it's calm, excited, or something else. So, can you give me a bit more detail?",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "excited"
+      ],
+      "pred_label": "excited",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It evokes fear.",
+      "model_prediction": "\\boxed{Joy} Well, you know, I was just, um, I was just thinking and just hoping that, mmm, maybe you'd want to get back together. This shows a hopeful and positive emotion. So, what do you think about this? Do you have any other examples?",
+      "ref_label": "fear",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The sentiment is sad.",
+      "model_prediction": "\\boxed{Anger} Well, that's a pretty strong emotion. If you want to talk more about this or have other emotions to discuss, feel free to let me know.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker sounds surprised.",
+      "model_prediction": "\\boxed{surprise} Well, it seems like the speaker was surprised. What do you think about that? Do you have any other examples of speech to analyze?",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker sounds angry.",
+      "model_prediction": "Well, without actually hearing the speech, it's really hard to say. But if you can describe the tone, the words used, or any facial expressions that might be associated with the speech, that would be really helpful. Maybe you could tell me more about the speech?",
+      "ref_label": "anger",
+      "pred_labels": [],
+      "pred_label": null,
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It creates a neutral atmosphere.",
+      "model_prediction": "\\boxed{surprise} Well, it seems like the speaker was surprised to find an unattended maids card. What do you think about this? Do you have any other examples?",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It sounds disgusted.",
+      "model_prediction": "The speaker's emotional timbre is probably \"surprise\". It seems like they were caught off guard by something. What do you think? Do you have any other examples of emotional timbre you want to discuss?",
+      "ref_label": "disgust",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "\\boxed{surprise} Well, it seems like the speaker was surprised by something. What do you think might have surprised them?",
+      "ref_label": "happy",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "\\boxed{disgust}。如果还有类似的分析，欢迎随时告诉我哦。",
+      "ref_label": "happy",
+      "pred_labels": [
+        "disgust"
+      ],
+      "pred_label": "disgust",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The overall tone is happy.",
+      "model_prediction": "\\boxed{joy} Well, it seems like the speech has a happy and joyful tone. What do you think about it?",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The label is surprised.",
+      "model_prediction": "\\boxed{anger} Well, it seems like the speaker is expressing a strong negative emotion. If you have any other speech samples or want to discuss this further, feel free to let me know.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The overall tone is surprised.",
+      "model_prediction": "Well, it's hard to say just from this short clip. But if there's a lot of laughter, that could suggest a neutral or even a joyful tone. However, without more context, it's just a guess. You should probably listen to the whole speech to get a better idea. So, what do you think? Do you have any other parts of the speech you can share?",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "A surprised feeling comes through.",
+      "model_prediction": "Well, it's a bit hard to say without actually hearing the speech. But if it's a speech that's full of hope and optimism, it might be a neutral sentiment. If it's filled with excitement and happiness, then joy. If there's a sense of shock or surprise, it could be surprise. If it's full of frustration or anger, it's anger. If it's full of sorrow or sadness, it's sadness. And if it's full of disgust or revulsion, it's disgust. If it's full of fear or anxiety, it's fear. So, what do you think the speech might be about? It'd be interesting to hear your thoughts.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral",
+        "excited",
+        "happy",
+        "surprise",
+        "frustration",
+        "anger",
+        "sad",
+        "disgust",
+        "fear"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The undertone is surprised.",
+      "model_prediction": "\\boxed{surprise} This is a surprise because the speaker is expressing shock at the situation of someone being trapped in an ATM vestibule. So, what do you think about this? Do you have any other examples?",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker is fearful.",
+      "model_prediction": "\\boxed{Surprise} Well, that's a pretty intense reaction. What do you think about it?",
+      "ref_label": "fear",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "Well, it's a bit hard to say just from this short clip. But if I had to guess, I'd say it's probably neutral. There's no obvious sign of joy, surprise, anger, sadness, disgust, or fear. So, I'd box it as \\boxed{neutral}. What do you think? Do you have any other parts of the speech you want to discuss?",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral",
+        "happy",
+        "surprise",
+        "anger",
+        "sad",
+        "disgust",
+        "fear"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The label is fearful.",
+      "model_prediction": "\\boxed{Sadness} Well, that's a pretty sad tone. It seems like the speaker is worried about a breakup because of their weight. What do you think about that?",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It evokes happiness.",
+      "model_prediction": "\\boxed{anger} Well, it seems like the speaker is expressing a strong negative emotion. If you want to talk more about this or have other thoughts, feel free to share.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The tone of emotion in the speaker's message is neutral. So, it's \\boxed{neutral}. If you have any other messages you want to analyze, feel free to share.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    }
+  ]
+}

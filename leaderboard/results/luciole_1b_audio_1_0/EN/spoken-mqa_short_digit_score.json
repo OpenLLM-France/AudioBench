@@ -1,0 +1,249 @@
+{
+    "model_name": "OpenLLM-France/Luciole-1B-Audio-1.0",
+    "model_id": "luciole_1b_audio_1_0",
+    "dataset_name": "spoken-mqa_short_digit",
+    "metrics": [
+        "acc"
+    ],
+    "number_of_samples": 100,
+    "dataset_size": 100,
+    "task": "MATH QUESTION ANSWERING",
+    "sub_task": "Math (Text Instruction + Audio Context)",
+    "language": "EN",
+    "acc": {
+        "score": 0.13,
+        "std": 0.33630343441600474,
+        "quartiles": {
+            "min": 0.0,
+            "q1": 0.0,
+            "median": 0.0,
+            "q3": 0.0,
+            "max": 1.0
+        },
+        "n_errors": 0,
+        "all_scores": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+        ]
+    },
+    "details": [
+        {
+            "reference": [
+                "277"
+            ],
+            "prediction": "empty"
+        },
+        {
+            "reference": [
+                "-588"
+            ],
+            "prediction": "598"
+        },
+        {
+            "reference": [
+                "162"
+            ],
+            "prediction": "-326"
+        },
+        {
+            "reference": [
+                "-265"
+            ],
+            "prediction": "-22"
+        },
+        {
+            "reference": [
+                "46.8"
+            ],
+            "prediction": "12"
+        },
+        {
+            "reference": [
+                "561"
+            ],
+            "prediction": "empty"
+        },
+        {
+            "reference": [
+                "0.6"
+            ],
+            "prediction": "-62.3"
+        },
+        {
+            "reference": [
+                "631"
+            ],
+            "prediction": "-121"
+        },
+        {
+            "reference": [
+                "39.6"
+            ],
+            "prediction": "-91.5"
+        },
+        {
+            "reference": [
+                "398"
+            ],
+            "prediction": "498"
+        },
+        {
+            "reference": [
+                "304"
+            ],
+            "prediction": "304"
+        },
+        {
+            "reference": [
+                "82.2"
+            ],
+            "prediction": "9"
+        },
+        {
+            "reference": [
+                "892"
+            ],
+            "prediction": "952"
+        },
+        {
+            "reference": [
+                "90.6"
+            ],
+            "prediction": "empty"
+        },
+        {
+            "reference": [
+                "8.03"
+            ],
+            "prediction": "-30.125"
+        },
+        {
+            "reference": [
+                "-134"
+            ],
+            "prediction": "200"
+        },
+        {
+            "reference": [
+                "9.39"
+            ],
+            "prediction": "-17"
+        },
+        {
+            "reference": [
+                "24.5"
+            ],
+            "prediction": "-18.5"
+        },
+        {
+            "reference": [
+                "756"
+            ],
+            "prediction": "115"
+        },
+        {
+            "reference": [
+                "51.7"
+            ],
+            "prediction": "26.7"
+        }
+    ]
+}

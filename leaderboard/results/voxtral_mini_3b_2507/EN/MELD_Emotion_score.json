@@ -1,0 +1,535 @@
+{
+  "model_name": "mistralai/Voxtral-Mini-3B-2507",
+  "model_id": "voxtral_mini_3b_2507",
+  "dataset_name": "MELD_Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 342,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "EN",
+  "label_match": {
+    "score": 41.199999999999996,
+    "std": 0.4921950832749145,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "n_skipped_no_ref_label": 0,
+    "macro_f1": 41.75526426439557,
+    "macro_recall": 41.57140596066504,
+    "majority_baseline": 17.2,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 7,
+    "excluded_rare_classes": [],
+    "per_class": {
+      "disgust": {
+        "n": 43,
+        "precision": 76.47058823529412,
+        "recall": 30.23255813953488,
+        "f1": 43.33333333333333
+      },
+      "neutral": {
+        "n": 37,
+        "precision": 31.944444444444443,
+        "recall": 62.16216216216216,
+        "f1": 42.20183486238532
+      },
+      "fear": {
+        "n": 36,
+        "precision": 66.66666666666666,
+        "recall": 27.77777777777778,
+        "f1": 39.21568627450981
+      },
+      "happy": {
+        "n": 36,
+        "precision": 41.935483870967744,
+        "recall": 36.11111111111111,
+        "f1": 38.80597014925373
+      },
+      "anger": {
+        "n": 34,
+        "precision": 41.935483870967744,
+        "recall": 38.23529411764706,
+        "f1": 40.0
+      },
+      "surprise": {
+        "n": 33,
+        "precision": 36.734693877551024,
+        "recall": 54.54545454545454,
+        "f1": 43.90243902439025
+      },
+      "sad": {
+        "n": 31,
+        "precision": 48.148148148148145,
+        "recall": 41.935483870967744,
+        "f1": 44.827586206896555
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The speaker's voice conveys a mix of sadness and urgency. The repeated question \"Where is it?\" and the exclamation \"My dead grandmother's wedding ring!\" suggest a deep emotional attachment to the ring and a sense of loss or frustration that it is missing. The tone is also tinged with a bit of desperation, as if the speaker is trying to convey the importance of the ring and the need to find it.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad",
+        "frustration"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "The speaker's voice conveys a tone of **neutral curiosity**. The question is asked in a straightforward and matter-of-fact manner, without any strong emotional undertones.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It evokes fear.",
+      "model_prediction": "The speaker's language evokes a sense of **sadness**. The use of phrases like \"just thinking\" and \"just hoping\" suggests a longing and a wistful desire, which are common expressions of sadness. The speaker's tone is also somewhat tentative and uncertain, which further reinforces the emotional state of sadness.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The sentiment is sad.",
+      "model_prediction": "The speaker's sentiments are best described as **disgust**. The speaker is expressing a negative opinion about women, which is a form of disgust.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "disgust"
+      ],
+      "pred_label": "disgust",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker sounds surprised.",
+      "model_prediction": "The emotional nuance evident in the speaker's speech is **surprise**. The exclamation \"Oh my god!\" is a common expression used to convey surprise or shock.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker sounds angry.",
+      "model_prediction": "The speaker's speech conveys a nuance of **sadness**. The phrase \"I mean, all I'm asking for is just a little emotion\" suggests a longing for connection or understanding, which is often associated with sadness. The speaker seems to be expressing a desire for empathy or acknowledgment, which is a common theme in sad or melancholic emotions.",
+      "ref_label": "anger",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It creates a neutral atmosphere.",
+      "model_prediction": "The speech creates a **surprise** atmosphere. The speaker's discovery of an unattended maid's card, especially in the context of being \"way ahead of the game,\" suggests a moment of unexpected discovery or realization.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It sounds disgusted.",
+      "model_prediction": "The speaker's emotional timbre is likely **joy**. The phrase \"Good job!\" is typically used to express approval, encouragement, or congratulations, which are all indicators of joy.",
+      "ref_label": "disgust",
+      "pred_labels": [
+        "happy",
+        "anger"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "The speaker's words convey a sense of **surprise** and **joy**. The phrase \"Really? Okay, great.\" suggests that the speaker is genuinely taken aback by the news or situation they are discussing, and their response is filled with enthusiasm and positivity.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "surprise",
+        "happy"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "The speaker's words convey a sense of **surprise** and **disgust**. The phrase \"that woman's got an ass like Carol's\" is a playful and somewhat crude way to describe the woman's physical appearance, which is followed by a question that seems to be a response to the speaker's own thoughts. The speaker's tone suggests that they are not expecting to find someone with such a physical attribute, and the use of the word \"ass\" in this context implies a level of shock or surprise.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "surprise",
+        "disgust"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The overall tone is happy.",
+      "model_prediction": "The prevailing emotional tone of the speech is joy. The speaker expresses their happiness with the phrase \"Happy holidays,\" which is a common greeting during the festive season.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The label is surprised.",
+      "model_prediction": "The speech's tone is **surprise**. The speaker is expressing disbelief and skepticism, questioning the other person's statement with a tone of surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The overall tone is surprised.",
+      "model_prediction": "The prevailing emotional tone of the speech is **surprise**. The speaker's exclamation \"Wow!\" and the repetition of \"What?\" indicate a sense of astonishment or curiosity.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "A surprised feeling comes through.",
+      "model_prediction": "The sentiment that comes through most clearly in the speech is **neutral**. The speaker is simply stating a fact, \"So that's it,\" without any emotional inflection or additional context that would indicate a different sentiment.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The undertone is surprised.",
+      "model_prediction": "The emotional undertone in the speech is **surprise**. The speaker's exclamation \"Oh my god!\" and the repeated \"He's trapped in an ATM vestibule with Chill Good Ago!\" indicate a sense of astonishment and disbelief. The use of the phrase \"Chill Good Ago\" also suggests a playful or humorous tone, but the overall context of the situation being described is serious enough to warrant the surprise reaction.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker is fearful.",
+      "model_prediction": "The speaker's emotional state is primarily **fear**. This is evident from the repeated use of \"Oh my God\" and the urgent tone of voice, as well as the phrase \"there's some creep out there with the telescope,\" which suggests a sense of unease and concern.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "fear"
+      ],
+      "pred_label": "fear",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "The speaker's voice seems to convey a sense of **neutrality** or **calmness**. The repetition of \"no\" and the lack of any accompanying emotion or inflection suggest a straightforward and unemotional response.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The label is fearful.",
+      "model_prediction": "The speech's tone is **fear**.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "fear"
+      ],
+      "pred_label": "fear",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "It evokes happiness.",
+      "model_prediction": "The speaker's language evokes a sense of **neutrality**. The phrase \"You know what, I should do it\" is a straightforward statement with no strong emotional undertones.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The tone of emotion in the speaker's message is neutral. The speaker is simply stating a fact about their sushi being ready, without any strong emotional undertones.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    }
+  ]
+}

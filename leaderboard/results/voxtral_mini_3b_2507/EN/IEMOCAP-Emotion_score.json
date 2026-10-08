@@ -1,0 +1,557 @@
+{
+  "model_name": "mistralai/Voxtral-Mini-3B-2507",
+  "model_id": "voxtral_mini_3b_2507",
+  "dataset_name": "IEMOCAP-Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 1004,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "EN",
+  "label_match": {
+    "score": 22.48995983935743,
+    "std": 0.41751619014833813,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 0.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    "n_skipped_no_ref_label": 1,
+    "macro_f1": 18.35104729191665,
+    "macro_recall": 25.286131996658312,
+    "majority_baseline": 26.506024096385545,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 6,
+    "excluded_rare_classes": [
+      {
+        "label": "fear",
+        "n": 3
+      }
+    ],
+    "per_class": {
+      "frustration": {
+        "n": 66,
+        "precision": 46.808510638297875,
+        "recall": 33.33333333333333,
+        "f1": 38.93805309734514
+      },
+      "neutral": {
+        "n": 52,
+        "precision": 38.23529411764706,
+        "recall": 25.0,
+        "f1": 30.23255813953488
+      },
+      "excited": {
+        "n": 38,
+        "precision": 40.0,
+        "recall": 10.526315789473683,
+        "f1": 16.666666666666664
+      },
+      "anger": {
+        "n": 35,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "sad": {
+        "n": 35,
+        "precision": 100.0,
+        "recall": 2.857142857142857,
+        "f1": 5.555555555555556
+      },
+      "happy": {
+        "n": 20,
+        "precision": 10.596026490066226,
+        "recall": 80.0,
+        "f1": 18.71345029239766
+      },
+      "fear": {
+        "n": 3,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is happiness.",
+      "model_prediction": "To determine the emotions in the speaker's voice, we need to analyze the context and tone of the utterance. The speaker says \"Thank you.\" This phrase is typically used in a neutral or polite manner, indicating a lack of strong emotion.\n\n**Conclusion:** The speaker's voice is likely neutral. $\\boxed{\\text{neutral}}$",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+      "model_prediction": "To determine the speaker's emotional state, we need to analyze the tone and content of their speech. The speaker uses a dismissive and somewhat sarcastic tone, saying \"Well, that's only your business, Chris.\" This suggests a level of frustration or annoyance.\n\n1. **Identify the tone**: The speaker's tone is dismissive and sarcastic.\n2. **Analyze the content**: The content of the speech is a response to Chris's question, indicating a level of frustration or annoyance with Chris's inquiry.\n3. **Determine the emotional state**: Based on the tone and content, the speaker's emotional state is likely frustration.\n\nTherefore, the speaker's emotional state is:\n\\[ \\boxed{\\text{frustration}} \\]",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "happy",
+        "frustration"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's emotion seems sad.",
+      "model_prediction": "To determine the speaker's emotions, we need to analyze the content and tone of their speech. The speaker asks, \"What happened? What went wrong?\" This phrasing suggests a sense of confusion, frustration, and possibly a hint of anger or disappointment. The use of \"what\" and the repetition of the question indicate a lack of understanding or acceptance of the situation.\n\n1. **Identify the key phrases**: The speaker uses phrases like \"What happened?\" and \"What went wrong?\" which are indicative of confusion and frustration.\n2. **Analyze the tone**: The tone is direct and somewhat accusatory, suggesting a sense of disappointment or anger.\n3. **Consider the context**: Without additional context, it is difficult to pinpoint the exact emotion, but the phrasing and tone suggest a mix of frustration and confusion.\n\nGiven these points, the most appropriate emotion to describe the speaker's state is **frustration**.\n\n$\\boxed{\\text{frustration}}$",
+      "ref_label": "sad",
+      "pred_labels": [
+        "happy",
+        "frustration",
+        "anger"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's emotion seems anger.",
+      "model_prediction": "To interpret the emotions in the speaker's speech, we need to consider the context and the words used. The phrase \"What the hell is this?\" is typically used in a frustrated or angry manner. However, without additional context, it's challenging to determine the exact emotion.\n\nGiven the options, the most fitting interpretation is:\n\n\\[\n\\boxed{\\text{frustration}}\n\\]",
+      "ref_label": "anger",
+      "pred_labels": [
+        "frustration",
+        "anger"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a excited state.",
+      "model_prediction": "To determine the emotions in the speaker's voice, we need to analyze the content and tone of the audio. The speaker describes a mysterious and unusual phenomenon involving silverfish swimming in a specific direction. The tone is curious and somewhat perplexed, as the speaker expresses a lack of understanding about why the silverfish are doing this. The speaker also uses phrases like \"they don't know why they're doing it\" and \"we don't know why they're doing it,\" which convey a sense of confusion and uncertainty. Additionally, the speaker's use of the phrase \"it was just some internal time release firecracker that went off\" adds a touch of humor and playfulness, which could be interpreted as excitement or surprise.\n\nGiven these observations, the most fitting emotions are **surprise** and **neutral**.\n\n$\\boxed{\\text{surprise, neutral}}$",
+      "ref_label": "excited",
+      "pred_labels": [
+        "happy",
+        "excited",
+        "surprise",
+        "neutral"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the speaker's speech patterns, it seems like they are feeling other.",
+      "model_prediction": "To determine the speaker's emotional state, we need to analyze the content of their speech. The speaker uses the phrase \"very much sillier\" to describe something. This phrase suggests a tone of frustration or disappointment, as the speaker is expressing that something is not as expected or desired.\n\n1. **Identify the phrase**: The phrase \"very much sillier\" is used.\n2. **Analyze the phrase**: The phrase implies that the speaker is expressing dissatisfaction with the current state of affairs.\n3. **Determine the emotional state**: The use of the phrase \"very much sillier\" indicates frustration or disappointment.\n\nTherefore, the speaker's emotional state is:\n\\[ \\boxed{\\text{frustration}} \\]",
+      "ref_label": null,
+      "pred_labels": [
+        "happy",
+        "frustration"
+      ],
+      "pred_label": "happy",
+      "rate_score": null
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a happiness state.",
+      "model_prediction": "To determine the speaker's emotions, we need to analyze the content of the speech. The speaker says, \"I don't know, it seemed like a pretty good spot to me. Look at the view you have of the moon from here.\" This statement suggests a positive and appreciative tone.\n\n1. **Identify the speaker's words**: The speaker expresses a positive opinion about the spot and highlights the view of the moon.\n2. **Analyze the emotions**: The words \"pretty good spot\" and \"look at the view\" convey a sense of happiness and excitement.\n3. **Conclusion**: The speaker's emotions are likely happiness and excitement.\n\nTherefore, the answer is: $\\boxed{\\text{happiness, excited}}$.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy",
+        "excited"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker's tone sounds excited.",
+      "model_prediction": "To determine the emotions conveyed in the speaker's voice, we need to analyze the context and the words used. The speaker says, \"Wait a minute. I've got it.\" This phrase suggests a moment of realization or understanding, which is often associated with excitement or happiness.\n\n1. **Identify the context**: The speaker is expressing a moment of realization.\n2. **Analyze the words**: \"Wait a minute\" suggests a pause or reflection, which can be neutral or thoughtful. \"I've got it\" indicates a sense of accomplishment or understanding, which is typically associated with happiness or excitement.\n3. **Conclude the emotion**: Based on the context and the words used, the emotion conveyed in the speaker's voice is likely excitement.\n\nTherefore, the answer is: $\\boxed{\\text{excited}}$.",
+      "ref_label": "excited",
+      "pred_labels": [
+        "excited",
+        "happy",
+        "neutral"
+      ],
+      "pred_label": "excited",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+      "model_prediction": "To determine the speaker's emotional state, we need to analyze the tone and content of their speech. The speaker says, \"That's the way to do it.\" This phrase is often used in a positive or encouraging context, suggesting a neutral or happy tone. However, the speaker's tone could also be neutral if they are simply stating a fact or providing a solution.\n\nGiven the context, the most likely emotional state is:\n\\[ \\boxed{\\text{neutral}} \\]",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "happy",
+        "neutral"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a sad state.",
+      "model_prediction": "To determine the speaker's emotion, we need to analyze the words and phrases used in the statement. The speaker uses the phrase \"really messed up\" which conveys a strong sense of frustration or anger.\n\n1. **Identify the key phrase**: \"really messed up\"\n2. **Analyze the phrase**: This phrase suggests that the speaker is expressing dissatisfaction or disapproval.\n3. **Determine the emotion**: The use of strong language and the phrase \"really\" indicates a high level of frustration or anger.\n\nTherefore, the speaker is likely feeling:\n\\[ \\boxed{\\text{frustration}} \\]",
+      "ref_label": "sad",
+      "pred_labels": [
+        "frustration",
+        "anger"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone of the speaker's voice suggests that the speaker may be feeling frustration.",
+      "model_prediction": "To determine the emotional tone of the speaker's speech, we need to analyze the content and context of the statement.\n\n1. **Identify the content**: The speaker is asking about the differences between two situations and what they need to do in one situation that they can't do in the other.\n2. **Analyze the context**: The question is posed in a straightforward manner, without any explicit emotional cues.\n3. **Determine the emotional tone**: Given the lack of emotional language and the neutral tone of the question, the emotional tone is likely **neutral**.\n\nTherefore, the emotional tone of the speaker's speech is:\n\\[ \\boxed{\\text{neutral}} \\]",
+      "ref_label": "frustration",
+      "pred_labels": [
+        "happy",
+        "neutral"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the auditory cues, it sounds like the speaker is neutral state.",
+      "model_prediction": "To determine the emotional cues from the speaker's speech, we need to analyze the content and tone of the statement. The speaker asks, \"Meaning exactly that?\" This question seems to be a response to a previous statement or situation, and it could be interpreted in a few ways:\n\n1. **Neutral**: The speaker might be asking for clarification or confirmation of a statement made by someone else.\n2. **Frustration**: The speaker could be expressing frustration or confusion about the meaning of a statement.\n3. **Sad**: The speaker might be feeling disappointed or upset about the implications of a statement.\n\nGiven the context, the most likely interpretation is **frustration** or **confusion**. The speaker seems to be questioning the exact meaning of a statement, which could indicate a lack of understanding or dissatisfaction with the current situation.\n\nTherefore, the answer is:\n\\[ \\boxed{\\text{Frustration}} \\]",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "happy",
+        "neutral",
+        "frustration",
+        "sad"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's speech suggesting they might be feeling sad.",
+      "model_prediction": "To determine the speaker's emotional state from the given sentence \"I'm cold,\" we need to analyze the context and the tone of the statement.\n\n1. **Identify the emotion**: The speaker is expressing a physical sensation, which is cold.\n2. **Analyze the context**: The sentence does not provide any additional context that would indicate a strong emotional state beyond the physical sensation.\n3. **Consider the tone**: The tone is neutral and factual.\n\nGiven these points, the speaker's emotional state is likely **neutral**.\n\n$\\boxed{\\text{neutral}}$",
+      "ref_label": "sad",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's tone sounds neutral state.",
+      "model_prediction": "To determine the emotional tone of the speaker's speech, we need to analyze the content and context of the statement.\n\n1. **Identify the statement**: The speaker says, \"It's like... I don't want to go south.\"\n2. **Analyze the content**: The statement is a simple expression of reluctance or dissatisfaction with a situation.\n3. **Determine the emotional tone**: The use of \"I don't want to go south\" suggests a negative or frustrated emotion.\n\nTherefore, the emotional tone of the speaker's speech is:\n\\[ \\boxed{\\text{frustration}} \\]",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "happy",
+        "frustration"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the auditory cues, it sounds like the speaker is fear.",
+      "model_prediction": "To determine the emotions conveyed in the speaker's voice, we need to analyze the content of the statement and the context in which it is made.\n\n1. **Analyze the statement**: The speaker says, \"Baby, I need you to sit down.\"\n2. **Context**: The context is not provided, but it is reasonable to assume that the speaker is addressing someone they are close to, possibly a partner or a child.\n3. **Emotional tone**: The phrase \"Baby\" is often used in a familiar and affectionate manner, but the command \"I need you to sit down\" can be interpreted in different ways depending on the context.\n4. **Possible emotions**: The phrase could convey a mix of urgency, concern, and possibly a hint of frustration or impatience.\n\nGiven these points, the most likely emotions conveyed are:\n- **Concern**: The speaker is worried about the situation.\n- **Urgency**: The speaker needs a quick response.\n- **Frustration**: The speaker might be feeling a bit impatient or stressed.\n\nTherefore, the answer is:\n\\[ \\boxed{\\text{Concern, Urgency, Frustration}} \\]",
+      "ref_label": "fear",
+      "pred_labels": [
+        "happy",
+        "frustration"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker's emotion seems frustration.",
+      "model_prediction": "To determine the emotions in the speaker's voice, we need to analyze the context and the words used.\n\n1. **Context**: The speaker is expressing confusion and dissatisfaction about the current situation.\n2. **Words used**: \"I don't get it,\" \"mean,\" \"the first time,\" \"you said it was like the best night of your life.\"\n3. **Emotions**: The speaker's tone and words suggest frustration and confusion.\n\nTherefore, the emotion detected in the speaker's voice is:\n\\[ \\boxed{\\text{frustration}} \\]",
+      "ref_label": "frustration",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+      "model_prediction": "To determine the emotional cues from the speaker's speech, we need to analyze the tone and words used.\n\n1. **Identify the tone**: The speaker's tone is urgent and somewhat frustrated.\n2. **Analyze the words**: The speaker uses phrases like \"apparently,\" \"because,\" and \"we will find your luggage,\" which convey a sense of urgency and determination.\n3. **Consider the context**: The speaker is asking about a flight, which is a common situation where people might be anxious or frustrated if their luggage is missing.\n\nGiven these points, the emotional cues are:\n\n- **Frustration**\n\nThus, the answer is: $\\boxed{\\text{Frustration}}$",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "frustration"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is sad.",
+      "model_prediction": "To determine the emotional tone of the speaker's speech, we need to analyze the content and context of the statement.\n\n1. **Identify the content**: The speaker mentions that the person they are referring to could not stand up before they died.\n2. **Analyze the context**: The statement is made in a personal context, likely referring to a close family member or friend.\n3. **Determine the emotional tone**: The phrase \"couldn't really stand\" suggests a state of physical weakness and impending death, which is typically associated with sadness and concern.\n\nTherefore, the emotional tone of the speaker's speech is:\n\\[ \\boxed{\\text{sad}} \\]",
+      "ref_label": "sad",
+      "pred_labels": [
+        "happy",
+        "sad"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the speaker's speech patterns, it seems like they are feeling neutral state.",
+      "model_prediction": "To determine the emotions conveyed in the speaker's voice, we need to analyze the context and the words used. The speaker is asking about the process of a direct debit, which is a common financial transaction. The tone of the voice can be inferred from the phrasing and the repetition of the question.\n\n1. **Context**: The speaker is asking about a direct debit, which is a common financial transaction.\n2. **Phrasing**: The speaker repeats the question \"You do the direct, the direct is taken right out of your bank account, correct?\" This repetition suggests a need for clarification or confirmation.\n3. **Emotion**: The repetition and the need for confirmation suggest a level of frustration or confusion rather than excitement or happiness.\n\nTherefore, the emotion conveyed in the speaker's voice is:\n\\[ \\boxed{\\text{frustration}} \\]",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "frustration",
+        "excited",
+        "happy"
+      ],
+      "pred_label": "frustration",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is happiness.",
+      "model_prediction": "To determine the emotions in the speaker's voice, we need to analyze the context and the words used.\n\n1. **Context**: The speaker is discussing their upcoming marriage.\n2. **Words Used**: \"I know,\" \"It's weird,\" \"It's crazy,\" \"It's the beginning of the rest of my life.\"\n3. **Emotions**: The words \"It's weird\" and \"It's crazy\" suggest a mix of excitement and nervousness. The phrase \"It's the beginning of the rest of my life\" indicates a sense of anticipation and the weight of the upcoming commitment.\n\nGiven these points, the speaker's voice likely conveys a mix of excitement and nervousness.\n\n$\\boxed{\\text{excited, nervous}}$",
+      "ref_label": "happy",
+      "pred_labels": [
+        "excited"
+      ],
+      "pred_label": "excited",
+      "rate_score": 0.0
+    }
+  ]
+}

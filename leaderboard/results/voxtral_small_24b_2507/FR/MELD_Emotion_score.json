@@ -1,0 +1,541 @@
+{
+  "model_name": "mistralai/Voxtral-Small-24B-2507",
+  "model_id": "voxtral_small_24b_2507",
+  "dataset_name": "MELD_Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 342,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "FR",
+  "label_match": {
+    "score": 40.8,
+    "std": 0.49146312170904544,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    "n_skipped_no_ref_label": 0,
+    "macro_f1": 40.525847111827844,
+    "macro_recall": 41.77458474488615,
+    "majority_baseline": 17.2,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 7,
+    "excluded_rare_classes": [],
+    "per_class": {
+      "disgust": {
+        "n": 43,
+        "precision": 55.00000000000001,
+        "recall": 25.581395348837212,
+        "f1": 34.920634920634924
+      },
+      "neutral": {
+        "n": 37,
+        "precision": 35.55555555555556,
+        "recall": 43.24324324324324,
+        "f1": 39.02439024390244
+      },
+      "fear": {
+        "n": 36,
+        "precision": 64.28571428571429,
+        "recall": 25.0,
+        "f1": 36.0
+      },
+      "happy": {
+        "n": 36,
+        "precision": 48.148148148148145,
+        "recall": 36.11111111111111,
+        "f1": 41.269841269841265
+      },
+      "anger": {
+        "n": 34,
+        "precision": 41.17647058823529,
+        "recall": 41.17647058823529,
+        "f1": 41.17647058823529
+      },
+      "surprise": {
+        "n": 33,
+        "precision": 32.3943661971831,
+        "recall": 69.6969696969697,
+        "f1": 44.23076923076923
+      },
+      "sad": {
+        "n": 31,
+        "precision": 43.24324324324324,
+        "recall": 51.61290322580645,
+        "f1": 47.05882352941176
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "L'étiquette est : peur.",
+      "model_prediction": "Le ton de cette phrase est clairement celui de la colère. L'utilisation de points d'exclamation et la répétition de la question \"Where is it?\" indiquent une forte émotion et une insistance pressante.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "L'émotion identifiée est la surprise.",
+      "model_prediction": "L'émotion qui entre en résonance avec le contenu du discours est la **surprise**. La question \"This is going in your book?\" suggère une certaine incertitude ou étonnement, ce qui est typique de la surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Le sentiment est craintif.",
+      "model_prediction": "Les sentiments exprimés correspondent à la tristesse. La personne semble espérer une réconciliation, ce qui indique un sentiment de perte ou de manque, typique de la tristesse.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "L'interlocuteur semble triste.",
+      "model_prediction": "L'interlocuteur exprime une nuance de colère dans son discours. Cela est perceptible par l'utilisation de la phrase \"Try telling my wife that,\" qui suggère une réaction défensive et potentiellement hostile à l'idée que les femmes ne sont pas grandes.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le locuteur exprime de la surprise.",
+      "model_prediction": "L'émotion qui prédomine dans les propos tenus est la surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Le locuteur laisse paraître de la colère.",
+      "model_prediction": "La colère prédomine dans les propos tenus.",
+      "ref_label": "anger",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'étiquette est : neutre.",
+      "model_prediction": "Le ton de cette phrase est plutôt neutre, mais il y a une légère touche de surprise ou d'amusement. L'utilisation de \"we're way ahead of the game\" suggère une certaine satisfaction ou fierté, ce qui pourrait être interprété comme une émotion positive.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "neutral",
+        "surprise"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'orateur exprime de l'aversion.",
+      "model_prediction": "L'indice verbal \"Good job\" suggère une émotion de joie.",
+      "ref_label": "disgust",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le locuteur exprime de la joie.",
+      "model_prediction": "L'émotion prédominante dans les propos tenus est la joie. Cela est évident grâce à l'utilisation de mots comme \"great\" et \"okay\", qui expriment une satisfaction et une acceptation positives.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'orateur exprime de l'allégresse.",
+      "model_prediction": "L'auditeur semble ressentir de la surprise et de la joie. La surprise est déduite de la réaction initiale à la remarque, tandis que la joie est suggérée par le rire qui suit.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "surprise",
+        "happy"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "L'étiquette est : joie.",
+      "model_prediction": "Le ton de cette phrase est neutre. L'expression \"Happy holidays\" est une formule de politesse couramment utilisée pour souhaiter de bonnes fêtes, et elle est généralement prononcée de manière neutre.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral",
+        "happy"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le profil est surpris.",
+      "model_prediction": "La valence émotionnelle de l'interlocuteur semble être la surprise. L'expression \"You're not serious\" et la répétition de la question \"You really talk to him?\" suggèrent une réaction de surprise ou d'incrédulité face à une information inattendue.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Le locuteur exprime de la surprise.",
+      "model_prediction": "L'émotion prédominante dans les propos tenus est la surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "L'état semble ébaubi.",
+      "model_prediction": "Le locuteur semble habiter un état affectif de neutralité. Le ton de la phrase \"So that's it\" est simple et direct, sans aucune inflexion émotionnelle marquée. Cela suggère que le locuteur n'exprime ni joie, ni surprise, ni colère, ni tristesse, ni dégoût, ni peur.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral",
+        "happy",
+        "surprise",
+        "anger",
+        "sad",
+        "disgust",
+        "fear"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le message est empreint de surprise.",
+      "model_prediction": "Le message émotionnel véhiculé par cette prise de parole est la surprise. L'expression \"Oh my God\" et la description d'une situation inhabituelle et comique, comme être piégé dans un vestibule de distributeur automatique avec des bonbons, indiquent une réaction de surprise et d'amusement.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Le timbre paraît effrayé.",
+      "model_prediction": "Le timbre émotionnel de la voix est de la surprise et de la peur.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "surprise",
+        "fear"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le message est empreint de surprise.",
+      "model_prediction": "Le message émotionnel véhiculé par cette prise de parole est la surprise.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Le locuteur affiche de la peur.",
+      "model_prediction": "Les propos tenus prédominent une émotion de peur. La personne exprime une inquiétude quant à la réaction de son partenaire en cas de prise de poids, ce qui indique une peur de la perte ou de l'abandon.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "fear"
+      ],
+      "pred_label": "fear",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "Il instaure une atmosphère joyeuse.",
+      "model_prediction": "Le discours instaure une atmosphère de surprise et de détermination. La personne semble hésitante au début, mais finit par se convaincre de faire quelque chose, ce qui suggère une prise de décision soudaine et résolue.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "Le profil est peureux.",
+      "model_prediction": "La valence émotionnelle de l'interlocuteur semble être neutre. Il mentionne simplement qu'il doit partir parce que sa commande de sushi est arrivée, sans montrer d'émotion particulière.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    }
+  ]
+}

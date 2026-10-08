@@ -184,3 +184,9 @@ log_for_all_models*
 tmp*
 local*
 airflow
+# Published leaderboard: only the score files are versioned, index.html is built by CI
+!/leaderboard/results/
+/leaderboard/results/**/*
+!/leaderboard/results/**/
+!/leaderboard/results/**/*_score.json
+/leaderboard/index.html

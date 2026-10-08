@@ -1,0 +1,539 @@
+{
+  "model_name": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
+  "model_id": "qwen3_omni_30b_instruct",
+  "dataset_name": "MELD_Emotion",
+  "metrics": [
+    "label_match"
+  ],
+  "number_of_samples": 250,
+  "dataset_size": 342,
+  "task": "EMOTION RECOGNITION",
+  "sub_task": "Emotion",
+  "language": "EN",
+  "label_match": {
+    "score": 49.2,
+    "std": 0.49993599590347565,
+    "quartiles": {
+      "min": 0.0,
+      "q1": 0.0,
+      "median": 0.0,
+      "q3": 1.0,
+      "max": 1.0
+    },
+    "n_errors": 0,
+    "all_scores": [
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0
+    ],
+    "n_skipped_no_ref_label": 0,
+    "macro_f1": 48.483493380097386,
+    "macro_recall": 49.55192653661389,
+    "majority_baseline": 17.2,
+    "n_classes": 7,
+    "macro_min_support": 10,
+    "macro_n_classes": 7,
+    "excluded_rare_classes": [],
+    "per_class": {
+      "disgust": {
+        "n": 43,
+        "precision": 83.33333333333334,
+        "recall": 34.883720930232556,
+        "f1": 49.18032786885246
+      },
+      "neutral": {
+        "n": 37,
+        "precision": 34.42622950819672,
+        "recall": 56.75675675675676,
+        "f1": 42.857142857142854
+      },
+      "fear": {
+        "n": 36,
+        "precision": 71.42857142857143,
+        "recall": 27.77777777777778,
+        "f1": 40.0
+      },
+      "happy": {
+        "n": 36,
+        "precision": 43.63636363636363,
+        "recall": 66.66666666666666,
+        "f1": 52.74725274725275
+      },
+      "anger": {
+        "n": 34,
+        "precision": 52.63157894736842,
+        "recall": 58.82352941176471,
+        "f1": 55.55555555555555
+      },
+      "surprise": {
+        "n": 33,
+        "precision": 50.0,
+        "recall": 69.6969696969697,
+        "f1": 58.22784810126582
+      },
+      "sad": {
+        "n": 31,
+        "precision": 55.55555555555556,
+        "recall": 32.25806451612903,
+        "f1": 40.816326530612244
+      }
+    }
+  },
+  "details": [
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The emotional tenor of the speaker's voice is **anger**.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "The emotional tenor of the speaker's voice is **surprise**.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "It evokes fear.",
+      "model_prediction": "The emotion evoked by the speaker's language is **sadness**.\n\nThe hesitant tone, use of filler words (\"um,\" \"well,\" \"you know\"), and the vulnerable content of the message — expressing hope to \"get back together\" — suggest a sense of longing and emotional pain, which are characteristic of sadness.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad",
+        "happy"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The sentiment is sad.",
+      "model_prediction": "The speaker's sentiment is **neutral**.\n\nThe tone is conversational and somewhat resigned, without strong emotional indicators like anger, joy, or sadness. The exchange is light and possibly sarcastic, but it does not express any intense emotion.",
+      "ref_label": "sad",
+      "pred_labels": [
+        "neutral",
+        "anger",
+        "happy",
+        "sad"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker sounds surprised.",
+      "model_prediction": "The emotional nuance evident in the speaker's speech is **joy**.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The speaker sounds angry.",
+      "model_prediction": "The emotional nuance evident in the speaker's speech is **anger**.",
+      "ref_label": "anger",
+      "pred_labels": [
+        "anger"
+      ],
+      "pred_label": "anger",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "It creates a neutral atmosphere.",
+      "model_prediction": "The emotional atmosphere of the speech is **joy**.\n\nThe speaker's tone is lighthearted and amused, and the audience laughter indicates that the statement is meant to be humorous. The phrase \"we're way ahead of the game\" is delivered with a sense of playful triumph, contributing to a cheerful and joyful mood.",
+      "ref_label": "neutral",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It sounds disgusted.",
+      "model_prediction": "The speaker's emotional timbre is **neutral**.",
+      "ref_label": "disgust",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "The emotional vibe conveyed by the speaker's words is **joy**.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The vibe is happy.",
+      "model_prediction": "The emotional vibe conveyed by the speaker's words is **neutral**. The tone is casual and observational, without strong emotional indicators like anger, joy, or sadness. The line is delivered in a matter-of-fact way, typical of conversational or comedic dialogue.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "neutral",
+        "anger",
+        "happy",
+        "sad"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The overall tone is happy.",
+      "model_prediction": "The prevailing emotional tone of the speech is **joy**.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The label is surprised.",
+      "model_prediction": "The affective label for the speech's tone would be **surprise**.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The overall tone is surprised.",
+      "model_prediction": "The prevailing emotional tone of the speech is **surprise**.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "A surprised feeling comes through.",
+      "model_prediction": "The sentiment that comes through most clearly in the speech is **sadness**.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The undertone is surprised.",
+      "model_prediction": "The emotional undertone of the speech is **surprise**.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "surprise"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The speaker is fearful.",
+      "model_prediction": "The speaker's emotional state is **surprise** and **fear**. The initial exclamation \"Oh my God\" and the urgent tone indicate surprise, while the mention of a \"creep\" with a telescope suggests a sense of alarm or fear.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "surprise",
+        "fear"
+      ],
+      "pred_label": "surprise",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The tone is surprised.",
+      "model_prediction": "The emotional tenor of the speaker's voice is **neutral**.",
+      "ref_label": "surprise",
+      "pred_labels": [
+        "neutral"
+      ],
+      "pred_label": "neutral",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "The label is fearful.",
+      "model_prediction": "Sadness",
+      "ref_label": "fear",
+      "pred_labels": [
+        "sad"
+      ],
+      "pred_label": "sad",
+      "rate_score": 0.0
+    },
+    {
+      "reference": "It evokes happiness.",
+      "model_prediction": "The speaker's language evokes **joy**.",
+      "ref_label": "happy",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 1.0
+    },
+    {
+      "reference": "The tone is fearful.",
+      "model_prediction": "The tone of emotion in the speaker's message is **joy**.",
+      "ref_label": "fear",
+      "pred_labels": [
+        "happy"
+      ],
+      "pred_label": "happy",
+      "rate_score": 0.0
+    }
+  ]
+}
