@@ -18,7 +18,7 @@ import html
 import json
 import os
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -54,6 +54,7 @@ def _load_leaderboard_config(path):
         "ignored_model_patterns": [re.compile(fill(p))
                                    for p in cfg.get("ignored_model_patterns") or []],
         "model_renames": name_map("model_renames"),
+        "organization_renames": name_map("organization_renames"),
         "model_sizes": [(re.compile(fill(p)), str(size))
                         for p, size in cfg.get("model_sizes") or []],
     }
@@ -68,6 +69,7 @@ ONLY_SHOW_CONSORTIUM_MODELS = _CFG["consortium_models"]
 _IGNORED_MODEL_PATTERNS = _CFG["ignored_model_patterns"]
 _MODEL_NAME_CORRECTIONS = _CFG["model_renames"] | ONLY_SHOW_CONSORTIUM_MODELS
 _MODEL_SIZE_OVERRIDES = _CFG["model_sizes"]
+_ORGANIZATION_RENAMES = _CFG["organization_renames"]
 
 
 def _excluded_from_task_avg(entry):
@@ -295,6 +297,36 @@ def load_all_scores(input_folder, show_all_models=False, show_all_datasets=False
                     entry["n"] = int(n)
                 entries.append(entry)
 
+    return _finalize_model_names(entries)
+
+
+_STEP_SUFFIX_RE = re.compile(r"_step_\d+(?:-last)?$")
+
+
+def _rename_organization(name):
+    org, sep, rest = name.partition("/")
+    return _ORGANIZATION_RENAMES[org] + sep + rest if sep and org in _ORGANIZATION_RENAMES else name
+
+
+def _finalize_model_names(entries):
+    """Display-name passes run after the filters (so they can't hide a model):
+
+    The results folder name stays in the hover tooltip (_MODEL_CHECKPOINT)."""
+    names = {e["model_name"] for e in entries}
+    stems = Counter(_STEP_SUFFIX_RE.sub("", _rename_organization(n)) for n in names)
+    renames = {}
+    for n in names:
+        new = _rename_organization(n)
+        stem = _STEP_SUFFIX_RE.sub("", new)
+        if stems[stem] == 1:
+            new = stem
+        if new != n:
+            renames[n] = new
+    for e in entries:
+        e["model_name"] = renames.get(e["model_name"], e["model_name"])
+    for old, new in renames.items():
+        if old in _MODEL_CHECKPOINT:
+            _MODEL_CHECKPOINT[new] = _MODEL_CHECKPOINT.pop(old)
     return entries
 
 # ---------------------------------------------------------------------------

@@ -12,11 +12,10 @@ correct answers, so this metric is also more consistent.
 Per-sample score is 0/1; the reported aggregate is mean*100 (0-100), matching
 the binary judge scale so existing consumers stay unchanged.
 
-Emotion recognition is hedge-tolerant: a prediction naming at most two
-emotions scores 1.0 if the reference is among them ("frustration or anger"
-matches "anger"), since these models often name overlapping emotions. Listing
-three or more emotions does not earn credit, so dumping every label can't game
-the score.
+Emotion recognition scores the first emotion the prediction names: the prompts
+list the allowed emotions, so a hedge gets no extra credit ("frustration or
+anger" does not match "anger"). Emotions cited after the answer, typically in
+an explanation ("**frustration** ... no sign of anger"), are ignored.
 
 Age recognition uses a slightly fuzzier label space: precise decade buckets
 ("teens", "20".."80") when the text names a decade or numeric range, with a
@@ -200,9 +199,7 @@ def compute_label_match(references, predictions, task_type):
         detail = {"reference": ref, "model_prediction": pred, "ref_label": ref_label}
 
         if is_emotion:
-            # A hedge ("frustration or anger") gets credit if the reference is
-            # among the emotions it names, but only for a genuine hedge (<=2
-            # distinct labels) so that listing everything doesn't game the score.
+            # All emotions named, in order; only the first one is scored.
             pred_labels = _emotion_labels(pred)
             pred_label = pred_labels[0] if pred_labels else None
             detail["pred_labels"] = pred_labels
@@ -217,10 +214,7 @@ def compute_label_match(references, predictions, task_type):
             details.append(detail)
             continue
 
-        if is_emotion:
-            matched = ref_label in pred_labels and len(pred_labels) <= 2
-        else:
-            matched = pred_label == ref_label
+        matched = pred_label == ref_label
         score = 1.0 if matched else 0.0
         all_scores.append(score)
         detail["rate_score"] = score
@@ -240,9 +234,8 @@ def _class_balanced_stats(details):
     "male" on CommonVoice — can't ride the prior, unlike plain accuracy).
 
     Classes are the gold (reference) label set; samples with an unresolvable
-    reference are excluded. The effective predicted label honours the same
-    matching as `score` (so the emotion hedge tolerance is respected), making
-    per-class recall consistent with the micro-accuracy reported above.
+    reference are excluded. The predicted label is the one `score` matched on,
+    making per-class recall consistent with the micro-accuracy reported above.
     """
     gold = [d for d in details if d["rate_score"] is not None]
     classes = sorted({d["ref_label"] for d in gold})
@@ -252,8 +245,7 @@ def _class_balanced_stats(details):
     for d in gold:
         ref = d["ref_label"]
         support[ref] += 1
-        # honour hedge-tolerant matching: a correct sample counts as predicting ref
-        pred_eff = ref if d["rate_score"] == 1.0 else d.get("pred_label")
+        pred_eff = d.get("pred_label")
         if pred_eff == ref:
             tp[ref] += 1
         elif pred_eff in fp:  # predicted another gold class

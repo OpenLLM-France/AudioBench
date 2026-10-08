@@ -329,6 +329,7 @@ models:
   - id: voxtral_small_24b_2507    # 24B Voxtral; ~48GB bf16 -> needs VRAM headroom
     gpu_memory_utilization: 0.65
   - id: gemma_4_e2b_it            # needs recent vLLM (Gemma4ForConditionalGeneration)
+  - id: gemma_4_e4b_it            # same family, ~8B with embeddings; same container as E2B
   - id: granite_speech_4_1_2b     # ASR/AST specialist; native English prompts for ASR/AST
   # - id: audio_flamingo_3        # need very recent vLLM (and so transformers)
   #   batch_size: 25

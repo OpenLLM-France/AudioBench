@@ -23,6 +23,7 @@ dependencies = [
     "evaluate",
     "datasets<4",
     "jiwer<4",
+    "num2words",
     "more-itertools",
     "huggingface-hub",
     "librosa",
