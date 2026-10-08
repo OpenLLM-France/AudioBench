@@ -112,3 +112,5 @@ details > summary:hover { color: #1e40af; }
 .toggle-bar button { padding: 4px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
   border: none; background: #e2e8f0; color: #475569; transition: background .15s, color .15s; }
 .toggle-bar button.active { background: #3a5a8c; color: white; }
+.page-header .subtitle a { color: #2563eb; text-decoration: none; }
+.page-header .subtitle a:hover { text-decoration: underline; }

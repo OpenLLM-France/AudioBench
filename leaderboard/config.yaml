@@ -6,9 +6,7 @@
 # be ticked back in the browser), and left out of the static figures.
 # --show_all_datasets bypasses this list.
 ignored_datasets:
-  - VoxCeleb  # Speaker identification — only run on some models
   - MuChoMusic
-  - SLUE-SQA5_format_json_answer  # Format following
   # Information Extraction
   - SLUE-SQA5_time2word
   - SLUE-SQA5_word2time

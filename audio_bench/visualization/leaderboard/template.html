@@ -17,18 +17,18 @@ __NAV_ITEMS__
     <div class="xp-filter-head">
       <span>Experiments</span>
       <div class="flt-btns">
-        <button id="xp-rename-reset" type="button" title="Annuler tous les renommages">Noms d'origine</button>
-        <button id="xp-toggle-all" type="button">Tout décocher</button>
+        <button id="xp-rename-reset" type="button" title="Undo all renames">Original names</button>
+        <button id="xp-toggle-all" type="button">Uncheck all</button>
       </div>
     </div>
     <div id="xp-filter-tree" class="flt-tree"></div>
   </div>
   <div id="lang-filter" class="flt-panel">
     <div class="xp-filter-head">
-      <span>Langues</span>
+      <span>Languages</span>
       <div class="flt-btns">
-        <button id="lang-fren" type="button" title="Garder uniquement les datasets en français ou en anglais">FR/EN</button>
-        <button id="lang-toggle-all" type="button">Tout décocher</button>
+        <button id="lang-fren" type="button" title="Keep only French or English datasets">FR/EN</button>
+        <button id="lang-toggle-all" type="button">Uncheck all</button>
       </div>
     </div>
     <div id="lang-filter-tree" class="flt-tree"></div>
@@ -37,9 +37,9 @@ __NAV_ITEMS__
     <div class="xp-filter-head">
       <span>Datasets</span>
       <div class="flt-btns">
-        <button id="ds-reset" type="button" title="Sélection par défaut">Défaut</button>
-        <button id="ds-core" type="button" title="Sélection par défaut, limitée aux tâches ASR, AST et QA">ASR/AST/QA</button>
-        <button id="ds-toggle-all" type="button">Tout cocher</button>
+        <button id="ds-reset" type="button" title="Default selection">Default</button>
+        <button id="ds-core" type="button" title="Default selection, restricted to the ASR, AST and QA tasks">ASR/AST/QA</button>
+        <button id="ds-toggle-all" type="button">Check all</button>
       </div>
     </div>
     <div id="ds-filter-tree" class="flt-tree"></div>
@@ -48,7 +48,9 @@ __NAV_ITEMS__
 <main>
 <header class="page-header">
   <h1>French &amp; English Audio LLM Leaderboard</h1>
-  <p class="subtitle">Multi-task benchmark of audio language models (ASR, translation, QA…), focused on French and English, with additional results in German, Spanish, Italian, Dutch, Portuguese and Arabic</p>
+  <p class="subtitle">Multi-task benchmark of audio language models (ASR, translation, QA…), focused on French and English, with additional results in German, Spanish, Italian, Dutch, Portuguese and Arabic.
+    <a href="https://github.com/OpenLLM-France/AudioBench">Source code</a> ·
+    <a href="https://huggingface.co/datasets/OpenLLM-France/Luciole-Audio-Evaluation-Dataset">Evaluation datasets</a></p>
 </header>
 __SECTIONS__
 </main>

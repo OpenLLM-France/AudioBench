@@ -449,7 +449,7 @@
       g.cb.indeterminate = n > 0 && n < g.leaves.length;
       g.count.textContent = '(' + n + '/' + g.leaves.length + ')';
     });
-    toggleBtn.textContent = dsOn.every(Boolean) ? 'Tout décocher' : 'Tout cocher';
+    toggleBtn.textContent = dsOn.every(Boolean) ? 'Uncheck all' : 'Check all';
   }
 
   function update() { syncBoxes(); refresh(); }
@@ -502,7 +502,7 @@
 
   function updateLangs() {
     langs.forEach(function (l) { langBoxes[l].checked = langOn[l]; });
-    langToggleBtn.textContent = allLangsOn() ? 'Tout décocher' : 'Tout cocher';
+    langToggleBtn.textContent = allLangsOn() ? 'Uncheck all' : 'Check all';
     update();
   }
 

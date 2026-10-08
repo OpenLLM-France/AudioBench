@@ -17,12 +17,12 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = 'PNG';
-    btn.title = 'Télécharger cette table en PNG';
+    btn.title = 'Download this table as PNG';
     bar.appendChild(btn);
     tbl.parentNode.insertBefore(bar, tbl);
 
     btn.addEventListener('click', function () {
-      if (!window.htmlToImage) { window.alert('html-to-image non chargé (pas de connexion au CDN ?)'); return; }
+      if (!window.htmlToImage) { window.alert('html-to-image not loaded (no connection to the CDN?)'); return; }
       btn.disabled = true;
       window.htmlToImage.toPng(tbl, {
         pixelRatio: 2,

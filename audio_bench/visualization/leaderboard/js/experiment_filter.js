@@ -83,7 +83,7 @@
   }
 
   function askRename(m) {
-    var v = window.prompt('Nouveau nom pour ' + m + ' (vide = nom d\'origine) :', displayName(m));
+    var v = window.prompt('New name for ' + m + ' (empty = original name):', displayName(m));
     if (v === null) return;
     v = v.trim();
     if (v && v !== m) renames[m] = v; else delete renames[m];
@@ -156,7 +156,7 @@
 
   document.getElementById('xp-rename-reset').addEventListener('click', function () {
     if (!Object.keys(renames).length) return;
-    if (!window.confirm('Revenir aux noms d\'origine pour toutes les expériences ?')) return;
+    if (!window.confirm('Restore the original names for all experiments?')) return;
     renames = {};
     saveRenames();
     applyRenames();
@@ -184,7 +184,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'xp-rename';
-    btn.title = 'Renommer (affichage uniquement)';
+    btn.title = 'Rename (display only)';
     btn.textContent = '✎';
     btn.addEventListener('click', function (e) {
       e.preventDefault();
@@ -277,7 +277,7 @@
     });
     if (window.refreshReportTables) window.refreshReportTables();
     var allChecked = models.every(function (m) { return checked[m]; });
-    toggleBtn.textContent = allChecked ? 'Tout décocher' : 'Tout cocher';
+    toggleBtn.textContent = allChecked ? 'Uncheck all' : 'Check all';
   }
 
   toggleBtn.addEventListener('click', function () {
