@@ -139,7 +139,7 @@
   function applyRenames() {
     rows.forEach(function (tr) {
       var td = tr.querySelector('td.mname');
-      if (td) td.textContent = displayName(tr.getAttribute('data-model'));
+      if (td) (td.querySelector('a') || td).textContent = displayName(tr.getAttribute('data-model'));
     });
     models.forEach(function (m) {
       var a = leafAliases[m];
@@ -151,6 +151,7 @@
   document.addEventListener('dblclick', function (e) {
     var td = e.target.closest('td.mname');
     if (!td || !td.parentNode.hasAttribute('data-model')) return;
+    if (e.target.closest('a')) return;  // a linked name: rename it from the sidebar
     askRename(td.parentNode.getAttribute('data-model'));
   });
 

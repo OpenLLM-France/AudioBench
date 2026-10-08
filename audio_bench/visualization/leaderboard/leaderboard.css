@@ -51,6 +51,8 @@ tr.xp-hidden { display: none !important; }
 .flt-tree .xp-alias { color: #93c5fd; }
 .flt-tree li.flt-masked > label { opacity: .4; }
 td.mname { cursor: text; }
+td.mname a { color: inherit; text-decoration: none; }
+td.mname a:hover { color: #2563eb; text-decoration: underline; }
 .tbl-tools { display: flex; justify-content: flex-start; margin: 4px 0 -4px; }
 .tbl-tools button { font-size: 11px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;
                     border-radius: 4px; padding: 2px 8px; cursor: pointer; }

@@ -58,6 +58,9 @@ def _load_leaderboard_config(path):
         "organization_renames": name_map("organization_renames"),
         "model_sizes": [(re.compile(fill(p)), str(size))
                         for p, size in cfg.get("model_sizes") or []],
+        "hf_links": bool(cfg.get("hf_links")),
+        "hf_unlinked_models": [re.compile(fill(p))
+                               for p in cfg.get("hf_unlinked_models") or []],
     }
 
 
@@ -65,7 +68,7 @@ def use_leaderboard_config(path):
     """(Re)load the leaderboard config into the module-level settings below."""
     global _IGNORED_DATASETS, _AVG_EXCLUDED_TASK_LANGS, CONSORTIUM_NAME, \
         ONLY_SHOW_CONSORTIUM_MODELS, _IGNORED_MODEL_PATTERNS, _MODEL_NAME_CORRECTIONS, \
-        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES
+        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES, _HF_LINKS, _HF_UNLINKED_MODELS
     cfg = _load_leaderboard_config(path)
     _IGNORED_DATASETS = cfg["ignored_datasets"]
     _AVG_EXCLUDED_TASK_LANGS = cfg["avg_excluded_task_langs"]
@@ -75,6 +78,8 @@ def use_leaderboard_config(path):
     _MODEL_NAME_CORRECTIONS = cfg["model_renames"] | ONLY_SHOW_CONSORTIUM_MODELS
     _MODEL_SIZE_OVERRIDES = cfg["model_sizes"]
     _ORGANIZATION_RENAMES = cfg["organization_renames"]
+    _HF_LINKS = cfg["hf_links"]
+    _HF_UNLINKED_MODELS = cfg["hf_unlinked_models"]
 
 
 use_leaderboard_config(_LEADERBOARD_CONFIG)
@@ -98,12 +103,28 @@ def _is_model_ignored(model_name):
 # model id as a hover tooltip in the tables.
 _MODEL_CHECKPOINT = {}
 
+# Maps the display model name -> the model_name of its score files (its
+# Hugging Face id when hf_links is set). Populated like _MODEL_CHECKPOINT.
+_MODEL_HF_ID = {}
+
+
+def _model_hf_url(m):
+    """Hugging Face page of model *m*, or None (hf_links off, or unlinked model)."""
+    if not _HF_LINKS or any(p.search(m) for p in _HF_UNLINKED_MODELS):
+        return None
+    hf_id = _MODEL_HF_ID.get(m, m)
+    return f"https://huggingface.co/{hf_id}" if "/" in hf_id else None
+
 
 def _model_name_td(m):
-    """Render the model-name table cell, showing the model id on hover."""
+    """Render the model-name table cell, showing the model id on hover and
+    linking to the model's Hugging Face page when it has one."""
     model_id = _MODEL_CHECKPOINT.get(m, m)
     title_attr = f' title="{html.escape(model_id, quote=True)}"' if model_id != m else ""
-    return f'<td class="mname"{title_attr}>{m}</td>'
+    url = _model_hf_url(m)
+    name = (f'<a href="{html.escape(url, quote=True)}" target="_blank" rel="noopener">{m}</a>'
+            if url else m)
+    return f'<td class="mname"{title_attr}>{name}</td>'
 
 LOWER_IS_BETTER = {"wer"}
 ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
@@ -273,6 +294,7 @@ def load_all_scores(input_folder, show_all_models=False, show_all_datasets=False
                 continue
             # Remember the model id (results folder name) for the hover tooltip.
             _MODEL_CHECKPOINT.setdefault(model_name, model_id)
+            _MODEL_HF_ID.setdefault(model_name, raw_model_name)
             task = data.get("task")
             language = data.get("language")
             sub_task = data.get("sub_task")
@@ -333,8 +355,9 @@ def _finalize_model_names(entries):
     for e in entries:
         e["model_name"] = renames.get(e["model_name"], e["model_name"])
     for old, new in renames.items():
-        if old in _MODEL_CHECKPOINT:
-            _MODEL_CHECKPOINT[new] = _MODEL_CHECKPOINT.pop(old)
+        for names_map in (_MODEL_CHECKPOINT, _MODEL_HF_ID):
+            if old in names_map:
+                names_map[new] = names_map.pop(old)
     return entries
 
 # ---------------------------------------------------------------------------
