@@ -30,9 +30,5 @@ model_sizes:
   - ['^mistralai/Voxtral-Small-24B-2507$', 24.3B]
   - ['^google/gemma-4-E2B-it$', 5.1B]
 
-# Model names are Hugging Face ids: link each one to its HF page in the tables,
-# except the models matched below (regex on the model name), which have no
-# public page yet.
+# Model names are Hugging Face ids: link each one to its HF page in the tables.
 hf_links: true
-hf_unlinked_models:
-  - '^OpenLLM-France/Luciole-1B-Audio'

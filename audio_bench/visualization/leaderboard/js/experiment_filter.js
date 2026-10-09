@@ -279,6 +279,12 @@
     if (window.refreshReportTables) window.refreshReportTables();
     var allChecked = models.every(function (m) { return checked[m]; });
     toggleBtn.textContent = allChecked ? 'Uncheck all' : 'Check all';
+    updateCount();
+  }
+
+  function updateCount() {
+    document.getElementById('xp-count').textContent =
+      '(' + models.filter(function (m) { return checked[m]; }).length + '/' + models.length + ')';
   }
 
   toggleBtn.addEventListener('click', function () {
@@ -291,5 +297,6 @@
   });
 
   refreshGroups();
+  updateCount();
   applyRenames();
 })();

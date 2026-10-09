@@ -19,7 +19,8 @@
     btn.textContent = 'PNG';
     btn.title = 'Download this table as PNG';
     bar.appendChild(btn);
-    tbl.parentNode.insertBefore(bar, tbl);
+    var card = tbl.closest('.scroll') || tbl;
+    card.parentNode.insertBefore(bar, card);
 
     btn.addEventListener('click', function () {
       if (!window.htmlToImage) { window.alert('html-to-image not loaded (no connection to the CDN?)'); return; }

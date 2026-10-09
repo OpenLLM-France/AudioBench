@@ -4,54 +4,51 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>French &amp; English Audio LLM Leaderboard</title>
+<meta name="description" content="Multi-task scores of audio language models on French and English benchmarks, by OpenLLM-France.">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
 __STYLES__
 </head>
 <body>
-<nav class="sidebar">
-  <ul>
-__NAV_ITEMS__
-  </ul>
-  <div id="xp-filter" class="flt-panel">
-    <div class="xp-filter-head">
-      <span>Experiments</span>
-      <div class="flt-btns">
-        <button id="xp-rename-reset" type="button" title="Undo all renames">Original names</button>
-        <button id="xp-toggle-all" type="button">Uncheck all</button>
-      </div>
-    </div>
-    <div id="xp-filter-tree" class="flt-tree"></div>
-  </div>
-  <div id="lang-filter" class="flt-panel">
-    <div class="xp-filter-head">
-      <span>Languages</span>
-      <div class="flt-btns">
-        <button id="lang-fren" type="button" title="Keep only French or English datasets">FR/EN</button>
-        <button id="lang-toggle-all" type="button">Uncheck all</button>
-      </div>
-    </div>
-    <div id="lang-filter-tree" class="flt-tree"></div>
-  </div>
-  <div id="ds-filter" class="flt-panel">
-    <div class="xp-filter-head">
-      <span>Datasets</span>
-      <div class="flt-btns">
-        <button id="ds-reset" type="button" title="Default selection">Default</button>
-        <button id="ds-core" type="button" title="Default selection, restricted to the ASR, AST and QA tasks">ASR/AST/QA</button>
-        <button id="ds-toggle-all" type="button">Check all</button>
-      </div>
-    </div>
-    <div id="ds-filter-tree" class="flt-tree"></div>
-  </div>
-</nav>
 <main>
-<header class="page-header">
   <h1>French &amp; English Audio LLM Leaderboard</h1>
-  <p class="subtitle">Multi-task benchmark of audio language models (ASR, translation, QA…), focused on French and English, with additional results in German, Spanish, Italian, Dutch, Portuguese and Arabic.</p>
-  <p class="subtitle"><a href="https://github.com/OpenLLM-France/AudioBench">Source code</a> ·
-    <a href="https://huggingface.co/datasets/OpenLLM-France/Luciole-Audio-Evaluation-Dataset">Evaluation datasets</a></p>
-</header>
+  <div class="muted"><a href="https://github.com/OpenLLM-France/AudioBench">Source code</a> ·
+    <a href="https://huggingface.co/datasets/OpenLLM-France/Luciole-Audio-Evaluation-Dataset">Evaluation datasets</a></div>
+  <p class="intro">Multi-task benchmark of audio language models (ASR, translation, QA…), focused on French and English,
+    with additional results in German, Spanish, Italian, Dutch, Portuguese and Arabic.</p>
+
+  <nav class="tabs" id="tabs">
+__NAV_ITEMS__
+  </nav>
+
+  <div class="controls" id="controls">
+    <div class="group" id="lang-filter"><span class="group-label all" id="lang-toggle-all" title="Select all / none">Languages</span>
+      <span id="lang-filter-tree"></span></div>
+    <div class="group">
+      <details class="dropdown" id="ds-filter">
+        <summary>Datasets <span class="dd-count" id="ds-count"></span></summary>
+        <div class="dd-panel">
+          <div class="dd-head">
+            <button id="ds-reset" type="button" title="Default selection">Default</button>
+            <button id="ds-core" type="button" title="Default selection, restricted to the ASR, AST and QA tasks">ASR/AST/QA</button>
+            <button id="ds-toggle-all" type="button">Check all</button>
+          </div>
+          <div id="ds-filter-tree" class="flt-tree"></div>
+        </div>
+      </details>
+      <details class="dropdown" id="xp-filter">
+        <summary>Models <span class="dd-count" id="xp-count"></span></summary>
+        <div class="dd-panel">
+          <div class="dd-head">
+            <button id="xp-rename-reset" type="button" title="Undo all renames">Original names</button>
+            <button id="xp-toggle-all" type="button">Uncheck all</button>
+          </div>
+          <div id="xp-filter-tree" class="flt-tree"></div>
+        </div>
+      </details>
+    </div>
+  </div>
+
 __SECTIONS__
 </main>
 <div id="celltip"></div>

@@ -59,8 +59,6 @@ def _load_leaderboard_config(path):
         "model_sizes": [(re.compile(fill(p)), str(size))
                         for p, size in cfg.get("model_sizes") or []],
         "hf_links": bool(cfg.get("hf_links")),
-        "hf_unlinked_models": [re.compile(fill(p))
-                               for p in cfg.get("hf_unlinked_models") or []],
     }
 
 
@@ -68,7 +66,7 @@ def use_leaderboard_config(path):
     """(Re)load the leaderboard config into the module-level settings below."""
     global _IGNORED_DATASETS, _AVG_EXCLUDED_TASK_LANGS, CONSORTIUM_NAME, \
         ONLY_SHOW_CONSORTIUM_MODELS, _IGNORED_MODEL_PATTERNS, _MODEL_NAME_CORRECTIONS, \
-        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES, _HF_LINKS, _HF_UNLINKED_MODELS
+        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES, _HF_LINKS
     cfg = _load_leaderboard_config(path)
     _IGNORED_DATASETS = cfg["ignored_datasets"]
     _AVG_EXCLUDED_TASK_LANGS = cfg["avg_excluded_task_langs"]
@@ -79,7 +77,6 @@ def use_leaderboard_config(path):
     _MODEL_SIZE_OVERRIDES = cfg["model_sizes"]
     _ORGANIZATION_RENAMES = cfg["organization_renames"]
     _HF_LINKS = cfg["hf_links"]
-    _HF_UNLINKED_MODELS = cfg["hf_unlinked_models"]
 
 
 use_leaderboard_config(_LEADERBOARD_CONFIG)
@@ -109,8 +106,8 @@ _MODEL_HF_ID = {}
 
 
 def _model_hf_url(m):
-    """Hugging Face page of model *m*, or None (hf_links off, or unlinked model)."""
-    if not _HF_LINKS or any(p.search(m) for p in _HF_UNLINKED_MODELS):
+    """Hugging Face page of model *m*, or None when hf_links is off."""
+    if not _HF_LINKS:
         return None
     hf_id = _MODEL_HF_ID.get(m, m)
     return f"https://huggingface.co/{hf_id}" if "/" in hf_id else None
@@ -231,7 +228,7 @@ def _lang_sort_key(lang: str):
     return (1, 0, up)
 
 
-MISSING_COLOR = "#e0e0e0"
+MISSING_COLOR = "#f1f0ec"
 RANK_COLORS = {
     "first": "#5dade2",        # sky blue
     "second": "#82e0aa",       # green
@@ -1377,6 +1374,9 @@ def plot_size_vs_performance(entries, collector, *, category="Overview",
             height=500,
             width=800,
             template="plotly_white",
+            font=dict(family="system-ui, sans-serif", color="#1d1d1b"),  # page palette
+            xaxis=dict(gridcolor="#e6e4df", linecolor="#e6e4df"),
+            yaxis=dict(gridcolor="#e6e4df", linecolor="#e6e4df"),
         )
 
         collector.append({
@@ -1419,7 +1419,7 @@ def _render_table(tbl_id, models, aggregates, columns):
         else:
             top.append(f'<th rowspan="2">{header}</th>')
 
-    lines = [f'<table class="ov-tbl" id="{tbl_id}">',
+    lines = [f'<div class="scroll"><table class="ov-tbl" id="{tbl_id}">',
              "<thead><tr>" + "".join(top) + "</tr><tr>" + "".join(bottom) + "</tr></thead>",
              "<tbody>"]
     for m in models:
@@ -1432,7 +1432,7 @@ def _render_table(tbl_id, models, aggregates, columns):
             attrs = f' class="lang-col" data-group="{_slug(key)}"'
             lines += [td(sub_cells.get(m), attrs) for _, sub_cells in subs]
         lines.append("</tr>")
-    lines.append("</tbody></table>")
+    lines.append("</tbody></table></div>")
     return lines
 
 
@@ -1440,12 +1440,9 @@ def _rank_legend_html():
     """Colour legend of the 1st / 2nd / second to last / last cells."""
     items = [("first", "1st"), ("second", "2nd"), ("before_last", "Second to last"), ("last", "Last")]
     return (
-        '<div style="display:flex;gap:16px;align-items:center;font-size:12px;margin:8px 0;">'
-        + "".join(
-            '<span style="display:inline-flex;align-items:center;gap:4px;">'
-            f'<span style="width:12px;height:12px;background:{RANK_COLORS[key]};'
-            f'border:1px solid #ccc;border-radius:2px;"></span>{label}</span>'
-            for key, label in items)
+        '<div class="legend">'
+        + " ".join(f'<span><span class="swatch" style="background:{RANK_COLORS[key]}"></span>{label}</span>'
+                   for key, label in items)
         + '</div>'
     )
 
@@ -1502,8 +1499,7 @@ def plot_overview_table(entries, collector, *, title="Overview",
                      for m, v in data["task_model_score"][task].items()}
         columns.append((task, header, cells, _sub_columns(parts)))
 
-    lines = [_rank_legend_html()]
-    lines += _render_table(table_id, data["all_models"], table_aggregates, columns)
+    lines = _render_table(table_id, data["all_models"], table_aggregates, columns)
     lines.append(_agg_payload_html(table_id, table_aggregates,
                                    {t: data["task_disp_score"].get(t, {}) for t in column_tasks},
                                    {t: data["task_ascending"].get(t, False) for t in column_tasks}))
@@ -1635,14 +1631,9 @@ def _build_summary_table(task, metric, task_raw, agg_lang, collector,
 
     lines = []
     if subtitle:
-        lines.append(
-            f'<div style="font-size:14px;font-weight:600;color:#1e293b;margin:14px 0 4px;'
-            f'border-left:3px solid #3b82f6;padding-left:8px">{subtitle}</div>'
-        )
-    title = _format_suptitle(cat_name, metric)
-    lines.append(
-        f'<div style="font-size:15px;font-weight:600;color:#475569;margin:8px 0">{title}</div>'
-    )
+        lines.append(f'<h3>{subtitle}</h3>')
+    unit = " (%)" if metric in ZERO_TO_ONE_RANGE else ""
+    lines.append(f'<div class="tbl-title">{metric.upper()}{unit}</div>')
     lines += _render_table(tbl_id, all_models, table_aggregates, columns)
     ascending = _sort_ascending(metric)
     lines.append(_agg_payload_html(
@@ -1715,7 +1706,7 @@ def _build_dual_summary_tables(task, metric, task_raw, agg_lang, agg_sub,
 # The page skeleton, its stylesheet and its scripts live in leaderboard/ as plain
 # files; build_html_report() inlines them so the report stays a single file.
 _LEADERBOARD_DIR = Path(__file__).parent / "leaderboard"
-_REPORT_SCRIPTS = ["toggles.js", "tooltip.js", "experiment_filter.js", "table_engine.js", "png_export.js"]
+_REPORT_SCRIPTS = ["tabs.js", "toggles.js", "tooltip.js", "experiment_filter.js", "table_engine.js", "png_export.js"]
 
 
 def _render_template():
@@ -1766,18 +1757,14 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
     # --- Build nav HTML ---
     nav_lines = []
 
-    if overview_cats:
-        nav_lines.append('    <li class="nav-group">Overview</li>')
-        for cat in overview_cats:
-            slug = _slug(cat)
-            label = "All Tasks" if cat == "Overview" else cat.replace("Overview ", "")
-            nav_lines.append(f'    <li><a href="#cat-{slug}">{label}</a></li>')
-
-    if tasks_cats:
-        nav_lines.append('    <li class="nav-group">Tasks</li>')
-        for task, cat in tasks_cats:
-            slug = _slug(cat)
-            nav_lines.append(f'    <li><a href="#cat-{slug}">{task}</a></li>')
+    for cat in overview_cats:
+        # "Overview (FR/EN — ASR, AST, QA)" -> "FR/EN — ASR, AST, QA"
+        label = cat[len("Overview"):].strip(" ()") or "Overview"
+        nav_lines.append(f'    <a href="#cat-{_slug(cat)}">{label}</a>')
+    if overview_cats and tasks_cats:
+        nav_lines.append('    <span class="tab-sep"></span>')
+    for task, cat in tasks_cats:
+        nav_lines.append(f'    <a href="#cat-{_slug(cat)}">{task}</a>')
 
     # --- Build section HTML ---
     section_blocks = []
@@ -1789,12 +1776,17 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
         violins = [it for it in items if it["chart_type"] == "violin"]
         tables = [it for it in items if it["chart_type"] == "table"]
 
-        section_html = f'<section class="category" id="cat-{slug}">\n  <h2>{cat}</h2>\n'
+        section_html = f'<section class="category" id="cat-{slug}" hidden>\n  <h2>{cat}</h2>\n'
+        if tables:
+            section_html += f'  {_rank_legend_html()}\n'
 
         for chart_label, chart_items in [("Tables", tables), ("Score Distributions", violins)]:
             if not chart_items:
                 continue
-            section_html += f'  <details open>\n    <summary>{chart_label}</summary>\n'
+            # Only the violin plots fold away; tables are the page itself.
+            folded = chart_label != "Tables"
+            if folded:
+                section_html += f'  <details class="chart-group" open>\n    <summary>{chart_label}</summary>\n'
             for it in chart_items:
                 if "raw_html" in it:
                     raw = _resolve_sym_tokens(it["raw_html"])
@@ -1808,7 +1800,8 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
                         div_id=div_id,
                     )
                     section_html += f'    <div class="figure-wrapper">{fig_html}</div>\n'
-            section_html += '  </details>\n'
+            if folded:
+                section_html += '  </details>\n'
 
         section_html += '</section>'
         section_blocks.append(section_html)

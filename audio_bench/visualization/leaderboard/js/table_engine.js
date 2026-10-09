@@ -336,9 +336,10 @@
         return w.classList.contains('ds-hidden');
       });
       sec.classList.toggle('ds-hidden', empty);
-      var link = document.querySelector('nav.sidebar a[href="#' + sec.id + '"]');
-      if (link) link.parentNode.classList.toggle('ds-hidden', empty);
+      var link = document.querySelector('#tabs a[href="#' + sec.id + '"]');
+      if (link) link.classList.toggle('ds-hidden', empty);
     });
+    if (window.reportTabs) window.reportTabs.sync();
   }
 
   function refresh() {
@@ -450,6 +451,8 @@
       g.count.textContent = '(' + n + '/' + g.leaves.length + ')';
     });
     toggleBtn.textContent = dsOn.every(Boolean) ? 'Uncheck all' : 'Check all';
+    document.getElementById('ds-count').textContent =
+      '(' + dsOn.filter(Boolean).length + '/' + dsOn.length + ')';
   }
 
   function update() { syncBoxes(); refresh(); }
@@ -470,7 +473,8 @@
   });
 
   // ===================================================================
-  // Language filter panel: one checkbox per language.
+  // Language filter: one toggle button per language; clicking the
+  // "Languages" label selects all / none.
   // ===================================================================
   var langTreeEl = document.getElementById('lang-filter-tree');
   var langToggleBtn = document.getElementById('lang-toggle-all');
@@ -478,45 +482,28 @@
     return langKey(a) < langKey(b) ? -1 : langKey(a) > langKey(b) ? 1 : 0;
   });
   var langBoxes = {};
-  var langUl = document.createElement('ul');
   langs.forEach(function (l) {
     var n = dsLangs.filter(function (ls) { return ls.indexOf(l) !== -1; }).length;
-    var li = document.createElement('li');
-    var lab = document.createElement('label');
-    var cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.addEventListener('change', function () { langOn[l] = cb.checked; updateLangs(); });
-    langBoxes[l] = cb;
-    var count = document.createElement('span');
-    count.className = 'xp-count';
-    count.textContent = '(' + n + ')';
-    lab.appendChild(cb);
-    lab.appendChild(document.createTextNode(l));
-    lab.appendChild(count);
-    li.appendChild(lab);
-    langUl.appendChild(li);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = l;
+    btn.title = n + ' dataset' + (n > 1 ? 's' : '');
+    btn.addEventListener('click', function () { langOn[l] = !langOn[l]; updateLangs(); });
+    langBoxes[l] = btn;
+    langTreeEl.appendChild(btn);
   });
-  langTreeEl.appendChild(langUl);
 
   function allLangsOn() { return langs.every(function (l) { return langOn[l]; }); }
 
   function updateLangs() {
-    langs.forEach(function (l) { langBoxes[l].checked = langOn[l]; });
-    langToggleBtn.textContent = allLangsOn() ? 'Uncheck all' : 'Check all';
+    langs.forEach(function (l) { langBoxes[l].setAttribute('aria-pressed', langOn[l] ? 'true' : 'false'); });
     update();
   }
 
-  function selectLangs(only) {
-    langs.forEach(function (l) { langOn[l] = !only || only.indexOf(l) !== -1; });
-    updateLangs();
-  }
   langToggleBtn.addEventListener('click', function () {
     var next = !allLangsOn();
     langs.forEach(function (l) { langOn[l] = next; });
     updateLangs();
-  });
-  document.getElementById('lang-fren').addEventListener('click', function () {
-    selectLangs(['FR', 'EN']);
   });
 
   updateLangs();
