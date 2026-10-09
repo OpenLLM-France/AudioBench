@@ -230,8 +230,9 @@
 
     // 1. Aggregates + row order (by the first aggregate). Rows are sorted
     // first, so that ties in the other aggregates are coloured in row order.
+    var vals = null;
     if (t.agg) {
-      var vals = computeAggs(t.agg, on);
+      vals = computeAggs(t.agg, on);
       var first = t.agg.aggs[0];
       if (first) {
         var fv = vals[first.name];
@@ -319,6 +320,17 @@
       return !t.cols[ci][0].classList.contains('ds-hidden');
     });
     t.tbl.classList.toggle('ds-empty-tbl', !anyCol);
+
+    // 5. Rank (#): position among the shown rows ranked by the first aggregate.
+    var first = t.agg && t.agg.aggs[0];
+    var fv = first ? vals[first.name] : null;
+    var rank = 0;
+    trs.forEach(function (tr) {
+      var td = tr.querySelector('td.rank');
+      if (!td) return;
+      var shown = rowOn(tr) && rowHasData.get(tr) && (!fv || tr.getAttribute('data-model') in fv);
+      td.textContent = shown ? ++rank : '';
+    });
   }
 
   // Hide figure wrappers whose tables are all empty, then empty sections.

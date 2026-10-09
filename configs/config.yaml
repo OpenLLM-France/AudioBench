@@ -296,9 +296,11 @@ global:
       metrics: label_match
       task: Spoken Language Identification
       language: en
+      # Balanced subset: 47 samples x 6 languages (en, fr, de, es, it, zh-CN)
+      number_of_samples: 250
       datasets:
         - name: CoVost2_AIR-Bench
-          path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
+          path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test_balanced.jsonl
 
     - group: diarization
       metrics: flow_judge

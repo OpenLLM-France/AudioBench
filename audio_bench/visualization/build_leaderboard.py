@@ -123,7 +123,7 @@ def _model_name_td(m):
     url = _model_hf_url(m)
     name = (f'<a href="{html.escape(url, quote=True)}" target="_blank" rel="noopener">{m}</a>'
             if url else m)
-    return f'<td class="mname"{title_attr}>{name}</td>'
+    return f'<td class="mname left"{title_attr}>{name}</td>'
 
 LOWER_IS_BETTER = {"wer"}
 ZERO_TO_ONE_RANGE = {"wer", "meteor", "acc"}
@@ -1398,8 +1398,8 @@ def _render_table(tbl_id, models, aggregates, columns):
     *columns* lists ``(key, header, cells, subs)``: *cells* maps a model to the
     ``(html, tooltip)`` of its cell (see ``_score_cell``), *subs* is the
     breakdown hidden behind a [+] toggle, as ``(header, cells)`` sub-columns.
-    Aggregate cells are left empty: the report JS computes them, like every
-    value, CI, rank colour and tooltip, and sorts the rows.
+    Aggregate and rank (#) cells are left empty: the report JS computes them,
+    like every value, CI, rank colour and tooltip, and sorts the rows.
     """
     def td(cell, attrs=""):
         if cell is None:
@@ -1408,7 +1408,8 @@ def _render_table(tbl_id, models, aggregates, columns):
         title = f' title="{tip}"' if tip else ""
         return f"<td{attrs}{title}>{value}</td>"
 
-    top = ['<th rowspan="2">Model</th>', '<th rowspan="2">Size</th>',
+    top = ['<th rowspan="2" class="left">#</th>', '<th rowspan="2" class="left">Model</th>',
+           '<th rowspan="2">Size</th>',
            f'<th colspan="{len(aggregates)}">Aggregation</th>']
     bottom = [f"<th>{_AGG_META[a]['label']}</th>" for a in aggregates]
     for key, header, _, subs in columns:
@@ -1425,6 +1426,7 @@ def _render_table(tbl_id, models, aggregates, columns):
              "<tbody>"]
     for m in models:
         lines.append(f'<tr data-model="{html.escape(m, quote=True)}">')
+        lines.append('<td class="rank left"></td>')
         lines.append(_model_name_td(m))
         lines.append(f"<td>{_extract_model_size(m)}</td>")
         lines += [f'<td data-agg="{a}"></td>' for a in aggregates]
