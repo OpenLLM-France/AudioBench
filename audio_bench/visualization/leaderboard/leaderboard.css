@@ -105,6 +105,7 @@ details.chart-group > summary { cursor: pointer; color: var(--muted); font-weigh
 .ov-tbl th.lang-col { color: var(--muted); }
 .ov-tbl thead th a { color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
 .ov-tbl thead th a:hover { color: var(--accent); }
+.ov-tbl .metric-tip { cursor: help; }
 .ov-tbl .toggle-btn { margin-left: 4px; font-size: 11px; line-height: 1; padding: 2px 5px; color: var(--muted);
                       vertical-align: 1px; }
 .ov-tbl .toggle-btn:hover { color: var(--accent); border-color: var(--accent); }

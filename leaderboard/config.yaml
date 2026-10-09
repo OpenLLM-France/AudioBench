@@ -32,3 +32,9 @@ model_sizes:
 
 # Model names are Hugging Face ids: link each one to its HF page in the tables.
 hf_links: true
+
+# Models unchecked by default in the report's model filter (regex on the model
+# name); they can still be ticked back in the browser, and are left out of the
+# static figures. --show_all_models bypasses this list.
+hidden_models:
+  - '^OpenLLM-France/Luciole-1B-Audio'

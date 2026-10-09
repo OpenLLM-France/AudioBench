@@ -11,7 +11,9 @@
   var treeEl = document.getElementById('xp-filter-tree');
   var toggleBtn = document.getElementById('xp-toggle-all');
   var checked = {};
-  models.forEach(function (m) { checked[m] = true; });
+  // Models listed in hidden_models (config) start unchecked.
+  var offModels = JSON.parse(document.getElementById('report-data').textContent).off_models || [];
+  models.forEach(function (m) { checked[m] = offModels.indexOf(m) === -1; });
 
   // -------------------------------------------------------------------
   // Build a trie of models, tokenized on "/" and "_" (keeping the
@@ -168,7 +170,7 @@
     var label = document.createElement('label');
     var cb = document.createElement('input');
     cb.type = 'checkbox';
-    cb.checked = true;
+    cb.checked = checked[modelName];
     cb.addEventListener('change', function () {
       checked[modelName] = cb.checked;
       refreshGroups();
@@ -297,6 +299,6 @@
   });
 
   refreshGroups();
-  updateCount();
+  applyFilter();
   applyRenames();
 })();

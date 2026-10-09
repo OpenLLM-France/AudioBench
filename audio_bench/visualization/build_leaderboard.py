@@ -59,6 +59,7 @@ def _load_leaderboard_config(path):
         "model_sizes": [(re.compile(fill(p)), str(size))
                         for p, size in cfg.get("model_sizes") or []],
         "hf_links": bool(cfg.get("hf_links")),
+        "hidden_models": [re.compile(fill(p)) for p in cfg.get("hidden_models") or []],
     }
 
 
@@ -66,7 +67,7 @@ def use_leaderboard_config(path):
     """(Re)load the leaderboard config into the module-level settings below."""
     global _IGNORED_DATASETS, _AVG_EXCLUDED_TASK_LANGS, CONSORTIUM_NAME, \
         ONLY_SHOW_CONSORTIUM_MODELS, _IGNORED_MODEL_PATTERNS, _MODEL_NAME_CORRECTIONS, \
-        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES, _HF_LINKS
+        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES, _HF_LINKS, _HIDDEN_MODELS
     cfg = _load_leaderboard_config(path)
     _IGNORED_DATASETS = cfg["ignored_datasets"]
     _AVG_EXCLUDED_TASK_LANGS = cfg["avg_excluded_task_langs"]
@@ -77,6 +78,7 @@ def use_leaderboard_config(path):
     _MODEL_SIZE_OVERRIDES = cfg["model_sizes"]
     _ORGANIZATION_RENAMES = cfg["organization_renames"]
     _HF_LINKS = cfg["hf_links"]
+    _HIDDEN_MODELS = cfg["hidden_models"]
 
 
 use_leaderboard_config(_LEADERBOARD_CONFIG)
@@ -673,6 +675,12 @@ def _metric_label(metric):
     return metric.upper() + (" %" if metric in ZERO_TO_ONE_RANGE else "")
 
 
+def _metric_header(name, metric):
+    """Column header *name*, its metric shown on hover rather than in the label."""
+    unit = " (%)" if metric in ZERO_TO_ONE_RANGE else ""
+    return f'<span class="metric-tip" title="Metric: {metric.upper()}{unit}">{name}</span>'
+
+
 def _score_cell(score, metric, model, sub_lines=()):
     """(html, tooltip) of the table cell showing a symbolic *score*.
 
@@ -705,21 +713,14 @@ def _breakdown(model, parts):
 
 def _sub_columns(parts):
     """The ``(header, cells)`` sub-columns of the ``(label, scores, metric)`` parts."""
-    return [(label, {m: _score_cell(v, metric, m) for m, v in scores.items()})
+    return [(_metric_header(label.removesuffix(f" ({_metric_label(metric)})"), metric),
+             {m: _score_cell(v, metric, m) for m, v in scores.items()})
             for label, scores, metric in parts]
 
 
 def _sort_ascending(metric):
     """Return True if lower is better for this metric."""
     return metric in LOWER_IS_BETTER
-
-
-def _two_line_label(label):
-    """Insert <br> before a trailing ' (...)' suffix for two-line table headers."""
-    if label.endswith(')') and ' (' in label:
-        idx = label.rfind(' (')
-        return label[:idx] + '<br>' + label[idx+1:]
-    return label
 
 
 def _extract_model_size(model_name):
@@ -1494,7 +1495,7 @@ def plot_overview_table(entries, collector, *, title="Overview",
         else:
             metric = data["task_metric"][task]
             anchor = "cat-" + _slug("Tasks \u00b7 " + task)
-            header = _two_line_label(f'<a href="#{anchor}">{task}</a> ({_metric_label(metric)})')
+            header = _metric_header(f'<a href="#{anchor}">{task}</a>', metric)
             cells = {m: _score_cell(v, metric, m, _breakdown(m, parts))
                      for m, v in data["task_model_score"][task].items()}
         columns.append((task, header, cells, _sub_columns(parts)))
@@ -1725,7 +1726,8 @@ def _slug(text):
     return re.sub(r'[^a-zA-Z0-9]+', '_', text).strip('_')
 
 
-def build_html_report(collected_figures, output_path, default_off_datasets=()):
+def build_html_report(collected_figures, output_path, default_off_datasets=(),
+                      default_off_models=()):
     """Assemble a single HTML report from collected Plotly figures.
 
     Figures are grouped by category, with violin plots shown before tables
@@ -1734,7 +1736,8 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
 
     Symbolic table cells are resolved into data-* attributes and the score
     graph is embedded for the dataset filter; *default_off_datasets* lists the
-    dataset indices unchecked when the page loads.
+    dataset indices unchecked when the page loads, *default_off_models* the
+    models unchecked in the model filter.
     """
     # Group figures by category, preserving insertion order
     categories = {}
@@ -1813,6 +1816,7 @@ def build_html_report(collected_figures, output_path, default_off_datasets=()):
         "datasets": [list(k) for k in _SYM_DATASETS],
         "super_cats": [_super_category(k[0]) for k in _SYM_DATASETS],
         "off": list(default_off_datasets),
+        "off_models": list(default_off_models),
         "colors": {**RANK_COLORS, "missing": MISSING_COLOR},
     }, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace('__REPORT_DATA__', report_data)
@@ -1887,8 +1891,14 @@ def main():
     def _default_on(e):
         return show_all_datasets or e["dataset_name"] not in _IGNORED_DATASETS
 
-    # Plotly figures are static: they use the default dataset selection.
-    plot_entries = [e for e in all_entries if _default_on(e)]
+    # Models unchecked by default in the model filter (hidden_models).
+    default_off_models = sorted({
+        e["model_name"] for e in all_entries
+        if not show_all_models and any(p.search(e["model_name"]) for p in _HIDDEN_MODELS)})
+
+    # Plotly figures are static: they use the default dataset and model selection.
+    plot_entries = [e for e in all_entries
+                    if _default_on(e) and e["model_name"] not in default_off_models]
     # Tables use symbolic scores so the report JS can recompute them.
     entries = _symbolize_entries(all_entries)
     default_off = sorted({
@@ -1974,7 +1984,8 @@ def main():
         return
 
     output_path = os.path.join(args.output_folder, "index.html")
-    build_html_report(collector, output_path, default_off_datasets=default_off)
+    build_html_report(collector, output_path, default_off_datasets=default_off,
+                      default_off_models=default_off_models)
 
 
 if __name__ == "__main__":
