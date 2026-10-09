@@ -201,7 +201,7 @@ global:
     - group: audio_captioning
       metrics: flow_judge
       task: Audio Captioning
-      language: other
+      language: en
       datasets:
         - name: wavcaps_test
         - name: audiocaps_test
@@ -286,7 +286,7 @@ global:
     - group: music_captioning
       metrics: flow_judge
       task: Music Captioning
-      language: other
+      language: en
       datasets:
         - name: MusicCaps
           path: <DATA_FOLDER>/nemo/music/music-captioning/en/context/MusicCaps/test.jsonl
@@ -295,7 +295,7 @@ global:
     - group: language_identification
       metrics: label_match
       task: Spoken Language Identification
-      language: other
+      language: en
       datasets:
         - name: CoVost2_AIR-Bench
           path: <DATA_FOLDER>/nemo/misc/en/context/AIR_bench/Foundation/speech/covost2/test.jsonl
