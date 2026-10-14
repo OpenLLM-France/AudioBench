@@ -18,6 +18,7 @@ avg_excluded_task_langs:
 
 # Model size shown in the tables (regex on the model name -> size).
 model_sizes:
+  - ['^OpenLLM-France/Luciole-23B-Audio', 24.1B]
   - ['^OpenLLM-France/Luciole-8B-Audio', 8.8B]
   - ['^OpenLLM-France/Luciole-1B-Audio', 1.9B]
   - ['^microsoft/Phi-4-multimodal-instruct$', 5.6B]
@@ -36,5 +37,4 @@ hf_links: true
 # Models unchecked by default in the report's model filter (regex on the model
 # name); they can still be ticked back in the browser, and are left out of the
 # static figures. --show_all_models bypasses this list.
-hidden_models:
-  - '^OpenLLM-France/Luciole-1B-Audio'
+hidden_models: []

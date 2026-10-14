@@ -128,14 +128,6 @@ global:
           path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/word2time/verified_test_pure.jsonl
           prompt_prefix: 'Give only the timestamp (or a list of timestamps if many) in seconds. No sentence, no quotes, no extra words. Format like: 12.1s if one occurence or 12.1s,13.2s if many occurences or 19.3s-23.6s if start and end are asked or "invalid_timestamp" if not found.'
 
-    - group: format_follwing
-      metrics: format_check
-      task: Format Following
-      language: en
-      datasets:
-        - name: SLUE-SQA5_format_json_answer
-          path: <DATA_FOLDER>/nemo/misc/en/context/slue-phase-2-sqa5/format_json_answer/verified_test.jsonl
-
     # Math Question Answering
     - group: math_qa
       metrics: acc
