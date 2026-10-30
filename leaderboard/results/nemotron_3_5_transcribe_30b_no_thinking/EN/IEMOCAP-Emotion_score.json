@@ -1,0 +1,535 @@
+{
+    "model_name": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B (no thinking)",
+    "model_id": "nemotron_3_5_transcribe_30b_no_thinking",
+    "dataset_name": "IEMOCAP-Emotion",
+    "metrics": [
+        "label_match"
+    ],
+    "number_of_samples": 250,
+    "dataset_size": 1004,
+    "task": "EMOTION RECOGNITION",
+    "sub_task": "Emotion",
+    "language": "EN",
+    "label_match": {
+        "score": 33.33333333333333,
+        "std": 0.47140452079103173,
+        "quartiles": {
+            "min": 0.0,
+            "q1": 0.0,
+            "median": 0.0,
+            "q3": 1.0,
+            "max": 1.0
+        },
+        "n_errors": 0,
+        "all_scores": [
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        ],
+        "n_skipped_no_ref_label": 1,
+        "macro_f1": 30.862510479526517,
+        "macro_recall": 36.80084535347693,
+        "majority_baseline": 26.506024096385545,
+        "n_classes": 7,
+        "macro_min_support": 10,
+        "macro_n_classes": 6,
+        "excluded_rare_classes": [
+            {
+                "label": "fear",
+                "n": 3
+            }
+        ],
+        "per_class": {
+            "frustration": {
+                "n": 66,
+                "precision": 38.46153846153847,
+                "recall": 15.151515151515152,
+                "f1": 21.73913043478261
+            },
+            "neutral": {
+                "n": 52,
+                "precision": 35.35353535353536,
+                "recall": 67.3076923076923,
+                "f1": 46.35761589403973
+            },
+            "excited": {
+                "n": 38,
+                "precision": 100.0,
+                "recall": 2.631578947368421,
+                "f1": 5.128205128205128
+            },
+            "anger": {
+                "n": 35,
+                "precision": 30.0,
+                "recall": 25.71428571428571,
+                "f1": 27.69230769230769
+            },
+            "sad": {
+                "n": 35,
+                "precision": 53.84615384615385,
+                "recall": 40.0,
+                "f1": 45.90163934426229
+            },
+            "happy": {
+                "n": 20,
+                "precision": 26.41509433962264,
+                "recall": 70.0,
+                "f1": 38.35616438356165
+            },
+            "fear": {
+                "n": 3,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+            }
+        }
+    },
+    "details": [
+        {
+            "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is happiness.",
+            "model_prediction": "happy",
+            "ref_label": "happy",
+            "pred_labels": [
+                "happy"
+            ],
+            "pred_label": "happy",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+            "model_prediction": "neutral",
+            "ref_label": "neutral",
+            "pred_labels": [
+                "neutral"
+            ],
+            "pred_label": "neutral",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "The speaker's emotion seems sad.",
+            "model_prediction": "frustration",
+            "ref_label": "sad",
+            "pred_labels": [
+                "frustration"
+            ],
+            "pred_label": "frustration",
+            "rate_score": 0.0
+        },
+        {
+            "reference": "The speaker's emotion seems anger.",
+            "model_prediction": "frustration",
+            "ref_label": "anger",
+            "pred_labels": [
+                "frustration"
+            ],
+            "pred_label": "frustration",
+            "rate_score": 0.0
+        },
+        {
+            "reference": "From the speaker's speech, it seems they are in a excited state.",
+            "model_prediction": "surprised",
+            "ref_label": "excited",
+            "pred_labels": [
+                "surprise"
+            ],
+            "pred_label": "surprise",
+            "rate_score": 0.0
+        },
+        {
+            "reference": "Based on the speaker's speech patterns, it seems like they are feeling other.",
+            "model_prediction": "happy",
+            "ref_label": null,
+            "pred_labels": [
+                "happy"
+            ],
+            "pred_label": "happy",
+            "rate_score": null
+        },
+        {
+            "reference": "From the speaker's speech, it seems they are in a happiness state.",
+            "model_prediction": "happy",
+            "ref_label": "happy",
+            "pred_labels": [
+                "happy"
+            ],
+            "pred_label": "happy",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "The speaker's tone sounds excited.",
+            "model_prediction": "neutral",
+            "ref_label": "excited",
+            "pred_labels": [
+                "neutral"
+            ],
+            "pred_label": "neutral",
+            "rate_score": 0.0
+        },
+        {
+            "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+            "model_prediction": "neutral",
+            "ref_label": "neutral",
+            "pred_labels": [
+                "neutral"
+            ],
+            "pred_label": "neutral",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "From the speaker's speech, it seems they are in a sad state.",
+            "model_prediction": "sad",
+            "ref_label": "sad",
+            "pred_labels": [
+                "sad"
+            ],
+            "pred_label": "sad",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "The tone of the speaker's voice suggests that the speaker may be feeling frustration.",
+            "model_prediction": "neutral",
+            "ref_label": "frustration",
+            "pred_labels": [
+                "neutral"
+            ],
+            "pred_label": "neutral",
+            "rate_score": 0.0
+        },
+        {
+            "reference": "Based on the auditory cues, it sounds like the speaker is neutral state.",
+            "model_prediction": "neutral",
+            "ref_label": "neutral",
+            "pred_labels": [
+                "neutral"
+            ],
+            "pred_label": "neutral",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "The speaker's speech suggesting they might be feeling sad.",
+            "model_prediction": "sad",
+            "ref_label": "sad",
+            "pred_labels": [
+                "sad"
+            ],
+            "pred_label": "sad",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "The speaker's tone sounds neutral state.",
+            "model_prediction": "happy",
+            "ref_label": "neutral",
+            "pred_labels": [
+                "happy"
+            ],
+            "pred_label": "happy",
+            "rate_score": 0.0
+        },
+        {
+            "reference": "Based on the auditory cues, it sounds like the speaker is fear.",
+            "model_prediction": "frustration",
+            "ref_label": "fear",
+            "pred_labels": [
+                "frustration"
+            ],
+            "pred_label": "frustration",
+            "rate_score": 0.0
+        },
+        {
+            "reference": "The speaker's emotion seems frustration.",
+            "model_prediction": "frustration",
+            "ref_label": "frustration",
+            "pred_labels": [
+                "frustration"
+            ],
+            "pred_label": "frustration",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "From the speaker's speech, it seems they are in a neutral state state.",
+            "model_prediction": "neutral",
+            "ref_label": "neutral",
+            "pred_labels": [
+                "neutral"
+            ],
+            "pred_label": "neutral",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is sad.",
+            "model_prediction": "sad",
+            "ref_label": "sad",
+            "pred_labels": [
+                "sad"
+            ],
+            "pred_label": "sad",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "Based on the speaker's speech patterns, it seems like they are feeling neutral state.",
+            "model_prediction": "neutral",
+            "ref_label": "neutral",
+            "pred_labels": [
+                "neutral"
+            ],
+            "pred_label": "neutral",
+            "rate_score": 1.0
+        },
+        {
+            "reference": "Based on the tone of the speaker's voice and their delivery, it seems like the speaker is happiness.",
+            "model_prediction": "happy",
+            "ref_label": "happy",
+            "pred_labels": [
+                "happy"
+            ],
+            "pred_label": "happy",
+            "rate_score": 1.0
+        }
+    ]
+}

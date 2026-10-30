@@ -58,6 +58,8 @@ def _load_leaderboard_config(path):
         "organization_renames": name_map("organization_renames"),
         "model_sizes": [(re.compile(fill(p)), str(size))
                         for p, size in cfg.get("model_sizes") or []],
+        "model_notes": [(re.compile(fill(p)), str(note))
+                        for p, note in cfg.get("model_notes") or []],
         "hf_links": bool(cfg.get("hf_links")),
         "hidden_models": [re.compile(fill(p)) for p in cfg.get("hidden_models") or []],
     }
@@ -67,7 +69,7 @@ def use_leaderboard_config(path):
     """(Re)load the leaderboard config into the module-level settings below."""
     global _IGNORED_DATASETS, _AVG_EXCLUDED_TASK_LANGS, CONSORTIUM_NAME, \
         ONLY_SHOW_CONSORTIUM_MODELS, _IGNORED_MODEL_PATTERNS, _MODEL_NAME_CORRECTIONS, \
-        _MODEL_SIZE_OVERRIDES, _ORGANIZATION_RENAMES, _HF_LINKS, _HIDDEN_MODELS
+        _MODEL_SIZE_OVERRIDES, _MODEL_NOTES, _ORGANIZATION_RENAMES, _HF_LINKS, _HIDDEN_MODELS
     cfg = _load_leaderboard_config(path)
     _IGNORED_DATASETS = cfg["ignored_datasets"]
     _AVG_EXCLUDED_TASK_LANGS = cfg["avg_excluded_task_langs"]
@@ -76,6 +78,7 @@ def use_leaderboard_config(path):
     _IGNORED_MODEL_PATTERNS = cfg["ignored_model_patterns"]
     _MODEL_NAME_CORRECTIONS = cfg["model_renames"] | ONLY_SHOW_CONSORTIUM_MODELS
     _MODEL_SIZE_OVERRIDES = cfg["model_sizes"]
+    _MODEL_NOTES = cfg["model_notes"]
     _ORGANIZATION_RENAMES = cfg["organization_renames"]
     _HF_LINKS = cfg["hf_links"]
     _HIDDEN_MODELS = cfg["hidden_models"]
@@ -111,8 +114,14 @@ def _model_hf_url(m):
     """Hugging Face page of model *m*, or None when hf_links is off."""
     if not _HF_LINKS:
         return None
-    hf_id = _MODEL_HF_ID.get(m, m)
+    # A variant suffix (e.g. "... (no thinking)") is not part of the Hugging Face id.
+    hf_id = re.sub(r" \(.*\)$", "", _MODEL_HF_ID.get(m, m))
     return f"https://huggingface.co/{hf_id}" if "/" in hf_id else None
+
+
+def _model_note(m):
+    """Note shown in small under model *m*'s name (config model_notes), or ""."""
+    return next((note for pattern, note in _MODEL_NOTES if pattern.search(m)), "")
 
 
 def _model_name_td(m):
@@ -121,8 +130,13 @@ def _model_name_td(m):
     model_id = _MODEL_CHECKPOINT.get(m, m)
     title_attr = f' title="{html.escape(model_id, quote=True)}"' if model_id != m else ""
     url = _model_hf_url(m)
-    name = (f'<a href="{html.escape(url, quote=True)}" target="_blank" rel="noopener">{m}</a>'
-            if url else m)
+    note = _model_note(m)
+    # The note is shown under the name: a " (note)" suffix of the name would repeat it.
+    base = m.removesuffix(f" ({note})") if note else m
+    name = (f'<a href="{html.escape(url, quote=True)}" target="_blank" rel="noopener">{base}</a>'
+            if url else f'<span>{base}</span>')
+    if note:
+        name += f'<br><small class="mnote">{html.escape(note)}</small>'
     return f'<td class="mname left"{title_attr}>{name}</td>'
 
 LOWER_IS_BETTER = {"wer"}

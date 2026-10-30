@@ -113,6 +113,7 @@ details.chart-group > summary { cursor: pointer; color: var(--muted); font-weigh
 .ci { font-size: 11px; opacity: .65; }
 
 td.mname { cursor: text; }
+td.mname .mnote { color: var(--muted); font-weight: 400; font-size: 11px; }
 
 .tbl-tools { display: flex; justify-content: flex-start; margin: 0 0 6px; }
 .tbl-tools button { font-size: 12px; padding: 1px 8px; color: var(--muted); }

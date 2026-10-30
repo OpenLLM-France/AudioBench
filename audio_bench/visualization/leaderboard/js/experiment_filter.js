@@ -141,7 +141,13 @@
   function applyRenames() {
     rows.forEach(function (tr) {
       var td = tr.querySelector('td.mname');
-      if (td) (td.querySelector('a') || td).textContent = displayName(tr.getAttribute('data-model'));
+      if (!td) return;
+      var name = displayName(tr.getAttribute('data-model'));
+      // The note is shown in small under the name: keep its " (note)" suffix out of it.
+      var note = td.querySelector('.mnote');
+      if (note && name.endsWith(' (' + note.textContent + ')'))
+        name = name.slice(0, -(note.textContent.length + 3));
+      (td.querySelector('a, span') || td).textContent = name;
     });
     models.forEach(function (m) {
       var a = leafAliases[m];

@@ -54,9 +54,11 @@ def _run_flow_judge(metric, input_data, task_type=None):
 
         eval_inputs = []
         kept_items = []
-        all_details = []
+        # One slot per sample, so all_details (and the all_scores built from it) stays in
+        # sample order even when some prompts are discarded.
+        all_details = [None] * len(predictions)
 
-        for q, r, p in zip(questions, references, predictions):
+        for idx, (q, r, p) in enumerate(zip(questions, references, predictions)):
             query = f"{task_context}\n{q}" if task_context else q
 
             eval_input = EvalInput(
@@ -71,7 +73,7 @@ def _run_flow_judge(metric, input_data, task_type=None):
             n_tokens = len(tokenizer.encode(prompt))
 
             if n_tokens > max_model_len:
-                all_details.append({
+                all_details[idx] = {
                     "question": q,
                     "reference": r,
                     "model_prediction": p,
@@ -81,23 +83,23 @@ def _run_flow_judge(metric, input_data, task_type=None):
                     ),
                     "rate_score": 0,
                     "success": 0,
-                })
+                }
                 continue
 
             eval_inputs.append(eval_input)
-            kept_items.append((q, r, p))
+            kept_items.append((idx, q, r, p))
 
         results = judge.batch_evaluate(eval_inputs, save_results=False) if eval_inputs else []
 
-        for (q, r, p), result in zip(kept_items, results):
-            all_details.append({
+        for (idx, q, r, p), result in zip(kept_items, results):
+            all_details[idx] = {
                 "question": q,
                 "reference": r,
                 "model_prediction": p,
                 "judge_response": result.feedback,
                 "rate_score": result.score if result.score is not None else 0,
                 "success": 1 if result.score is not None and result.score >= 0 else 0,
-            })
+            }
 
         del model
         torch.cuda.empty_cache()

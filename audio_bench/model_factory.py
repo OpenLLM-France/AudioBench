@@ -117,6 +117,10 @@ def load_model(model_id, model_path=None, gpu_memory_utilization=0.4, batch_size
         from audio_bench.model_src.vllm.granite_speech import GraniteSpeech
         model = GraniteSpeech(gpu_memory_utilization=gpu_memory_utilization, device=device)
 
+    elif model_id.startswith('nemotron_3_5_transcribe_30b'):
+        from audio_bench.model_src.api.nemotron_transcribe import NemotronTranscribe
+        model = NemotronTranscribe(thinking=not model_id.endswith('_no_thinking'), device=device)
+
     elif model_id == 'kimi_audio_7b_instruct':
         from audio_bench.model_src.transformers.kimi_audio_7b_instruct import KimiAudio7BInstruct
         model = KimiAudio7BInstruct(model_path=model_path, device=device)
@@ -164,6 +168,8 @@ _MODEL_ID_TO_NAME = {
     "gemma_4_e2b_it": "google/gemma-4-E2B-it",
     "gemma_4_e4b_it": "google/gemma-4-E4B-it",
     "granite_speech_4_1_2b": "ibm-granite/granite-speech-4.1-2b",
+    "nemotron_3_5_transcribe_30b": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B (thinking)",
+    "nemotron_3_5_transcribe_30b_no_thinking": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B (no thinking)",
 }
 
 # Prefix-based entries (checked when exact match fails)
