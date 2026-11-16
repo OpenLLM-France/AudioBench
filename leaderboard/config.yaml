@@ -31,6 +31,7 @@ model_sizes:
   - ['^mistralai/Voxtral-Small-24B-2507$', 24.3B]
   - ['^google/gemma-4-E2B-it$', 5.1B]
   - ['^nvidia/NVIDIA-Nemotron-3\.5-Transcribe-30B-A4B', 33.7B]
+  - ['^swiss-ai/Apertus-v1\.5-8B$', 8.9B]
 
 # Note shown in small, in grey, under a model's name in the tables (regex on the
 # model name -> note). A " (note)" suffix of the name is then left out of it.

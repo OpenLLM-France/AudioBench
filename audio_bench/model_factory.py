@@ -73,6 +73,12 @@ def load_model(model_id, model_path=None, gpu_memory_utilization=0.4, batch_size
         from audio_bench.model_src.vllm.seallms_audio_7b import SeallmsAudio7B
         model = SeallmsAudio7B(gpu_memory_utilization=gpu_memory_utilization, device=device)
 
+    elif model_id in _LUCIOLE_RELEASES:
+        # Released checkpoints: the HF repo by default, a local copy through `path`.
+        from audio_bench.model_src.nemo.luciole_audio import LucioleAudio
+        model = LucioleAudio(model_path=model_path or _LUCIOLE_RELEASES[model_id], device=device)
+        model.name = _LUCIOLE_RELEASES[model_id]
+
     elif model_id.startswith('luciole_audio') or model_id.startswith('linagora'):
         from audio_bench.model_src.nemo.luciole_audio import LucioleAudio
         model = LucioleAudio(model_path=model_path, device=device)
@@ -120,6 +126,10 @@ def load_model(model_id, model_path=None, gpu_memory_utilization=0.4, batch_size
     elif model_id.startswith('nemotron_3_5_transcribe_30b'):
         from audio_bench.model_src.api.nemotron_transcribe import NemotronTranscribe
         model = NemotronTranscribe(thinking=not model_id.endswith('_no_thinking'), device=device)
+
+    elif model_id == 'apertus_v1_5_8b':
+        from audio_bench.model_src.api.apertus import Apertus
+        model = Apertus(device=device)
 
     elif model_id == 'kimi_audio_7b_instruct':
         from audio_bench.model_src.transformers.kimi_audio_7b_instruct import KimiAudio7BInstruct
@@ -170,7 +180,16 @@ _MODEL_ID_TO_NAME = {
     "granite_speech_4_1_2b": "ibm-granite/granite-speech-4.1-2b",
     "nemotron_3_5_transcribe_30b": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B (thinking)",
     "nemotron_3_5_transcribe_30b_no_thinking": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B (no thinking)",
+    "apertus_v1_5_8b": "swiss-ai/Apertus-v1.5-8B",
 }
+
+# Released Luciole audio models: model_id -> HF repo (also their display name).
+_LUCIOLE_RELEASES = {
+    "luciole_1b_audio_1_0": "OpenLLM-France/Luciole-1B-Audio-1.0",
+    "luciole_8b_audio_1_0": "OpenLLM-France/Luciole-8B-Audio-1.0",
+    "luciole_23_audio_1_0": "OpenLLM-France/Luciole-23B-Audio-1.0",
+}
+_MODEL_ID_TO_NAME.update(_LUCIOLE_RELEASES)
 
 # Prefix-based entries (checked when exact match fails)
 _MODEL_ID_PREFIX_TO_NAME = {

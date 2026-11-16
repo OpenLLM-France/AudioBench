@@ -18,7 +18,6 @@ NEMOTRON_CONCURRENCY = int(os.environ.get("NEMOTRON_CONCURRENCY", "32"))
 # language ID; reasoning on (temperature 0.6, top-p 0.95) for audio QA and the other
 # understanding tasks. The no-thinking variant runs every task without reasoning.
 _NO_THINKING_TASKS = {"ASR", "AST", "SPOKEN LANGUAGE IDENTIFICATION"}
-
 # Model card's verbatim transcription prompt, with the language named (as in asr_benchmark).
 _ASR_PROMPT = ("Audio transcription. Language: {language}. Wording: verbatim, including fillers and "
                "repetitions. Formatting: punctuation and capitalization. Output: transcript only.")
@@ -96,10 +95,16 @@ class NemotronTranscribe(BaseModel):
 
     def _request(self, audio_array, sampling_rate, instruction, task_type):
         thinking = self.thinking and task_type not in _NO_THINKING_TASKS
+        chat_template_kwargs = {"enable_thinking": thinking}
         if thinking:
+            # Model card reasoning preset: 16384 reasoning tokens + 1024 to finish reasoning,
+            # within the 20480 completion tokens (the budget needs --reasoning-parser).
             sampling = dict(temperature=0.6, top_p=0.95, max_tokens=20480)
+            extra_body = {"top_k": -1, "thinking_token_budget": 17408}
+            chat_template_kwargs["reasoning_budget"] = 16384
         else:
-            sampling = dict(temperature=0, top_p=1.0, max_tokens=4096)
+            sampling = dict(temperature=0, top_p=1.0, max_tokens=16384)
+            extra_body = {}
         audio_b64 = _audio_to_base64_wav(audio_array, sampling_rate)
         messages = [{"role": "user", "content": [
             {"type": "text", "text": instruction},
@@ -109,9 +114,14 @@ class NemotronTranscribe(BaseModel):
             model=self.served_model,
             messages=messages,
             seed=0,
-            extra_body={"chat_template_kwargs": {"enable_thinking": thinking}},
+            extra_body={**extra_body, "chat_template_kwargs": chat_template_kwargs},
             **sampling,
         )
-        text = completion.choices[0].message.content or ""
-        # Served without a reasoning parser, the reasoning stays in the content.
+        choice = completion.choices[0]
+        text = choice.message.content or ""
+        # The model sometimes answers straight away without closing </think>: the reasoning parser
+        # then files the whole answer as reasoning. A cut-off output ("length") stays empty.
+        if not text.strip() and choice.finish_reason == "stop":
+            text = getattr(choice.message, "reasoning", None) or getattr(choice.message, "reasoning_content", None) or ""
+        # The reasoning parser moves the reasoning out of the content; without it, it stays there.
         return _THINK_RE.sub("", text).strip()
